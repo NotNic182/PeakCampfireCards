@@ -111,7 +111,7 @@ namespace CampfireCards.Abilities
 
         public override void OnRemoved(Character me) => _q.Clear();
 
-        public override string Status(Character me) => _q.Pending > 0 ? $"Delayed Consequences: {_q.Pending} pending" : null;
+        public override string Status(Character me) => _q.Pending > 0 ? $"{Card.Name}: {_q.Pending} pending" : null;
     }
 
     /// <summary>Safety Net: once per biome, press the key to place an anchor on safe ground; going down revives you there with 40 Injury.</summary>

@@ -275,7 +275,7 @@
     {
       "id": 1,
       "key": "GeckoGrip",
-      "name": "Sticky Fingers",
+      "name": "Piton-Free Fingers",
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
@@ -301,7 +301,7 @@
     {
       "id": 2,
       "key": "MountainGoat",
-      "name": "Mountain Goat",
+      "name": "Budget Scout Cannon",
       "rarity": "uncommon",
       "category": "climbing",
       "type": "Passive",
@@ -334,7 +334,7 @@
     {
       "id": 3,
       "key": "Surefooted",
-      "name": "Surefooted",
+      "name": "Swipity, No Slippity",
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
@@ -360,7 +360,7 @@
     {
       "id": 4,
       "key": "OverhangArtist",
-      "name": "Parkourist",
+      "name": "Pitonless Pit Stop",
       "rarity": "rare",
       "category": "climbing",
       "type": "Conditional passive",
@@ -401,7 +401,7 @@
     {
       "id": 6,
       "key": "FastFingers",
-      "name": "Diet Energy Drink",
+      "name": "Energy Drink Overdose",
       "rarity": "uncommon",
       "category": "climbing",
       "type": "Passive",
@@ -434,7 +434,7 @@
     {
       "id": 7,
       "key": "Featherfall",
-      "name": "Lite Tenderfoot",
+      "name": "Tenderfoot Insurance",
       "rarity": "uncommon",
       "category": "climbing",
       "type": "Passive",
@@ -460,7 +460,7 @@
     {
       "id": 8,
       "key": "LedgeDancer",
-      "name": "Scout Master Reach",
+      "name": "Myres' Long Arm",
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
@@ -486,7 +486,7 @@
     {
       "id": 9,
       "key": "DeepLungs",
-      "name": "Heart of the Cards",
+      "name": "Scout Cookie Addiction",
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Passive",
@@ -519,7 +519,7 @@
     {
       "id": 10,
       "key": "SecondWind",
-      "name": "Second Wind",
+      "name": "Nic of Time",
       "rarity": "rare",
       "category": "stamina",
       "type": "Automatic ability",
@@ -540,7 +540,7 @@
     {
       "id": 11,
       "key": "MarathonLegs",
-      "name": "Runner",
+      "name": "Hasty Badge Training",
       "rarity": "common",
       "category": "stamina",
       "type": "Passive",
@@ -566,7 +566,7 @@
     {
       "id": 12,
       "key": "QuickRecovery",
-      "name": "Quick Recovery",
+      "name": "Scout's Microbreak",
       "rarity": "common",
       "category": "stamina",
       "type": "Passive",
@@ -592,7 +592,7 @@
     {
       "id": 13,
       "key": "QuietBreathing",
-      "name": "Quiet Breathing",
+      "name": "Gloom Meditation",
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Conditional passive",
@@ -618,7 +618,7 @@
     {
       "id": 14,
       "key": "CardioTax",
-      "name": "Cardio Tax",
+      "name": "Myres Made Me Run",
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Passive",
@@ -651,7 +651,7 @@
     {
       "id": 15,
       "key": "PulseClimber",
-      "name": "Pulse Climber",
+      "name": "Endurance Badge Grind",
       "rarity": "rare",
       "category": "stamina",
       "type": "Cyclic conditional passive",
@@ -680,7 +680,7 @@
     {
       "id": 16,
       "key": "HalfTank",
-      "name": "Half Tank",
+      "name": "Marshmallow Morale",
       "rarity": "common",
       "category": "stamina",
       "type": "Campfire-triggered passive",
@@ -700,7 +700,7 @@
     {
       "id": 17,
       "key": "DesertBlood",
-      "name": "Mesa Blood",
+      "name": "Cool Cucumber Complex",
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
@@ -733,7 +733,7 @@
     {
       "id": 18,
       "key": "WinterCoat",
-      "name": "Alpine Coat",
+      "name": "Bundled Up Badge",
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
@@ -766,7 +766,7 @@
     {
       "id": 19,
       "key": "VenomAntibodies",
-      "name": "Anti Antibodies",
+      "name": "Antidote Enthusiast",
       "rarity": "uncommon",
       "category": "environment",
       "type": "Passive",
@@ -792,7 +792,7 @@
     {
       "id": 20,
       "key": "SporeLungs",
-      "name": "Spore Lungs",
+      "name": "ROOTS Survivor",
       "rarity": "uncommon",
       "category": "environment",
       "type": "Passive",
@@ -818,7 +818,7 @@
     {
       "id": 21,
       "key": "Thornbreaker",
-      "name": "Thornbreaker",
+      "name": "Cactus? What Cactus?",
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
@@ -844,7 +844,7 @@
     {
       "id": 22,
       "key": "HeatShedding",
-      "name": "Heat Shedding",
+      "name": "Aloe Aftercare",
       "rarity": "uncommon",
       "category": "environment",
       "type": "Conditional passive",
@@ -870,7 +870,7 @@
     {
       "id": 23,
       "key": "Frostwalker",
-      "name": "Frostwalker",
+      "name": "Heat Pack Afterglow",
       "rarity": "uncommon",
       "category": "environment",
       "type": "Conditional passive",
@@ -896,7 +896,7 @@
     {
       "id": 24,
       "key": "ToxicAdaptation",
-      "name": "Toxic Adaptation",
+      "name": "Fartberry Fitness",
       "rarity": "rare",
       "category": "environment",
       "type": "Conditional passive",
@@ -936,7 +936,7 @@
     {
       "id": 25,
       "key": "BonePlating",
-      "name": "Bone Plating",
+      "name": "BingBong Safety Briefing",
       "rarity": "common",
       "category": "survival",
       "type": "Passive",
@@ -962,7 +962,7 @@
     {
       "id": 26,
       "key": "EfficientMedic",
-      "name": "Efficient Medic",
+      "name": "Medkit Merit Badge",
       "rarity": "uncommon",
       "category": "survival",
       "type": "Passive",
@@ -988,7 +988,7 @@
     {
       "id": 27,
       "key": "PainEngine",
-      "name": "Pain Engine",
+      "name": "Walk It Off, Scout",
       "rarity": "uncommon",
       "category": "survival",
       "type": "Conditional passive",
@@ -1028,7 +1028,7 @@
     {
       "id": 28,
       "key": "EmergencyPurge",
-      "name": "Emergency Purge",
+      "name": "Discount Cure-All",
       "rarity": "rare",
       "category": "survival",
       "type": "Automatic ability",
@@ -1049,7 +1049,7 @@
     {
       "id": 29,
       "key": "PhoenixClause",
-      "name": "Phoenix Clause",
+      "name": "BingBong Flight Insurance",
       "rarity": "legendary",
       "category": "survival",
       "type": "Automatic revival",
@@ -1069,7 +1069,7 @@
     {
       "id": 30,
       "key": "IronStomach",
-      "name": "Iron Stomach",
+      "name": "Gourmand's Gut",
       "rarity": "common",
       "category": "survival",
       "type": "Consumption-triggered passive",
@@ -1095,7 +1095,7 @@
     {
       "id": 31,
       "key": "CurseBargain",
-      "name": "Curse Bargain",
+      "name": "Book of Broken Bones",
       "rarity": "rare",
       "category": "survival",
       "type": "Passive",
@@ -1128,7 +1128,7 @@
     {
       "id": 32,
       "key": "CleansingRitual",
-      "name": "Cleansing Ritual",
+      "name": "Tenacity Tincture",
       "rarity": "uncommon",
       "category": "survival",
       "type": "Item-use triggered",
@@ -1148,7 +1148,7 @@
     {
       "id": 33,
       "key": "PackRat",
-      "name": "Pack Rat",
+      "name": "Bing Bong's Baggage",
       "rarity": "rare",
       "category": "inventory",
       "type": "Passive",
@@ -1181,7 +1181,7 @@
     {
       "id": 34,
       "key": "Ultralight",
-      "name": "Ultralight",
+      "name": "Carry-On Only",
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Passive",
@@ -1207,7 +1207,7 @@
     {
       "id": 35,
       "key": "OneHandedScout",
-      "name": "One-Saber Scout",
+      "name": "Idol Hands",
       "rarity": "common",
       "category": "inventory",
       "type": "Conditional passive",
@@ -1233,7 +1233,7 @@
     {
       "id": 36,
       "key": "LuckyLunch",
-      "name": "Uncooked?",
+      "name": "Cook It, Keep It",
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Consumption-triggered",
@@ -1251,7 +1251,7 @@
     {
       "id": 37,
       "key": "CampChef",
-      "name": "Scout Chef",
+      "name": "Cooking Badge Deluxe",
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Consumption-triggered passive",
@@ -1279,7 +1279,7 @@
     {
       "id": 38,
       "key": "RopeBaron",
-      "name": "Rope Baron",
+      "name": "Lord of the Spools",
       "rarity": "rare",
       "category": "inventory",
       "type": "Campfire-triggered",
@@ -1307,7 +1307,7 @@
     {
       "id": 39,
       "key": "SupplyScout",
-      "name": "Supply Scout",
+      "name": "Scoutmaster's Care Package",
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Campfire-triggered",
@@ -1327,7 +1327,7 @@
     {
       "id": 40,
       "key": "DoubleDeal",
-      "name": "Double Deal",
+      "name": "Clown Luggage Special",
       "rarity": "legendary",
       "category": "inventory",
       "type": "One-time acquisition",
@@ -1347,7 +1347,7 @@
     {
       "id": 41,
       "key": "BelayBuddy",
-      "name": "Belay Buddy",
+      "name": "Rule Zero",
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
@@ -1389,7 +1389,7 @@
     {
       "id": 42,
       "key": "FieldMedic",
-      "name": "Tara",
+      "name": "Tara's First Aid Badge",
       "rarity": "uncommon",
       "category": "team",
       "type": "Passive",
@@ -1422,7 +1422,7 @@
     {
       "id": 43,
       "key": "RescueHarness",
-      "name": "Rescue Harness",
+      "name": "Human Carry-On",
       "rarity": "common",
       "category": "team",
       "type": "Passive",
@@ -1448,7 +1448,7 @@
     {
       "id": 44,
       "key": "HeatHuddle",
-      "name": "Heat Huddle",
+      "name": "Happy Camper Huddle",
       "rarity": "common",
       "category": "team",
       "type": "Conditional passive",
@@ -1474,7 +1474,7 @@
     {
       "id": 45,
       "key": "HerosArrival",
-      "name": "Otto",
+      "name": "Otto-Matic Clutch",
       "rarity": "rare",
       "category": "team",
       "type": "Revival-triggered",
@@ -1494,7 +1494,7 @@
     {
       "id": 46,
       "key": "LongArm",
-      "name": "Long Arm",
+      "name": "Long-Distance Uppies",
       "rarity": "common",
       "category": "team",
       "type": "Passive",
@@ -1520,7 +1520,7 @@
     {
       "id": 47,
       "key": "SharedBurden",
-      "name": "Shared Burden",
+      "name": "Take One for the Troop",
       "rarity": "rare",
       "category": "team",
       "type": "Proximity aura",
@@ -1550,7 +1550,7 @@
     {
       "id": 48,
       "key": "CampChoir",
-      "name": "Camp Choir",
+      "name": "Friendship Bugle Choir",
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
@@ -1578,7 +1578,7 @@
     {
       "id": 49,
       "key": "RocketAnkles",
-      "name": "Rocket Ankles",
+      "name": "Scout Cannon Legs",
       "rarity": "rare",
       "category": "mutation",
       "type": "Passive",
@@ -1618,7 +1618,7 @@
     {
       "id": 50,
       "key": "CursedCrown",
-      "name": "Cursed Crown",
+      "name": "Crown of Bad Decisions",
       "rarity": "rare",
       "category": "mutation",
       "type": "Acquisition and campfire triggered",
@@ -1641,7 +1641,7 @@
     {
       "id": 51,
       "key": "LoadedDice",
-      "name": "Loaded Dice",
+      "name": "Pandora's Pocket Gamble",
       "rarity": "uncommon",
       "category": "mutation",
       "type": "Random biome-triggered passive",
@@ -1671,7 +1671,7 @@
     {
       "id": 52,
       "key": "BloodBattery",
-      "name": "Blood Battery",
+      "name": "Bootleg Scoutmaster Bugle",
       "rarity": "legendary",
       "category": "mutation",
       "type": "Manually activated ability",
@@ -1692,7 +1692,7 @@
     {
       "id": 53,
       "key": "MomentumFiend",
-      "name": "Momentum Fiend",
+      "name": "Big Lollipop Crash",
       "rarity": "uncommon",
       "category": "mutation",
       "type": "Conditional passive",
@@ -1722,7 +1722,7 @@
     {
       "id": 54,
       "key": "DelayedConsequences",
-      "name": "Delayed Consequences",
+      "name": "Piton Payment Plan",
       "rarity": "rare",
       "category": "mutation",
       "type": "Delayed damage",
@@ -1744,7 +1744,7 @@
     {
       "id": 55,
       "key": "GlassHeart",
-      "name": "Glass Heart",
+      "name": "Glass Scout Cannon",
       "rarity": "legendary",
       "category": "mutation",
       "type": "Passive",
@@ -1777,7 +1777,7 @@
     {
       "id": 56,
       "key": "PacklessNomad",
-      "name": "Packless Nomad",
+      "name": "Baggage Claim Escapee",
       "rarity": "uncommon",
       "category": "mutation",
       "type": "Equipment-conditional passive",
@@ -1817,7 +1817,7 @@
     {
       "id": 57,
       "key": "DoubleDown",
-      "name": "Double Down",
+      "name": "Scout's Dishonor",
       "rarity": "legendary",
       "category": "wildcard",
       "type": "One-time acquisition",
@@ -1838,7 +1838,7 @@
     {
       "id": 58,
       "key": "ScavengersInstinct",
-      "name": "Scavenger's Initiative",
+      "name": "BingBong Baggage Scanner",
       "rarity": "rare",
       "category": "wildcard",
       "type": "Proximity visualization",
@@ -1858,7 +1858,7 @@
     {
       "id": 59,
       "key": "HungryHands",
-      "name": "Hungry Hands",
+      "name": "Medicinal Munchies",
       "rarity": "uncommon",
       "category": "wildcard",
       "type": "Consumption-triggered",
@@ -1879,7 +1879,7 @@
     {
       "id": 60,
       "key": "SafetyNet",
-      "name": "Safety Net",
+      "name": "Budget Checkpoint Flag",
       "rarity": "legendary",
       "category": "wildcard",
       "type": "Manually placed revival anchor",
@@ -1907,7 +1907,7 @@
     {
       "id": 61,
       "key": "Stoneblood",
-      "name": "Stoneblood",
+      "name": "Petrify Procrastination",
       "rarity": "rare",
       "category": "wildcard",
       "type": "Passive",
@@ -1933,7 +1933,7 @@
     {
       "id": 62,
       "key": "MountainsBargain",
-      "name": "Mountain's Bargain",
+      "name": "Myres' Fine Print",
       "rarity": "legendary",
       "category": "wildcard",
       "type": "Acquisition-triggered",
@@ -1961,7 +1961,7 @@
     {
       "id": 63,
       "key": "MountainsHeir",
-      "name": "Scoutmaster",
+      "name": "Myres' Favorite Scout",
       "rarity": "mythic",
       "category": "mythic",
       "type": "Permanent Mythic passive",

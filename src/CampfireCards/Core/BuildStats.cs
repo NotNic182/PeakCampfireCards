@@ -41,6 +41,19 @@ namespace CampfireCards.Core
         public static float BarSegmentsShift(float maxStaminaBonus, float fullWidth) => Math.Max(-0.95f, maxStaminaBonus) * fullWidth;
     }
 
+    /// <summary>stats.json in-game wording for one line: "more" when the value goes up, "less" when it goes down, "never" at 0.</summary>
+    public struct StatWords
+    {
+        public string More, Less, Never;
+        public bool HigherIsBetter;
+
+        public static StatWords Of(Channel c)
+        {
+            var d = ChannelTable.Defs[(int)c];
+            return new StatWords { More = d.More, Less = d.Less, Never = d.Never, HigherIsBetter = d.HigherIsBetter };
+        }
+    }
+
     /// <summary>One line of the combined stats: the value now (conditions and auras as they are) and the always-on value.</summary>
     public struct StatLine
     {
@@ -50,6 +63,7 @@ namespace CampfireCards.Core
         public bool IsMul;
         /// <summary>Value format for add lines: "stamina" (x100) or "seconds".</summary>
         public string Unit;
+        public StatWords Words;
         public bool Conditional => Math.Abs(Now - Always) > 0.0005f;
     }
 
@@ -62,11 +76,20 @@ namespace CampfireCards.Core
     {
         private struct Row
         {
-            public string Label; public bool IsMul; public string Unit; public Func<ModResult, float> Get; public Channel[] Uses;
+            public string Label; public bool IsMul; public string Unit; public StatWords Words; public Func<ModResult, float> Get; public Channel[] Uses;
         }
 
-        private static Row Mul(string label, Func<ModResult, float> get, params Channel[] uses) => new Row { Label = label, IsMul = true, Get = get, Uses = uses };
-        private static Row Ch(Channel c) => new Row { Label = ChannelTable.Defs[(int)c].Label, IsMul = ChannelTable.Defs[(int)c].IsMul, Get = r => r[c], Uses = new[] { c } };
+        /// <summary>A combined multiplier, worded like its first channel.</summary>
+        private static Row Mul(string label, Func<ModResult, float> get, params Channel[] uses) =>
+            new Row { Label = label, IsMul = true, Words = StatWords.Of(uses[0]), Get = get, Uses = uses };
+        private static Row Ch(Channel c, string unit = null) =>
+            new Row { Label = ChannelTable.Defs[(int)c].Label, IsMul = ChannelTable.Defs[(int)c].IsMul, Unit = unit, Words = StatWords.Of(c), Get = r => r[c], Uses = new[] { c } };
+
+        /// <summary>The all-status channel on its own covers only the statuses without a line of their own.</summary>
+        private static readonly StatWords OtherStatuses = new StatWords
+        {
+            More = "Other statuses build up {0} faster", Less = "Other statuses build up {0} slower", Never = "Other statuses never build up", HigherIsBetter = false,
+        };
 
         /// <summary>Channels the game cannot apply yet (preflight KNOWN_UNAPPLIED; Pack Rat's slot): never shown as a stat.</summary>
         private static readonly string[] NotApplied = { "invSlots" };
@@ -83,8 +106,8 @@ namespace CampfireCards.Core
                 Ch(Channel.climbStamina),
                 Ch(Channel.sprintStamina),
                 Ch(Channel.regenRate),
-                new Row { Label = ChannelTable.Defs[(int)Channel.regenDelay].Label, IsMul = false, Unit = "seconds", Get = r => r[Channel.regenDelay], Uses = new[] { Channel.regenDelay } },
-                new Row { Label = ChannelTable.Defs[(int)Channel.maxStamina].Label, IsMul = false, Unit = "stamina", Get = r => r[Channel.maxStamina], Uses = new[] { Channel.maxStamina } },
+                Ch(Channel.regenDelay, "seconds"),
+                Ch(Channel.maxStamina, "stamina"),
                 Ch(Channel.bonusStaminaGain),
                 Mul("Fall Injury received", r => StatComposites.Injury(r, true), Channel.fallInjury, Channel.allInjury),
                 Mul("Other Injury received", r => StatComposites.Injury(r, false), Channel.nonFallInjury, Channel.allInjury),
@@ -98,7 +121,9 @@ namespace CampfireCards.Core
                 var c = rate;
                 rows.Add(Mul(ChannelTable.Defs[(int)c].Label, r => StatComposites.StatusGain(r, c), c, Channel.negativeStatusRate));
             }
-            rows.Add(Mul("Other negative statuses", r => r[Channel.negativeStatusRate], Channel.negativeStatusRate));
+            var other = Mul("Other negative statuses", r => r[Channel.negativeStatusRate], Channel.negativeStatusRate);
+            other.Words = OtherStatuses;
+            rows.Add(other);
             // everything else, channel by channel (decay, food, healing, reach, slipping, huddling)
             var covered = new HashSet<Channel>();
             foreach (var r in rows) foreach (var c in r.Uses) covered.Add(c);
@@ -117,10 +142,45 @@ namespace CampfireCards.Core
                 float n = row.Get(now), a = row.Get(always);
                 float neutral = row.IsMul ? 1f : 0f;
                 if (Math.Abs(n - neutral) < 0.0005f && Math.Abs(a - neutral) < 0.0005f) continue;
-                list.Add(new StatLine { Label = row.Label, Now = n, Always = a, IsMul = row.IsMul, Unit = row.Unit });
+                list.Add(new StatLine { Label = row.Label, Now = n, Always = a, IsMul = row.IsMul, Unit = row.Unit, Words = row.Words });
             }
             return list;
         }
+
+        /// <summary>Unit of a channel's add value: max stamina is shown x100, the regen delay in seconds.</summary>
+        public static string UnitOf(Channel c) => c == Channel.maxStamina ? "stamina" : c == Channel.regenDelay ? "seconds" : null;
+
+        /// <summary>Is this value an unmodified scout's (x1, +0)?</summary>
+        public static bool IsNeutral(float v, bool isMul) => Math.Abs(v - (isMul ? 1f : 0f)) < 0.0005f;
+
+        /// <summary>Does this value help the scout (stats.json better)?</summary>
+        public static bool Helps(float v, bool isMul, StatWords w) => (v > (isMul ? 1f : 0f)) == w.HigherIsBetter;
+
+        /// <summary>
+        /// The value in the cards' own words: "You heat up 30% faster", "Your stamina bar is 25 longer", "Stamina starts
+        /// coming back 0.3 seconds sooner", "Climbing never tires you". Null for an unmodified value.
+        /// </summary>
+        public static string Say(float v, bool isMul, string unit, StatWords w)
+        {
+            if (IsNeutral(v, isMul)) return null;
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            bool up = v > (isMul ? 1f : 0f);
+            string amount;
+            if (isMul)
+            {
+                if (v < 0.0005f && !string.IsNullOrEmpty(w.Never)) return w.Never;
+                amount = (Math.Abs(v - 1f) * 100f).ToString("0.#", inv) + "%";
+            }
+            else if (unit == "seconds")
+            {
+                float sec = Math.Abs(v);
+                amount = sec.ToString("0.##", inv) + (Math.Abs(sec - 1f) < 0.005f ? " second" : " seconds");
+            }
+            else amount = (Math.Abs(v) * (unit == "stamina" ? 100f : 1f)).ToString("0.#", inv);
+            return string.Format(up ? w.More : w.Less, amount);
+        }
+
+        public static string Say(StatLine l, float v) => Say(v, l.IsMul, l.Unit, l.Words);
 
         /// <summary>"x1.25", "+20", "-0.5 s"; a multiplier of 0 reads "none".</summary>
         public static string Format(float v, bool isMul, string unit)

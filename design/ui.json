@@ -16,7 +16,10 @@
       1920,
       1080
     ],
-    "sortingOrder": 500
+    "sortingOrder": 500,
+    "font": "DarumadropOne-Regular.ttf",
+    "fontLicense": "DarumadropOne-OFL.txt",
+    "fontNote": "every mod text uses this font (assets/fonts, shipped next to the DLL; SIL Open Font License); the game's own font is its fallback, and the whole UI falls back to it when the file is missing or UI.CustomFont is off"
   },
   "timing": {
     "pickTimeoutSeconds": 30,
@@ -456,7 +459,7 @@
         ],
         "StatsHeader": "COMBINED EFFECTS",
         "AurasHeader": "FROM TEAMMATES",
-        "Hint": "Values with a condition show what applies right now; \"always\" is the value with no condition met. Press {0} to close."
+        "Hint": "Green helps you, red hurts you. (right now) means a condition or a nearby teammate changes it. Press {0} to close."
       },
       "behaviour": "toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI",
       "soundOn": "none"

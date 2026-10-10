@@ -5,56 +5,58 @@ namespace CampfireCards.Generated
     public enum Channel : byte { maxStamina, climbStamina, sprintStamina, climbSpeed, sprintSpeed, jumpHeight, slipForce, grabReach, helpReach, regenRate, regenDelay, fallInjury, nonFallInjury, allInjury, hungerRate, coldRate, heatRate, poisonRate, sporesRate, drowsyRate, thornsRate, curseRate, petrifyRate, negativeStatusRate, heatDecay, coldDecay, poisonDecay, sporesDecay, itemWeight, heldItemWeight, carryScoutWeight, foodHunger, cookedFoodHunger, healReceived, healGiven, healSelfUse, bonusStaminaGain, invSlots, huddleStrength }
     public enum Condition : byte { always, hangingStill, crouchStill, grounded, injury20, poisonOrSpores20, climbingWithItem, noBackpack, wearingBackpack, teammateNear, noTeammateNear, separatedFromTeam, momentumActive, pulseActive }
     public enum CapGroup : byte { none, staminaCost, maxStamina }
-    public struct ChannelDef { public Channel Id; public string Label; public bool IsMul; public CapGroup Cap; public bool HigherIsBetter; }
+    public struct ChannelDef { public Channel Id; public string Label; public bool IsMul; public CapGroup Cap; public bool HigherIsBetter; public string More; public string Less; public string Never; }
     public static class ChannelTable
     {
         public const int Count = 39;
         public static readonly ChannelDef[] Defs = new ChannelDef[]
         {
-            new ChannelDef { Id = Channel.maxStamina, Label = "Max stamina", IsMul = false, Cap = CapGroup.maxStamina, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.climbStamina, Label = "Climbing stamina cost", IsMul = true, Cap = CapGroup.staminaCost, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.sprintStamina, Label = "Sprint stamina cost", IsMul = true, Cap = CapGroup.staminaCost, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.climbSpeed, Label = "Climb speed", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.sprintSpeed, Label = "Sprint speed", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.jumpHeight, Label = "Jump height", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.slipForce, Label = "Slip and slide force", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.grabReach, Label = "Wall-grab reach", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.helpReach, Label = "Helping-hand reach", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.regenRate, Label = "Stamina regen rate", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.regenDelay, Label = "Stamina regen delay", IsMul = false, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.fallInjury, Label = "Fall Injury", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.nonFallInjury, Label = "Non-fall Injury", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.allInjury, Label = "All Injury", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.hungerRate, Label = "Hunger build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.coldRate, Label = "Cold build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.heatRate, Label = "Heat build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.poisonRate, Label = "Poison build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.sporesRate, Label = "Spores build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.drowsyRate, Label = "Drowsy build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.thornsRate, Label = "Thorns build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.curseRate, Label = "Curse build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.petrifyRate, Label = "Petrify build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.negativeStatusRate, Label = "All negative status build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.heatDecay, Label = "Heat decay", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.coldDecay, Label = "Cold decay", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.poisonDecay, Label = "Poison decay", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.sporesDecay, Label = "Spores decay", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.itemWeight, Label = "Carried item weight", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.heldItemWeight, Label = "Held item weight", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.carryScoutWeight, Label = "Carried scout weight", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false },
-            new ChannelDef { Id = Channel.foodHunger, Label = "Hunger removed by food", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.cookedFoodHunger, Label = "Hunger removed by cooked food", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.healReceived, Label = "Injury healed by items (received)", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.healGiven, Label = "Injury healed by items (given to teammates)", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.healSelfUse, Label = "Injury healed by items (used on yourself)", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.bonusStaminaGain, Label = "Bonus stamina received", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.invSlots, Label = "Inventory slots", IsMul = false, Cap = CapGroup.none, HigherIsBetter = true },
-            new ChannelDef { Id = Channel.huddleStrength, Label = "Huddle radius and cold removal", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true },
+            new ChannelDef { Id = Channel.maxStamina, Label = "Max stamina", IsMul = false, Cap = CapGroup.maxStamina, HigherIsBetter = true, More = "Your stamina bar is {0} longer", Less = "Your stamina bar is {0} shorter", Never = "" },
+            new ChannelDef { Id = Channel.climbStamina, Label = "Climbing stamina cost", IsMul = true, Cap = CapGroup.staminaCost, HigherIsBetter = false, More = "Climbing tires you {0} more", Less = "Climbing tires you {0} less", Never = "Climbing never tires you" },
+            new ChannelDef { Id = Channel.sprintStamina, Label = "Sprint stamina cost", IsMul = true, Cap = CapGroup.staminaCost, HigherIsBetter = false, More = "Sprinting tires you {0} more", Less = "Sprinting tires you {0} less", Never = "Sprinting never tires you" },
+            new ChannelDef { Id = Channel.climbSpeed, Label = "Climb speed", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "You climb {0} faster", Less = "You climb {0} slower", Never = "" },
+            new ChannelDef { Id = Channel.sprintSpeed, Label = "Sprint speed", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "You sprint {0} faster", Less = "You sprint {0} slower", Never = "" },
+            new ChannelDef { Id = Channel.jumpHeight, Label = "Jump height", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "You jump {0} higher", Less = "You jump {0} lower", Never = "" },
+            new ChannelDef { Id = Channel.slipForce, Label = "Slip and slide force", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "You slip and slide {0} more", Less = "You slip and slide {0} less", Never = "You never slip" },
+            new ChannelDef { Id = Channel.grabReach, Label = "Wall-grab reach", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Grab walls from {0} farther away", Less = "Grab walls only from {0} closer", Never = "" },
+            new ChannelDef { Id = Channel.helpReach, Label = "Helping-hand reach", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Pull teammates up from {0} farther away", Less = "Pull teammates up only from {0} closer", Never = "" },
+            new ChannelDef { Id = Channel.regenRate, Label = "Stamina regen rate", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Stamina comes back {0} faster", Less = "Stamina comes back {0} slower", Never = "" },
+            new ChannelDef { Id = Channel.regenDelay, Label = "Stamina regen delay", IsMul = false, Cap = CapGroup.none, HigherIsBetter = false, More = "Stamina starts coming back {0} later", Less = "Stamina starts coming back {0} sooner", Never = "" },
+            new ChannelDef { Id = Channel.fallInjury, Label = "Fall Injury", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Falls hurt {0} more", Less = "Falls hurt {0} less", Never = "Falls never hurt" },
+            new ChannelDef { Id = Channel.nonFallInjury, Label = "Non-fall Injury", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Hits that aren't falls hurt {0} more", Less = "Hits that aren't falls hurt {0} less", Never = "Hits that aren't falls never hurt" },
+            new ChannelDef { Id = Channel.allInjury, Label = "All Injury", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Every injury hurts {0} more", Less = "Every injury hurts {0} less", Never = "Nothing hurts you" },
+            new ChannelDef { Id = Channel.hungerRate, Label = "Hunger build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "You get hungry {0} faster", Less = "You get hungry {0} slower", Never = "You never get hungry" },
+            new ChannelDef { Id = Channel.coldRate, Label = "Cold build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "You get cold {0} faster", Less = "You get cold {0} slower", Never = "You never get cold" },
+            new ChannelDef { Id = Channel.heatRate, Label = "Heat build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "You heat up {0} faster", Less = "You heat up {0} slower", Never = "You never heat up" },
+            new ChannelDef { Id = Channel.poisonRate, Label = "Poison build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Poison builds up {0} faster", Less = "Poison builds up {0} slower", Never = "Poison never builds up" },
+            new ChannelDef { Id = Channel.sporesRate, Label = "Spores build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Spores build up {0} faster", Less = "Spores build up {0} slower", Never = "Spores never build up" },
+            new ChannelDef { Id = Channel.drowsyRate, Label = "Drowsy build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "You get drowsy {0} faster", Less = "You get drowsy {0} slower", Never = "You never get drowsy" },
+            new ChannelDef { Id = Channel.thornsRate, Label = "Thorns build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "New thorns count {0} more", Less = "New thorns count {0} less", Never = "Thorns don't count" },
+            new ChannelDef { Id = Channel.curseRate, Label = "Curse build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Curse builds up {0} faster", Less = "Curse builds up {0} slower", Never = "Curse never builds up" },
+            new ChannelDef { Id = Channel.petrifyRate, Label = "Petrify build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "You turn to stone {0} faster", Less = "You turn to stone {0} slower", Never = "You never turn to stone" },
+            new ChannelDef { Id = Channel.negativeStatusRate, Label = "All negative status build-up", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Every status builds up {0} faster", Less = "Every status builds up {0} slower", Never = "Statuses never build up" },
+            new ChannelDef { Id = Channel.heatDecay, Label = "Heat decay", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Heat wears off {0} faster", Less = "Heat wears off {0} slower", Never = "" },
+            new ChannelDef { Id = Channel.coldDecay, Label = "Cold decay", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Cold wears off {0} faster", Less = "Cold wears off {0} slower", Never = "" },
+            new ChannelDef { Id = Channel.poisonDecay, Label = "Poison decay", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Poison wears off {0} faster", Less = "Poison wears off {0} slower", Never = "" },
+            new ChannelDef { Id = Channel.sporesDecay, Label = "Spores decay", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Spores wear off {0} faster", Less = "Spores wear off {0} slower", Never = "" },
+            new ChannelDef { Id = Channel.itemWeight, Label = "Carried item weight", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Everything you carry is {0} heavier", Less = "Everything you carry is {0} lighter", Never = "Everything you carry weighs nothing" },
+            new ChannelDef { Id = Channel.heldItemWeight, Label = "Held item weight", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "The item in your hands weighs {0} more", Less = "The item in your hands weighs {0} less", Never = "The item in your hands weighs nothing" },
+            new ChannelDef { Id = Channel.carryScoutWeight, Label = "Carried scout weight", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Carrying a scout feels {0} heavier", Less = "Carrying a scout feels {0} lighter", Never = "Carrying a scout weighs nothing" },
+            new ChannelDef { Id = Channel.foodHunger, Label = "Hunger removed by food", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Food fills you up {0} more", Less = "Food fills you up {0} less", Never = "" },
+            new ChannelDef { Id = Channel.cookedFoodHunger, Label = "Hunger removed by cooked food", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Cooked food fills you up {0} more", Less = "Cooked food fills you up {0} less", Never = "" },
+            new ChannelDef { Id = Channel.healReceived, Label = "Injury healed by items (received)", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Bandages and medkits heal you {0} more", Less = "Bandages and medkits heal you {0} less", Never = "" },
+            new ChannelDef { Id = Channel.healGiven, Label = "Injury healed by items (given to teammates)", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Healing items you use on teammates heal {0} more", Less = "Healing items you use on teammates heal {0} less", Never = "" },
+            new ChannelDef { Id = Channel.healSelfUse, Label = "Injury healed by items (used on yourself)", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Healing items you use on yourself heal {0} more", Less = "Healing items you use on yourself heal {0} less", Never = "" },
+            new ChannelDef { Id = Channel.bonusStaminaGain, Label = "Bonus stamina received", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "You get {0} more extra (yellow) stamina", Less = "You get {0} less extra (yellow) stamina", Never = "" },
+            new ChannelDef { Id = Channel.invSlots, Label = "Inventory slots", IsMul = false, Cap = CapGroup.none, HigherIsBetter = true, More = "{0} extra pockets", Less = "{0} fewer pockets", Never = "" },
+            new ChannelDef { Id = Channel.huddleStrength, Label = "Huddle radius and cold removal", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Huddling warms you {0} more, from farther away", Less = "Huddling warms you {0} less, from closer", Never = "" },
         };
     }
     public static class ConditionTable
     {
         /// <summary>conditions.json meaning, indexed by Condition.</summary>
         public static readonly string[] Meaning = new string[] { "always", "gripping a climbable wall (not a rope or vine) without moving", "crouched and not moving", "standing on the ground", "Injury is at least 20", "Poison or Spores is at least 20", "climbing while holding an item", "not wearing a backpack", "wearing a backpack", "a living teammate is within the card's radius", "no living teammate is within the card's radius", "far from every living teammate (outside the huddle radius)", "Momentum Fiend's sprint bonus is active", "Pulse Climber's 1-second boost is active" };
+        /// <summary>conditions.json shown: the in-game wording after "while", indexed by Condition.</summary>
+        public static readonly string[] Shown = new string[] { "always", "you hang still on a wall", "you crouch and stay still", "you're on the ground", "you have 20+ Injury", "you have 20+ Poison or Spores", "you climb with an item in your hands", "you don't wear a backpack", "you wear a backpack", "a teammate is near you", "no teammate is near you", "you're far from every teammate", "your sprint speed-up is on", "your climbing boost is on" };
     }
 }

@@ -3,22 +3,23 @@
   "_columns": {
     "id": "condition id (C# identifier)",
     "meaning": "when it is true",
+    "shown": "in-game wording after \"while\" on the Current Build screen",
     "evaluatedBy": "how the mod decides it"
   },
   "rows": [
-    {"id": "always", "meaning": "always", "evaluatedBy": "constant"},
-    {"id": "hangingStill", "meaning": "gripping a climbable wall (not a rope or vine) without moving", "evaluatedBy": "wall-climbing flag and no climb input"},
-    {"id": "crouchStill", "meaning": "crouched and not moving", "evaluatedBy": "crouch flag and no movement input"},
-    {"id": "grounded", "meaning": "standing on the ground", "evaluatedBy": "grounded flag"},
-    {"id": "injury20", "meaning": "Injury is at least 20", "evaluatedBy": "current Injury status >= 0.20"},
-    {"id": "poisonOrSpores20", "meaning": "Poison or Spores is at least 20", "evaluatedBy": "current Poison or Spores status >= 0.20"},
-    {"id": "climbingWithItem", "meaning": "climbing while holding an item", "evaluatedBy": "climbing flag and an item in hand"},
-    {"id": "noBackpack", "meaning": "not wearing a backpack", "evaluatedBy": "backpack slot is empty"},
-    {"id": "wearingBackpack", "meaning": "wearing a backpack", "evaluatedBy": "backpack slot holds a backpack"},
-    {"id": "teammateNear", "meaning": "a living teammate is within the card's radius", "evaluatedBy": "distance to other living scouts"},
-    {"id": "noTeammateNear", "meaning": "no living teammate is within the card's radius", "evaluatedBy": "distance to other living scouts"},
-    {"id": "separatedFromTeam", "meaning": "far from every living teammate (outside the huddle radius)", "evaluatedBy": "distance to other living scouts"},
-    {"id": "momentumActive", "meaning": "Momentum Fiend's sprint bonus is active", "evaluatedBy": "card state machine"},
-    {"id": "pulseActive", "meaning": "Pulse Climber's 1-second boost is active", "evaluatedBy": "card state machine"}
+    {"id": "always", "meaning": "always", "shown": "always", "evaluatedBy": "constant"},
+    {"id": "hangingStill", "meaning": "gripping a climbable wall (not a rope or vine) without moving", "shown": "you hang still on a wall", "evaluatedBy": "wall-climbing flag and no climb input"},
+    {"id": "crouchStill", "meaning": "crouched and not moving", "shown": "you crouch and stay still", "evaluatedBy": "crouch flag and no movement input"},
+    {"id": "grounded", "meaning": "standing on the ground", "shown": "you're on the ground", "evaluatedBy": "grounded flag"},
+    {"id": "injury20", "meaning": "Injury is at least 20", "shown": "you have 20+ Injury", "evaluatedBy": "current Injury status >= 0.20"},
+    {"id": "poisonOrSpores20", "meaning": "Poison or Spores is at least 20", "shown": "you have 20+ Poison or Spores", "evaluatedBy": "current Poison or Spores status >= 0.20"},
+    {"id": "climbingWithItem", "meaning": "climbing while holding an item", "shown": "you climb with an item in your hands", "evaluatedBy": "climbing flag and an item in hand"},
+    {"id": "noBackpack", "meaning": "not wearing a backpack", "shown": "you don't wear a backpack", "evaluatedBy": "backpack slot is empty"},
+    {"id": "wearingBackpack", "meaning": "wearing a backpack", "shown": "you wear a backpack", "evaluatedBy": "backpack slot holds a backpack"},
+    {"id": "teammateNear", "meaning": "a living teammate is within the card's radius", "shown": "a teammate is near you", "evaluatedBy": "distance to other living scouts"},
+    {"id": "noTeammateNear", "meaning": "no living teammate is within the card's radius", "shown": "no teammate is near you", "evaluatedBy": "distance to other living scouts"},
+    {"id": "separatedFromTeam", "meaning": "far from every living teammate (outside the huddle radius)", "shown": "you're far from every teammate", "evaluatedBy": "distance to other living scouts"},
+    {"id": "momentumActive", "meaning": "Momentum Fiend's sprint bonus is active", "shown": "your sprint speed-up is on", "evaluatedBy": "card state machine"},
+    {"id": "pulseActive", "meaning": "Pulse Climber's 1-second boost is active", "shown": "your climbing boost is on", "evaluatedBy": "card state machine"}
   ]
 }

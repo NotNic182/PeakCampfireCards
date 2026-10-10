@@ -104,16 +104,33 @@ def main():
             problem('stats %s: op must be mul or add' % r['id'])
         if r.get('better') not in ('lower', 'higher'):
             problem('stats %s: better must be lower or higher' % r['id'])
+        for col in ('more', 'less'):
+            if '{0}' not in (r.get(col) or ''):
+                problem('stats %s: %s must be in-game wording with {0} for the amount' % (r['id'], col))
+        if '{' in (r.get('never') or ''):
+            problem('stats %s: never takes no amount' % r['id'])
+        if r.get('never') and r['op'] != 'mul':
+            problem('stats %s: never only applies to mul channels' % r['id'])
         if r['capGroup'] not in ('none', 'staminaCost', 'maxStamina'):
             problem('stats %s: unknown capGroup %s' % (r['id'], r['capGroup']))
         if ('Channel.' + r['id']) not in src:
             msg = 'stats %s: channel is never read in src (cards using it would do nothing)' % r['id']
             (warnings if r['id'] in KNOWN_UNAPPLIED else problems).append(msg)
 
+    # 2a. the UI font and its license ship with the mod
+    for key in ('font', 'fontLicense'):
+        name = ui['canvas'].get(key)
+        if not name or not os.path.exists(os.path.join(ROOT, 'assets', 'fonts', name)):
+            problem('ui canvas.%s: assets/fonts/%s is missing' % (key, name))
+        elif ("'" + name + "'") not in open(os.path.join(ROOT, 'tools', 'package.py'), encoding='utf-8').read():
+            problem('ui canvas.%s: tools/package.py does not ship %s' % (key, name))
+
     # 2b. conditions: every condition is evaluated in src
     for r in conditions['rows']:
         if ('Condition.' + r['id']) not in src:
             problem('conditions %s: never evaluated in src' % r['id'])
+        if not r.get('shown'):
+            problem('conditions %s: shown (in-game wording) is empty' % r['id'])
 
     # 3. cards
     rarities = ['common', 'uncommon', 'rare', 'legendary', 'mythic']

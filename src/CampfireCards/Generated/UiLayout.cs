@@ -15,6 +15,8 @@ namespace CampfireCards.Generated
         public const float OpeningPickDelaySeconds = 2.0f;
         public static readonly Vector2 ReferenceResolution = new Vector2(1920f, 1080f);
         public const int SortingOrder = 500;
+        /// <summary>The UI font file, next to the DLL (assets/fonts in the repo).</summary>
+        public const string FontFile = "DarumadropOne-Regular.ttf";
     }
 
     /// <summary>MenuWindow subclass (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop. Open() when it is the local player's turn; Close() after a pick or timeout; the game blocks movement and shows the cursor through MenuWindow</summary>
@@ -247,7 +249,7 @@ namespace CampfireCards.Generated
         public static readonly Color InactiveColor = new Color(0.6f, 0.6f, 0.6f, 1f);
         public const string StatsHeader = "COMBINED EFFECTS";
         public const string AurasHeader = "FROM TEAMMATES";
-        public const string Hint = "Values with a condition show what applies right now; \"always\" is the value with no condition met. Press {0} to close.";
+        public const string Hint = "Green helps you, red hurts you. (right now) means a condition or a nearby teammate changes it. Press {0} to close.";
     }
 
 }

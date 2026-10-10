@@ -1,7 +1,10 @@
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using CampfireCards.Generated;
 using TMPro;
 using UnityEngine;
+using UnityEngine.TextCore.LowLevel;
 using UnityEngine.UI;
 
 namespace CampfireCards.Ui
@@ -31,19 +34,71 @@ namespace CampfireCards.Ui
             }
         }
 
+        /// <summary>
+        /// Every mod text uses ui.json's font (UiTiming.FontFile, next to the DLL), with the game's font as the fallback
+        /// for any glyph it lacks (player names). Without the file, or with General.CustomFont off, the game's font.
+        /// </summary>
         public static TMP_FontAsset Font
         {
             get
             {
                 if (_font != null) return _font;
-                try { _font = TMP_Settings.defaultFontAsset; } catch { }
-                if (_font == null)
+                var game = GameFont();
+                if (!_customTried && Plugin.CustomFont != null && Plugin.CustomFont.Value)
                 {
-                    var all = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
-                    _font = all.FirstOrDefault(f => f != null && f.name.IndexOf("SDF", System.StringComparison.OrdinalIgnoreCase) >= 0) ?? all.FirstOrDefault();
+                    _customTried = true;
+                    _custom = LoadFont(Path.Combine(Plugin.PluginDir ?? "", UiTiming.FontFile), game);
                 }
+                _font = _custom ?? game;
                 Plugin.Log.LogInfo("UI font: " + (_font != null ? _font.name : "none"));
                 return _font;
+            }
+        }
+
+        private static TMP_FontAsset _custom;
+        private static bool _customTried;
+
+        private static TMP_FontAsset GameFont()
+        {
+            TMP_FontAsset f = null;
+            try { f = TMP_Settings.defaultFontAsset; } catch { }
+            if (f == null)
+            {
+                var all = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
+                f = all.FirstOrDefault(a => a != null && a.name.IndexOf("SDF", System.StringComparison.OrdinalIgnoreCase) >= 0) ?? all.FirstOrDefault();
+            }
+            return f;
+        }
+
+        /// <summary>A dynamic SDF font asset built from a font file; null (logged) when the file is missing or unreadable.</summary>
+        private static TMP_FontAsset LoadFont(string path, TMP_FontAsset fallback)
+        {
+            if (!File.Exists(path))
+            {
+                Plugin.Log.LogWarning("UI font file not found (" + path + "); using the game's font.");
+                return null;
+            }
+            try
+            {
+                var asset = TMP_FontAsset.CreateFontAsset(path, 0, 90, 9, GlyphRenderMode.SDFAA, 1024, 1024);
+                if (asset == null)
+                {
+                    Plugin.Log.LogWarning("UI font could not be read (" + path + "); using the game's font.");
+                    return null;
+                }
+                asset.name = Path.GetFileNameWithoutExtension(path);
+                asset.isMultiAtlasTexturesEnabled = true;
+                if (fallback != null) asset.fallbackFontAssetTable = new List<TMP_FontAsset> { fallback };
+                // built at runtime: keep it (and its atlas and material) through scene changes
+                asset.hideFlags = HideFlags.DontUnloadUnusedAsset;
+                if (asset.material != null) asset.material.hideFlags = HideFlags.DontUnloadUnusedAsset;
+                if (asset.atlasTexture != null) asset.atlasTexture.hideFlags = HideFlags.DontUnloadUnusedAsset;
+                return asset;
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogWarning("UI font failed to load (" + e.Message + "); using the game's font.");
+                return null;
             }
         }
 
