@@ -27,5 +27,6 @@ namespace CampfireCards.Net
         public static void OnSpawnItem(SpawnItem m, int sender) => Last.Add((104, sender, m));
         public static void OnRevivedBy(RevivedBy m, int sender) => Last.Add((105, sender, m));
         public static void OnPickRequest(PickRequest m, int sender) => Last.Add((106, sender, m));
+        public static void OnPickSkipped(PickSkipped m, int sender) => Last.Add((107, sender, m));
     }
 }

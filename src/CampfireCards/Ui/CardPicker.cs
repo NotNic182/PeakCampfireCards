@@ -62,6 +62,7 @@ namespace CampfireCards.Ui
         private const int MaxPerRow = 6;
         private readonly List<GameObject> _cards = new List<GameObject>();
         private float _deadline;
+        private bool _hasTimer;
         private bool _picked;
         private byte[] _hand;
         public Mode Current { get; private set; }
@@ -149,7 +150,7 @@ namespace CampfireCards.Ui
             }
             _onSacrifice = onChosen;
             _title.text = Ui_Title.SacrificeTitle;
-            float timeout = Plugin.PickTimeoutSeconds != null ? Plugin.PickTimeoutSeconds.Value : UiTiming.PickTimeoutSeconds;
+            float timeout = PickSession.TimeoutSeconds;
             Open(cards, timeout, Mode.Sacrifice);
             Hud.HidePrompt();
         }
@@ -168,6 +169,7 @@ namespace CampfireCards.Ui
             Current = mode;
             _hand = hand;
             _picked = false;
+            _hasTimer = timeoutSeconds > 0f;
             _deadline = Time.unscaledTime + timeoutSeconds;
             foreach (var c in _cards) Destroy(c);
             _cards.Clear();
@@ -260,15 +262,15 @@ namespace CampfireCards.Ui
             switch (Current)
             {
                 case Mode.Sacrifice:
-                    _subtitle.text = "Choose a card to give up. " + Mathf.CeilToInt(left) + "s";
-                    if (left <= 0f && _hand != null && _hand.Length > 0) Choose(_hand[Random.Range(0, _hand.Length)]);
+                    _subtitle.text = "Choose a card to give up." + (_hasTimer ? " " + Mathf.CeilToInt(left) + "s" : " Take your time.");
+                    if (_hasTimer && left <= 0f && _hand != null && _hand.Length > 0) Choose(_hand[Random.Range(0, _hand.Length)]);
                     break;
                 case Mode.Reveal:
                     _subtitle.text = "Added to your cards. Click to continue.";
                     if (left <= 0f) HideNow();
                     break;
                 default:
-                    _subtitle.text = Ui_Subtitle.Text.Replace("{timeLeft}", Mathf.CeilToInt(left).ToString());
+                    _subtitle.text = _hasTimer ? Ui_Subtitle.Text.Replace("{timeLeft}", Mathf.CeilToInt(left).ToString()) : Ui_Subtitle.UntimedText;
                     break;
             }
         }

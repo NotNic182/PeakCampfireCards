@@ -108,9 +108,11 @@ namespace CampfireCards
         }
 
         /// <summary>hooks.json campfireLit prefix: remember the state before the RPC.</summary>
-        public static void OnCampfireLitPrefix(Campfire __instance, out Campfire.FireState __state)
+        public static void OnCampfireLitPrefix(Campfire __instance, bool updateSegment, out Campfire.FireState __state)
         {
             __state = __instance.state;
+            if (__state != Campfire.FireState.Lit && updateSegment && RunState.RunStarted)
+                PickSession.SnapshotCampfireEligibility((byte)__instance.advanceToSegment);
         }
 
         /// <summary>hooks.json campfireLit postfix: Off -> Lit with updateSegment is a real lighting.</summary>

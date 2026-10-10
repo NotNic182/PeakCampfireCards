@@ -128,6 +128,12 @@ namespace CampfireCards.Net
             PickSession.OnSessionEnd(m);
         }
 
+        public static void OnPickSkipped(PickSkipped m, int sender)
+        {
+            if (!FromHost(sender)) return;
+            PickSession.OnSkipped(m);
+        }
+
         /// <summary>
         /// Mountain's Bargain: the owner gave up a card (never a Mythic, never the Bargain itself). A player can only
         /// remove their own cards, so a repeated message can only cost the sender.

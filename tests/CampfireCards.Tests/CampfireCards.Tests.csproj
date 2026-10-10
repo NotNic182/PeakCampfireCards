@@ -14,6 +14,8 @@
     <Compile Include="..\..\src\CampfireCards\Generated\ClimbStats.cs" Link="Generated\ClimbStats.cs" />
     <!-- wire format and dispatch; the game-side handlers are replaced by NetStub.cs -->
     <Compile Include="..\..\src\CampfireCards\Generated\NetEvents.cs" Link="Generated\NetEvents.cs" />
+    <!-- Real session orchestration against the small game/network boundary in SessionEnvironment.cs. -->
+    <Compile Include="..\..\src\CampfireCards\Cards\PickSession.cs" Link="Cards\PickSession.cs" />
   </ItemGroup>
 
   <ItemGroup>

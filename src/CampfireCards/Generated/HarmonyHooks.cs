@@ -14,7 +14,7 @@ namespace CampfireCards.Generated
     [HarmonyPatch(typeof(Campfire), "Light_Rpc", new Type[] { typeof(bool), typeof(float) })]
     internal static class Patch_campfireLit
     {
-        [HarmonyPrefix] static void Prefix(Campfire __instance, out Campfire.FireState __state) { CampfireCards.Hooks.OnCampfireLitPrefix(__instance, out __state); }
+        [HarmonyPrefix] static void Prefix(Campfire __instance, bool updateSegment, out Campfire.FireState __state) { CampfireCards.Hooks.OnCampfireLitPrefix(__instance, updateSegment, out __state); }
         [HarmonyPostfix] static void Postfix(Campfire __instance, bool updateSegment, float burningFor, Campfire.FireState __state) { CampfireCards.Hooks.OnCampfireLit(__instance, updateSegment, burningFor, __state); }
     }
 
