@@ -15,7 +15,7 @@
    "code": 90,
    "name": "Hello",
    "sender": "anyone entering a room",
-   "receivers": "Others",
+   "receivers": "Others (the host answers the sender with its own Hello, targeted)",
    "reliable": true,
    "fields": [
     {
@@ -29,9 +29,21 @@
     {
      "name": "deckHash",
      "type": "int"
+    },
+    {
+     "name": "rules",
+     "type": "int[]"
+    },
+    {
+     "name": "weights",
+     "type": "int[]"
+    },
+    {
+     "name": "cards",
+     "type": "int[]"
     }
    ],
-   "purpose": "announce the mod, its card count and a hash of the deck so players on different versions get a warning",
+   "purpose": "announce the mod version and the settings fingerprint (Core.SettingsFingerprint: global rules, rarity weights x10000, one hash per card) so players with different versions or card settings are told exactly what differs",
    "handler": "OnHello"
   },
   {
@@ -64,15 +76,23 @@
     {
      "name": "timeoutSeconds",
      "type": "float"
+    },
+    {
+     "name": "mode",
+     "type": "byte"
+    },
+    {
+     "name": "segment",
+     "type": "byte"
     }
    ],
-   "purpose": "a pick session begins: turn order (actor numbers, last to the fire first) and each player's dealt hand (handSize card ids per player, in order). reason: 0 opening, 1 campfire",
+   "purpose": "a pick session begins: pick order (actor numbers, last to the fire first; also the dealing order), each player's dealt hand (handSize card ids per player, in order), the host's timer and mode (Core.PickMode: 0 everyone chooses at once, 1 one at a time). reason: 0 opening, 1 campfire; segment: the campfire segment (255 = opening), so every client knows which session started and a new host can continue the queue",
    "handler": "OnPickSessionStart"
   },
   {
    "code": 92,
    "name": "PickMade",
-   "sender": "the picking player",
+   "sender": "host",
    "receivers": "All",
    "reliable": true,
    "fields": [
@@ -93,7 +113,7 @@
      "type": "bool"
     }
    ],
-   "purpose": "a player took a card: everyone adds it to that player's cards, applies effects, advances the turn",
+   "purpose": "the host accepted a pick (a player's PickRequest, or its own timeout pick): everyone checks it against the session (id, player, hand, not picked yet) and adds the card",
    "handler": "OnPickMade"
   },
   {
@@ -325,19 +345,11 @@
      "type": "byte"
     },
     {
-     "name": "x",
-     "type": "float"
-    },
-    {
-     "name": "y",
-     "type": "float"
-    },
-    {
-     "name": "z",
-     "type": "float"
+     "name": "segment",
+     "type": "byte"
     }
    ],
-   "purpose": "ask the host to spawn a real world pickup (Rope Baron, Supply Scout) at a safe spot",
+   "purpose": "ask the host for a card's campfire item (Rope Baron, Supply Scout) for the fire lit for this segment; the host checks the card, the item and that the fire was lit, places it next to that fire itself, and spawns it once per card per fire",
    "handler": "OnSpawnItem"
   },
   {
@@ -354,6 +366,25 @@
    ],
    "purpose": "tell the scout who fed you back on your feet that they revived you (Hero's Arrival)",
    "handler": "OnRevivedBy"
+  },
+  {
+   "code": 106,
+   "name": "PickRequest",
+   "sender": "the picking player",
+   "receivers": "MasterClient",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "sessionId",
+     "type": "int"
+    },
+    {
+     "name": "cardId",
+     "type": "byte"
+    }
+   ],
+   "purpose": "a player asks to take a card from their offer; the host validates it (session, turn, hand, not picked or claimed yet) and answers everyone with PickMade",
+   "handler": "OnPickRequest"
   }
  ]
 }

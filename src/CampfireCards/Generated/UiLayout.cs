@@ -6,7 +6,7 @@ namespace CampfireCards.Generated
 {
     public static class UiTiming
     {
-        public const float PickTimeoutSeconds = 60.0f;
+        public const float PickTimeoutSeconds = 30.0f;
         public const float FanSlideInSeconds = 0.35f;
         public const float CardStaggerSeconds = 0.08f;
         public const float HoverScale = 1.08f;
@@ -154,21 +154,27 @@ namespace CampfireCards.Generated
         public const float Y = 14.0f;
     }
 
-    /// <summary>dark panel, white text. shown to everyone who is not picking while a session runs; not a MenuWindow (no input block)</summary>
+    /// <summary>dark panel, white status line, and below it the pick order (last to the fire first) with each name coloured by state. shown while a session runs to everyone not choosing right now (in turns mode the others, in simultaneous mode everyone who already chose); not a MenuWindow (no input block)</summary>
     public static class Ui_WaitingBanner
     {
         public const string Parent = "root";
-        public static readonly Vector2 Size = new Vector2(700f, 60f);
+        public static readonly Vector2 Size = new Vector2(1100f, 84f);
         public const string Anchor = "top center, y=-120";
-        public const string Text = "{playerName} is picking a card...";
+        public const string Text = "{status} {timeLeft}s\n{order}";
         public const string SoundOn = "none";
         public const float FontSize = 28.0f;
         public static readonly Color Panel = new Color(0f, 0f, 0f, 0.6f);
         public static readonly Color Color = new Color(1f, 1f, 1f, 1f);
         public const string Template = "{0} is picking a card...";
+        public const string SimultaneousTemplate = "Waiting for {0}...";
+        public const string OrderLabel = "Pick order: ";
+        public const float OrderFontSize = 20.0f;
+        public static readonly Color DoneColor = new Color(0.62f, 0.92f, 0.45f, 1f);
+        public static readonly Color PickingColor = new Color(1f, 1f, 1f, 1f);
+        public static readonly Color QueuedColor = new Color(0.65f, 0.65f, 0.65f, 1f);
     }
 
-    /// <summary>one line per card: a square in the card's rarity colour plus its name. visible on the island when the player holds any card; hidden in menus</summary>
+    /// <summary>one line per card: a square in the card's rarity colour plus its name; a last line names the Current Build key. visible on the island when the player holds any card; hidden in menus</summary>
     public static class Ui_MyCardsHud
     {
         public const string Parent = "root";
@@ -179,6 +185,7 @@ namespace CampfireCards.Generated
         public const float FontSize = 18.0f;
         public static readonly Color Color = new Color(1f, 1f, 1f, 0.9f);
         public const string Header = "YOUR CARDS";
+        public const string HintTemplate = "[{0}] current build";
     }
 
     /// <summary>dark panel, white text. toastSeconds notices</summary>
@@ -220,6 +227,27 @@ namespace CampfireCards.Generated
         public const float FontSize = 24.0f;
         public static readonly Color Panel = new Color(0f, 0f, 0f, 0.65f);
         public static readonly Color Color = new Color(1f, 0.92f, 0.6f, 1f);
+    }
+
+    /// <summary>dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you. toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI</summary>
+    public static class Ui_BuildScreen
+    {
+        public const string Parent = "root";
+        public static readonly Vector2 Size = new Vector2(1560f, 860f);
+        public const string Anchor = "center";
+        public const string Text = "{cards} | {stats}";
+        public const string SoundOn = "none";
+        public static readonly Color Panel = new Color(0.03f, 0.03f, 0.04f, 0.88f);
+        public const string Title = "CURRENT BUILD";
+        public const float TitleFontSize = 34.0f;
+        public const float FontSize = 18.0f;
+        public const float MinFontSize = 11.0f;
+        public static readonly Color HeaderColor = new Color(1f, 0.86f, 0.55f, 1f);
+        public static readonly Color ActiveColor = new Color(0.62f, 0.92f, 0.45f, 1f);
+        public static readonly Color InactiveColor = new Color(0.6f, 0.6f, 0.6f, 1f);
+        public const string StatsHeader = "COMBINED EFFECTS";
+        public const string AurasHeader = "FROM TEAMMATES";
+        public const string Hint = "Values with a condition show what applies right now; \"always\" is the value with no condition met. Press {0} to close.";
     }
 
 }

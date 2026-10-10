@@ -22,7 +22,7 @@ namespace CampfireCards.Ui
 
         private static GameObject _root;
         private static RectTransform _rootRect;
-        private static Image _waitingPanel; private static TextMeshProUGUI _waitingText;
+        private static Image _waitingPanel; private static TextMeshProUGUI _waitingText, _waitingOrder;
         private static TextMeshProUGUI _myCards;
         private static Image _toastPanel; private static TextMeshProUGUI _toastText; private static float _toastUntil;
         private static TextMeshProUGUI _abilityBar;
@@ -47,7 +47,11 @@ namespace CampfireCards.Ui
 
             _waitingPanel = UiKit.Panel(_root.transform, "WaitingBanner", Ui_WaitingBanner.Size, Ui_WaitingBanner.Panel);
             UiKit.Place(_waitingPanel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -120f));
-            _waitingText = UiKit.Text(_waitingPanel.transform, "Text", Ui_WaitingBanner.Size, Ui_WaitingBanner.FontSize, Ui_WaitingBanner.Color, TextAlignmentOptions.Center, FontStyles.Bold);
+            var line = new Vector2(Ui_WaitingBanner.Size.x - 24f, Ui_WaitingBanner.Size.y * 0.5f);
+            _waitingText = UiKit.Text(_waitingPanel.transform, "Text", line, Ui_WaitingBanner.FontSize, Ui_WaitingBanner.Color, TextAlignmentOptions.Center, FontStyles.Bold);
+            UiKit.Place(_waitingText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -2f));
+            _waitingOrder = UiKit.Text(_waitingPanel.transform, "Order", line, Ui_WaitingBanner.OrderFontSize, Ui_WaitingBanner.Color, TextAlignmentOptions.Center);
+            UiKit.Place(_waitingOrder.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 2f));
             _waitingPanel.gameObject.SetActive(false);
 
             _myCards = UiKit.Text(_root.transform, "MyCardsHud", Ui_MyCardsHud.Size, Ui_MyCardsHud.FontSize, Ui_MyCardsHud.Color, TextAlignmentOptions.BottomLeft);
@@ -73,10 +77,12 @@ namespace CampfireCards.Ui
             RefreshMyCards();
         }
 
-        public static void ShowWaiting(string playerName)
+        /// <summary>The pick status banner: who is choosing (and the time left), and below it the pick order.</summary>
+        public static void ShowWaiting(string status, string order)
         {
             Ensure();
-            _waitingText.text = string.Format(Ui_WaitingBanner.Template, playerName);
+            _waitingText.text = status;
+            _waitingOrder.text = order ?? "";
             _waitingPanel.gameObject.SetActive(true);
         }
 
@@ -120,6 +126,8 @@ namespace CampfireCards.Ui
                 var color = Deck.TryGet(id, out def) ? Deck.RarityColor(def.Rarity) : Color.white;
                 sb.Append("<color=#").Append(UiKit.Hex(color)).Append(">■</color> ").Append(Deck.NameOf(id)).Append('\n');
             }
+            sb.Append("<size=80%><color=#").Append(UiKit.Hex(Ui_BuildScreen.InactiveColor)).Append('>')
+              .Append(string.Format(Ui_MyCardsHud.HintTemplate, Plugin.BuildScreenKeyLabel)).Append("</color></size>");
             _myCards.text = sb.ToString().TrimEnd();
             _myCards.gameObject.SetActive(RunState.OnIsland);
         }
@@ -198,6 +206,7 @@ namespace CampfireCards.Ui
             HideWaiting();
             HidePrompt();
             CardPicker.HideAll();
+            BuildScreen.Hide();
             ClearMarkers();
             if (_toastPanel != null) _toastPanel.gameObject.SetActive(false);
             if (_myCards != null) _myCards.gameObject.SetActive(false);

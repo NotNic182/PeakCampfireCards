@@ -12,6 +12,8 @@
     <Compile Include="..\..\src\CampfireCards\Core\*.cs" Link="Core\%(Filename).cs" />
     <Compile Include="..\..\src\CampfireCards\Generated\CardTable.cs" Link="Generated\CardTable.cs" />
     <Compile Include="..\..\src\CampfireCards\Generated\ClimbStats.cs" Link="Generated\ClimbStats.cs" />
+    <!-- wire format and dispatch; the game-side handlers are replaced by NetStub.cs -->
+    <Compile Include="..\..\src\CampfireCards\Generated\NetEvents.cs" Link="Generated\NetEvents.cs" />
   </ItemGroup>
 
   <ItemGroup>

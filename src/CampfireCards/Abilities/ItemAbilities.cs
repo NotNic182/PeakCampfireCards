@@ -103,7 +103,10 @@ namespace CampfireCards.Abilities
         public override string Status(Character me) => "Pack Rat: extra slot unavailable";
     }
 
-    /// <summary>Rope Baron / Supply Scout: an item for you next to every newly lit campfire. The host spawns it (net.json SpawnItem).</summary>
+    /// <summary>
+    /// Rope Baron / Supply Scout: an item for you next to every newly lit campfire. The owner only names the item and the
+    /// fire; the host checks the card, spawns it once per fire and places it next to that fire (net.json SpawnItem).
+    /// </summary>
     public sealed class Ability_CampfireSpawn : Ability
     {
         public override void OnCampfireLit(Character me, bool acquiredThisFire)
@@ -113,13 +116,7 @@ namespace CampfireCards.Abilities
             if (fire == null) return;
             int item = Mathf.RoundToInt(P("item", 0f));
             if (item < 0 || item >= CardTable.SpawnItems.Length) return;
-            Vector3 point, normal;
-            if (!SafeSpot.NearCampfire(fire, NetSend.LocalActor * 3 + item, out point, out normal))
-            {
-                if (!SafeSpot.Near(fire.transform.position, 2.5f, 6f, out point)) { Hud.Toast(Card.Name + ": no room next to the fire"); return; }
-                point -= Vector3.up * 1f;   // Near returns a torso height; items sit on the ground
-            }
-            NetSend.RaiseToMaster(new SpawnItem { item = (byte)item, x = point.x, y = point.y, z = point.z });
+            NetSend.RaiseToMaster(new SpawnItem { item = (byte)item, segment = (byte)fire.advanceToSegment });
         }
     }
 

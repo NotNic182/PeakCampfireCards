@@ -19,9 +19,9 @@
     },
     {
       "id": "Settings",
-      "class": "CampfireCards.Core.CardSettings",
+      "class": "CampfireCards.Core.CardSettings + CampfireCards.Core.SettingsFingerprint",
       "owns": "cards.json defaults",
-      "responsibility": "every tunable number: rarity weights, offer count, duplicates, Mythics on/off, stamina-cost cap, max-stamina floor, per-card enable, modifier values and parameters",
+      "responsibility": "every tunable number: rarity weights, offer count, duplicates, Mythics on/off, stamina-cost cap, max-stamina floor, per-card enable, modifier values and parameters; the fingerprint of every shared gameplay setting, compared between players",
       "dependsOn": "-",
       "testedBy": "Unit tests (DefaultRarityWeightsMatchSpec, MythicsCanBeDisabled, DisabledCardsAreNeverOffered)"
     },
@@ -35,19 +35,19 @@
     },
     {
       "id": "Mods",
-      "class": "CampfireCards.Core.ModResult",
+      "class": "CampfireCards.Core.ModResult + CampfireCards.Core.StatComposites + CampfireCards.Core.BuildStats",
       "owns": "stats.json channels and cap groups",
-      "responsibility": "folds active modifiers from scratch each frame: multiplicative percentages, additive flat stamina, 60% cost cap and 50 max-stamina floor for normal cards, Mythics past the caps, set overrides",
+      "responsibility": "folds active modifiers from scratch each frame: multiplicative percentages, additive flat stamina, 60% cost cap and 50 max-stamina floor for normal cards, Mythics past the caps, set overrides; StatComposites combines channels exactly as the hooks apply them, and BuildStats lists them (now and always-on) for the Current Build screen",
       "dependsOn": "Settings",
       "testedBy": "Unit tests (stacking, caps, Mythic overrides, no drift)"
     },
     {
       "id": "Timers",
-      "class": "CampfireCards.Core.Cooldown + CampfireCards.Core.Charge + CampfireCards.Core.DelayedInjuryQueue + CampfireCards.Core.ReviveArbiter",
+      "class": "CampfireCards.Core.Cooldown + CampfireCards.Core.Charge + CampfireCards.Core.DelayedInjuryQueue + CampfireCards.Core.ReviveArbiter + CampfireCards.Core.SpawnLedger + CampfireCards.Core.ItemTransaction + CampfireCards.Core.ThornsLedger + CampfireCards.Core.PerKeyBiomeCharge",
       "owns": "cards.json params",
-      "responsibility": "Unity-free timers: cooldowns, per-biome and per-run charges, latches, Momentum and Pulse machines, delayed Injury, host revive arbitration, Loaded Dice rolls",
+      "responsibility": "Unity-free timers and ledgers: cooldowns, per-biome and per-run charges, latches, Momentum and Pulse machines, delayed Injury, host revive arbitration (reset per run, victims forgotten on leave), once-per-fire item rewards, one decision per item use (Lucky Lunch), Thorns scaling of new thorns only, Loaded Dice rolls",
       "dependsOn": "-",
-      "testedBy": "Unit tests (Second Wind, charges, cooldown, Momentum, Pulse, Delayed Consequences, arbiter, Loaded Dice)"
+      "testedBy": "Unit tests (Second Wind, charges, cooldown, Momentum, Pulse, Delayed Consequences, arbiter incl. consecutive runs and overlapping requests, spawn ledger, item transaction, thorns ledger, Loaded Dice)"
     },
     {
       "id": "Deck",
@@ -99,25 +99,25 @@
     },
     {
       "id": "Session",
-      "class": "CampfireCards.Cards.PickSession",
-      "owns": "net.json 91/92/94/96/97 flow, ui.json timing",
-      "responsibility": "host: arrivals, last-arrival-first order, offers (skip and one-card flags, solo filter, Mythics once), bonus cards for card-draw cards; everyone: turns and the picker",
+      "class": "CampfireCards.Cards.PickSession + CampfireCards.Core.PickTurns + CampfireCards.Core.SessionQueue",
+      "owns": "net.json 91/92/94/96/97/106 flow, ui.json timing",
+      "responsibility": "host: arrivals, last-arrival-first order, a queue of sessions (one per campfire, never skipped), offers (skip and one-card flags, solo filter, Mythics once), validation of every pick request, timeout picks, bonus cards for card-draw cards; everyone: turn state, the picker and the status banner",
       "dependsOn": "Deck,Net,Ui",
-      "testedBy": "v0.3.0 in game: opening pick (click and timeout), campfire pick after F9, bonus grant reveal, sacrifice grid with 13 cards"
+      "testedBy": "Unit tests (PickTurns: regular, out-of-turn, invalid card, replay, stale session, timeout claim, simultaneous, leaver; SessionQueue: rapid fires, duplicates, order). v0.3.0 in game: opening pick (click and timeout), campfire pick after F9, bonus grant reveal, sacrifice grid with 13 cards. v0.4.0 flow not yet played"
     },
     {
       "id": "Net",
       "class": "CampfireCards.Net.NetSend + CampfireCards.Net.NetHandlers + CampfireCards.Net.NetDispatcher",
       "owns": "net.json (Generated/NetEvents.cs)",
-      "responsibility": "RaiseEvent helpers, dispatch, host-only checks, late-joiner StateSync, host-authoritative spawns and revive approvals",
+      "responsibility": "RaiseEvent helpers, dispatch with bounded array reads, host-only checks, host-validated picks, settings fingerprint warnings, late-joiner StateSync, host-authoritative spawns and revive approvals",
       "dependsOn": "-",
       "testedBy": "v0.3.0 solo host: PickSessionStart, PickMade, CardsGranted, CardSacrificed, SpawnItem round trips; multiplayer not yet tested"
     },
     {
       "id": "Ui",
-      "class": "CampfireCards.Ui.CardPicker + CampfireCards.Ui.Hud",
+      "class": "CampfireCards.Ui.CardPicker + CampfireCards.Ui.Hud + CampfireCards.Ui.BuildScreen",
       "owns": "ui.json (Generated/UiLayout.cs)",
-      "responsibility": "card fan with rarity frame and label, green benefit and red drawback; sacrifice and bonus-reveal modes; waiting banner, card list, ability bar, prompt, toasts, Scavenger markers",
+      "responsibility": "card fan with rarity frame and label, green benefit and red drawback; sacrifice and bonus-reveal modes; waiting banner with pick order, card list, Current Build screen, ability bar, prompt, toasts, Scavenger markers",
       "dependsOn": "Deck,Art,Sfx",
       "testedBy": "v0.3.0 in game screenshots: rarity frames and labels, green/red lines, No drawback, reveal and sacrifice modes, ability bar, card list, Scavenger marker"
     },

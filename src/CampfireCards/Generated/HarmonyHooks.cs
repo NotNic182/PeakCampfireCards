@@ -159,7 +159,8 @@ namespace CampfireCards.Generated
     [HarmonyPatch(typeof(CharacterAfflictions), "UpdateWeight")]
     internal static class Patch_updateWeight
     {
-        [HarmonyPostfix] static void Postfix(CharacterAfflictions __instance) { CampfireCards.Hooks.OnUpdateWeight(__instance); }
+        [HarmonyPrefix] static void Prefix(CharacterAfflictions __instance, out float __state) { CampfireCards.Hooks.OnUpdateWeightPrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(CharacterAfflictions __instance, float __state) { CampfireCards.Hooks.OnUpdateWeight(__instance, __state); }
     }
 
     [HarmonyPatch(typeof(GlobalEvents), "TriggerCharacterJumped", new Type[] { typeof(Character), typeof(bool) })]
