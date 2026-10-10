@@ -25,7 +25,8 @@ namespace CampfireCards.Net
         public const byte SpawnItem = 104;
         public const byte RevivedBy = 105;
         public const byte PickRequest = 106;
-        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106 };
+        public const byte PickSkipped = 107;
+        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107 };
     }
 
     /// <summary>announce the mod version and the settings fingerprint (Core.SettingsFingerprint: global rules, rarity weights x10000, one hash per card) so players with different versions or card settings are told exactly what differs. Sender: anyone entering a room. Receivers: Others (the host answers the sender with its own Hello, targeted).</summary>
@@ -70,7 +71,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>a pick session begins: pick order (actor numbers, last to the fire first; also the dealing order), each player's dealt hand (handSize card ids per player, in order), the host's timer and mode (Core.PickMode: 0 everyone chooses at once, 1 one at a time). reason: 0 opening, 1 campfire; segment: the campfire segment (255 = opening), so every client knows which session started and a new host can continue the queue. Sender: host. Receivers: All.</summary>
+    /// <summary>a pick session begins: pick order (actor numbers, last to the fire first; also the dealing order), each player's dealt hand (handSize card ids per player, in order), the host's timer and mode (Core.PickMode: 0 everyone chooses at once, 1 one at a time). reason: 0 opening, 1 campfire; segment: the campfire segment (255 = opening), so every client knows which session started and a new host can continue the queue; timeoutSeconds = 0 means unlimited time; ghosts are excluded from the order. Sender: host. Receivers: All.</summary>
     public struct PickSessionStart : INetEvent
     {
         public const byte Code = 91;
@@ -577,6 +578,36 @@ namespace CampfireCards.Net
         }
     }
 
+    /// <summary>the host removes a scout who died before choosing; every client advances the session without granting a card; stale and repeated skips do nothing. Sender: host. Receivers: All.</summary>
+    public struct PickSkipped : INetEvent
+    {
+        public const byte Code = 107;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "All";
+        public int sessionId;
+        public int actor;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(sessionId);
+                w.Write(actor);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static PickSkipped Read(byte[] data)
+        {
+            var v = new PickSkipped();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.sessionId = r.ReadInt32();
+                v.actor = r.ReadInt32();
+            }
+            return v;
+        }
+    }
+
     public static partial class NetDispatcher
     {
         /// <summary>Routes a received mod event to its handler. Returns false for codes the mod does not own.</summary>
@@ -601,6 +632,7 @@ namespace CampfireCards.Net
                 case 104: NetHandlers.OnSpawnItem(SpawnItem.Read(data), sender); return true;
                 case 105: NetHandlers.OnRevivedBy(RevivedBy.Read(data), sender); return true;
                 case 106: NetHandlers.OnPickRequest(PickRequest.Read(data), sender); return true;
+                case 107: NetHandlers.OnPickSkipped(PickSkipped.Read(data), sender); return true;
                 default: return false;
             }
         }

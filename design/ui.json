@@ -22,7 +22,7 @@
     "fontNote": "every mod text uses this font (assets/fonts, shipped next to the DLL; SIL Open Font License); the game's own font is its fallback, and the whole UI falls back to it when the file is missing or UI.CustomFont is off"
   },
   "timing": {
-    "pickTimeoutSeconds": 30,
+    "pickTimeoutSeconds": 60,
     "fanSlideInSeconds": 0.35,
     "cardStaggerSeconds": 0.08,
     "hoverScale": 1.08,
@@ -95,9 +95,10 @@
           0.85,
           0.85,
           1
-        ]
+        ],
+        "UntimedText": "Choose one. Take your time."
       },
-      "behaviour": "counts down pickTimeoutSeconds; at 0 a random card of the hand is taken",
+      "behaviour": "With a positive host timeout, counts down and the host takes a random card at 0; with timeoutSeconds = 0, no countdown or automatic pick",
       "soundOn": "none"
     },
     {

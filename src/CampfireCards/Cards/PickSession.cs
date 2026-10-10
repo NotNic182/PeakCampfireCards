@@ -13,8 +13,8 @@ namespace CampfireCards.Cards
     /// systems.json Session: host-authoritative picks. The host orders players last-to-the-fire first, deals every hand
     /// and starts the session (net.json PickSessionStart). A player asks for a card (PickRequest); only the host decides,
     /// after checking the session, the turn, the hand and earlier claims, and announces the accepted pick to everyone
-    /// (PickMade), which every client checks again before adding the card. A safety timer lets the host pick for anyone
-    /// who never answers. Campfires lit while a session runs wait in a queue and are never skipped.
+    /// (PickMade), which every client checks again before adding the card. An optional timer lets the host pick for anyone
+    /// who never answers. Ghosts receive no offer; deaths before choosing are skipped by the host. Campfires queue.
     /// </summary>
     public static class PickSession
     {
@@ -30,6 +30,8 @@ namespace CampfireCards.Cards
 
         private static readonly Dictionary<byte, Dictionary<int, double>> Arrivals = new Dictionary<byte, Dictionary<int, double>>();
         private static readonly SessionQueue _queue = new SessionQueue();
+        /// <summary>Scouts alive when each campfire was lit, before its RPC can revive anyone. Kept for queued fires.</summary>
+        private static readonly Dictionary<byte, HashSet<int>> _campfireEligible = new Dictionary<byte, HashSet<int>>();
         private static readonly HashSet<int> _seenSessions = new HashSet<int>();
         /// <summary>Picks applied from sessions this client never saw start (it joined mid-session): once per player each.</summary>
         private static readonly HashSet<(int session, int actor)> _foreignPicks = new HashSet<(int, int)>();
@@ -49,6 +51,7 @@ namespace CampfireCards.Cards
             Turns.Clear();
             Arrivals.Clear();
             _queue.Reset();
+            _campfireEligible.Clear();
             _seenSessions.Clear();
             _foreignPicks.Clear();
             _grants.Clear();
@@ -65,7 +68,7 @@ namespace CampfireCards.Cards
             Reset();
             _openingPending = true;
             _runStartTime = PhotonNetwork.Time;
-            TimeoutSeconds = Plugin.PickTimeoutSeconds != null ? Math.Max(5f, Plugin.PickTimeoutSeconds.Value) : UiTiming.PickTimeoutSeconds;
+            TimeoutSeconds = PickTiming.Normalize(Plugin.PickTimeoutSeconds != null ? Plugin.PickTimeoutSeconds.Value : UiTiming.PickTimeoutSeconds);
         }
 
         public static void RecordArrival(int actor, byte segment, double time)
@@ -85,6 +88,21 @@ namespace CampfireCards.Cards
             }
             if (!list.Contains(NetSend.LocalActor)) list.Add(NetSend.LocalActor);
             return list;
+        }
+
+        /// <summary>Living scouts can pick. A passed-out scout is still alive; data.dead is PEAK's ghost state.</summary>
+        public static bool CanReceiveCard(int actor)
+        {
+            Character c;
+            if (actor == NetSend.LocalActor) c = Character.localCharacter;
+            else if (!PlayerHandler.TryGetCharacter(actor, out c)) return false;
+            return c != null && c.data != null && !c.isBot && !c.data.dead;
+        }
+
+        public static void SnapshotCampfireEligibility(byte segment)
+        {
+            if (_campfireEligible.ContainsKey(segment)) return;
+            _campfireEligible[segment] = new HashSet<int>(ActorsInRoom().Where(CanReceiveCard));
         }
 
         /// <summary>Host: a session is running or about to (its start has not come back yet).</summary>
@@ -115,9 +133,20 @@ namespace CampfireCards.Cards
             }
             if (!Turns.Active) { HostStartNext(); return; }
 
+            int tickingSession = SessionId;
+            foreach (int actor in Turns.Pending.ToList())
+            {
+                if (!Turns.IsClaimed(actor) && !CanReceiveCard(actor)) HostSkip(actor);
+                // Offline delivery can finish this session and start the next one synchronously.
+                if (!Turns.Active || SessionId != tickingSession) return;
+            }
+
+            // Untimed sessions never auto-pick or close just because someone is still reading.
+            if (TimeoutSeconds <= 0f) return;
+
             float waited = UnityEngine.Time.unscaledTime - TurnStartTime;
             bool picked = false;
-            if (waited > TimeoutSeconds)
+            if (PickTiming.HasExpired(TimeoutSeconds, waited))
             {
                 // timeout picks are host picks like any other: claimed first, so a late request from the player loses
                 var due = Turns.Mode == PickMode.Turns ? new List<int> { Turns.CurrentActor } : Turns.Pending.ToList();
@@ -130,6 +159,7 @@ namespace CampfireCards.Cards
                     var rng = DealRandom.Shared;
                     HostAccept(actor, hand[rng.Next(hand.Length)], auto: true);
                     picked = true;
+                    if (!Turns.Active || SessionId != tickingSession) return;
                 }
             }
             // a pick may have ended this session and (offline, synchronously) started the next one: never judge that
@@ -178,7 +208,9 @@ namespace CampfireCards.Cards
 
         private static void Deal(byte reason, byte segment)
         {
-            var actors = ActorsInRoom();
+            HashSet<int> eligible;
+            _campfireEligible.TryGetValue(segment, out eligible);
+            var actors = ActorsInRoom().Where(a => CanReceiveCard(a) && (reason != 1 || eligible == null || eligible.Contains(a))).ToList();
             Dictionary<int, double> arr;
             Arrivals.TryGetValue(segment, out arr);
             // last to arrive picks first; players with no recorded arrival are treated as the latest
@@ -243,7 +275,7 @@ namespace CampfireCards.Cards
             var mode = m.mode == (byte)PickMode.Turns ? PickMode.Turns : PickMode.Simultaneous;
             Turns.Start(m.sessionId, m.order, hands, mode);
             Reason = m.reason;
-            TimeoutSeconds = m.timeoutSeconds > 0 ? m.timeoutSeconds : TimeoutSeconds;
+            TimeoutSeconds = PickTiming.Normalize(m.timeoutSeconds);
             _turnActor = int.MinValue;
             TurnStartTime = UnityEngine.Time.unscaledTime;
             // the skip / one-card flags were used to deal this session: consume them everywhere
@@ -284,8 +316,9 @@ namespace CampfireCards.Cards
 
         private static void ShowMyHand()
         {
+            if (!CanReceiveCard(NetSend.LocalActor)) { HidePickFan(); return; }
             Hud.HideWaiting();
-            float left = Math.Max(1f, TimeoutSeconds - (UnityEngine.Time.unscaledTime - TurnStartTime));
+            float left = TimeoutSeconds <= 0f ? 0f : Math.Max(1f, TimeoutSeconds - (UnityEngine.Time.unscaledTime - TurnStartTime));
             CardPicker.Ensure().Show(Reason, Turns.HandOf(NetSend.LocalActor), left, CardPicker.Mode.Pick);
         }
 
@@ -294,6 +327,7 @@ namespace CampfireCards.Cards
         {
             if (!Turns.Active || Turns.AllDone) { Hud.HideWaiting(); return; }
             int me = NetSend.LocalActor;
+            if (!CanReceiveCard(me)) HidePickFan();
             bool choosingNow = Turns.CanChoose(me) && !Turns.IsClaimed(me) && CardPicker.Instance != null && CardPicker.Instance.isOpen
                                && CardPicker.Instance.Current == CardPicker.Mode.Pick;
             if (choosingNow) { Hud.HideWaiting(); return; }
@@ -314,7 +348,7 @@ namespace CampfireCards.Cards
                 if (order.Length > Ui_WaitingBanner.OrderLabel.Length) order.Append("  ·  ");
                 order.Append("<color=#").Append(UiKit.Hex(color)).Append('>').Append(a == me ? "You" : NetSend.NameOf(a)).Append("</color>");
             }
-            Hud.ShowWaiting(status + "  " + left + "s", order.ToString());
+            Hud.ShowWaiting(status + (TimeoutSeconds > 0f ? "  " + left + "s" : ""), order.ToString());
         }
 
         // ------------------------------------------------------------------ picks
@@ -322,6 +356,7 @@ namespace CampfireCards.Cards
         public static void LocalPick(byte cardId)
         {
             int me = NetSend.LocalActor;
+            if (!CanReceiveCard(me)) { HidePickFan(); return; }
             if (!Turns.CanChoose(me) || Turns.IsClaimed(me)) return;
             Art.Sfx.Play("cardPick");
             if (NetSend.IsHost) HostOnRequest(new PickRequest { sessionId = SessionId, cardId = cardId }, me);
@@ -338,12 +373,14 @@ namespace CampfireCards.Cards
                 Plugin.Log.LogWarning($"Refused pick from actor {sender}: card {m.cardId}, session {m.sessionId} (current {SessionId}): {verdict}");
                 return;
             }
+            if (!CanReceiveCard(sender)) { HostSkip(sender); return; }
             HostAccept(sender, m.cardId, auto: false);
         }
 
         /// <summary>Host: claim the turn and announce the accepted pick to everyone (including itself).</summary>
         private static void HostAccept(int actor, byte cardId, bool auto)
         {
+            if (!CanReceiveCard(actor)) { HostSkip(actor); return; }
             Turns.Claim(actor);
             NetSend.Raise(new PickMade { sessionId = SessionId, actor = actor, cardId = cardId, auto = auto }, Photon.Realtime.ReceiverGroup.All);
         }
@@ -424,6 +461,23 @@ namespace CampfireCards.Cards
         public static void OnSessionEnd(SessionEnd m)
         {
             if (Turns.Active && m.sessionId == SessionId) End();
+        }
+
+        /// <summary>Remove an ineligible pending scout on every client so a ghost cannot hold up an untimed session.</summary>
+        private static void HostSkip(int actor)
+        {
+            if (!NetSend.IsHost || !Turns.IsPending(actor) || Turns.IsClaimed(actor)) return;
+            var m = new PickSkipped { sessionId = SessionId, actor = actor };
+            NetSend.Raise(m, Photon.Realtime.ReceiverGroup.All);
+            OnSkipped(m);   // update host state now; the echoed event is harmless
+        }
+
+        public static void OnSkipped(PickSkipped m)
+        {
+            if (!Turns.Skip(m.sessionId, m.actor)) return;
+            Plugin.Verbose($"Actor {m.actor} no longer eligible for pick session {m.sessionId}");
+            if (m.actor == NetSend.LocalActor) HidePickFan();
+            Refresh();
         }
 
         /// <summary>A player left the room: they no longer hold up the session (and the host's queue moves on).</summary>

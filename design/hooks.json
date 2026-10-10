@@ -40,12 +40,12 @@
       "targetType": "Campfire",
       "targetMember": "Light_Rpc",
       "signature": "bool, float",
-      "prefixArgs": "Campfire __instance, out Campfire.FireState __state",
+      "prefixArgs": "Campfire __instance, bool updateSegment, out Campfire.FireState __state",
       "prefixBool": false,
       "postfixArgs": "Campfire __instance, bool updateSegment, float burningFor, Campfire.FireState __state",
       "handler": "OnCampfireLit",
       "runsOn": "all",
-      "purpose": "fire goes Off -> Lit with updateSegment: campfire card effects, then the host starts a pick session",
+      "purpose": "snapshot living scouts before Light_Rpc; Off -> Lit with updateSegment applies campfire effects and queues a pick for those scouts",
       "verified": "Campfire.cs:461 [PunRPC] private void Light_Rpc(bool updateSegment, float burningFor); notes_world 2"
     },
     {

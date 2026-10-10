@@ -6,7 +6,7 @@ namespace CampfireCards.Generated
 {
     public static class UiTiming
     {
-        public const float PickTimeoutSeconds = 30.0f;
+        public const float PickTimeoutSeconds = 60.0f;
         public const float FanSlideInSeconds = 0.35f;
         public const float CardStaggerSeconds = 0.08f;
         public const float HoverScale = 1.08f;
@@ -46,7 +46,7 @@ namespace CampfireCards.Generated
         public const string BonusTitle = "BONUS CARDS";
     }
 
-    /// <summary>TMP light grey. counts down pickTimeoutSeconds; at 0 a random card of the hand is taken</summary>
+    /// <summary>TMP light grey. With a positive host timeout, counts down and the host takes a random card at 0; with timeoutSeconds = 0, no countdown or automatic pick</summary>
     public static class Ui_Subtitle
     {
         public const string Parent = "PickerWindow";
@@ -56,6 +56,7 @@ namespace CampfireCards.Generated
         public const string SoundOn = "none";
         public const float FontSize = 26.0f;
         public static readonly Color Color = new Color(0.85f, 0.85f, 0.85f, 1f);
+        public const string UntimedText = "Choose one. Take your time.";
     }
 
     /// <summary>HorizontalLayoutGroup, middle center. holds handSize Card elements; slides up over fanSlideInSeconds with cardStaggerSeconds between cards</summary>

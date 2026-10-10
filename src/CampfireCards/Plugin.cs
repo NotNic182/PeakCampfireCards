@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.5.0";
+        public const string Version = "0.5.1";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -59,7 +59,11 @@ namespace CampfireCards
             CustomFont = Config.Bind("General", "CustomFont", true,
                 "Show all Campfire Cards text in the bundled Darumadrop One font. Off: the game's own font. Takes effect on the next launch.");
             PickTimeoutSeconds = Config.Bind("General", "PickTimeoutSeconds", UiTiming.PickTimeoutSeconds,
-                "Safety timer: if a player has not chosen after this many seconds, a random card of their offer is taken (minimum 5). The host's value is used for everyone.");
+                "Seconds to choose a card (default 60). Set to 0 for unlimited time, with no automatic pick. Positive values have a minimum of 5. The host's value is used for everyone.");
+            var timerVersion = Config.Bind("General", "PickTimerSettingsVersion", 0,
+                "Tracks the one-time upgrade from the old 30-second default to 60 seconds. Leave this value as it is.");
+            PickTimeoutSeconds.Value = PickTiming.UpgradeLegacyDefault(PickTimeoutSeconds.Value, timerVersion.Value);
+            timerVersion.Value = 1;
             PickModeSetting = Config.Bind("General", "PickMode", PickMode.Simultaneous,
                 "Simultaneous: everyone chooses at the same time (the last to reach the fire is still dealt first and listed first). " +
                 "Turns: one player at a time, last to the fire first. The host's choice is used for everyone.");

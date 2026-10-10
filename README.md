@@ -33,6 +33,9 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
 - Normal cards together can cut a stamina cost by at most 60%, and cannot pull maximum stamina below 50.
 - Team cards (marked "team" below) only appear when you play with others.
 - Cards survive being revived. Everything resets when the run ends.
+- Ghosts are not dealt cards. Campfire eligibility is captured when the fire is lit, so being revived afterward
+  does not grant a card from that same fire. A living scout who dies before choosing is skipped without receiving
+  an automatic card; the other scouts can finish their choices.
 - Card-draw cards (Clown Luggage Special, Scout's Dishonor) give their bonus cards right away. Bonus cards are never card-draw cards.
 
 ## Controls
@@ -178,9 +181,12 @@ A campfire lit while a pick is still running gets its own pick right after it. L
   - `Sounds`.
   - `CustomFont`: show all Campfire Cards text in the bundled Darumadrop One font (default on); off uses the
     game's own font. Takes effect on the next launch.
-  - `PickTimeoutSeconds`: a random card of your offer is taken after this many seconds. The default is 30, and the
-    host's value applies to everyone. A config file written by version 0.3.0 keeps its old value of 60 until you
-    change it.
+  - `PickTimeoutSeconds`: **60 seconds by default**, with the host's value applying to everyone. A positive value
+    gives you that long to choose before the host takes a random card of your offer (minimum 5 seconds).
+    **Set it to `0` for unlimited time**: no countdown, automatic pick or reading-time cutoff. In Turns mode,
+    everyone waits until the current scout chooses; in Simultaneous mode, each scout can choose independently.
+    Version 0.5.1 upgrades an existing 30-second default to 60 once, preserving other durations. To deliberately
+    use 30 seconds, set it after that first launch. Sacrifice choices follow the same host timer.
   - `PickMode`: `Simultaneous` (default) or `Turns`. The host's choice applies to everyone.
 - `Keys`: `BloodBattery`, `SafetyNet`, `BuildScreen`.
 - `Cards`: `OfferCount`, `AllowDuplicates`, `MythicsEnabled`, `StaminaCostReductionCapPercent` (60), `MaxStaminaFloor` (50).
@@ -231,6 +237,27 @@ The output is `build/CampfireCards-<version>.zip`.
   the tests in `tests/`.
 - `src/CampfireCards/` is the BepInEx plugin: Harmony hooks into PEAK, the deck, effects, abilities, pick sessions,
   Photon sync, the card UI, the animated card art and the synthesised sounds.
+
+## Editing the deck
+
+Open [the card workbook](design/editable/card-editing.xlsx) and edit the blue columns on **Cards**: Name, Benefit,
+Drawback, Flavor and Requested effects. All 64 cards are included, with current numbers and handlers on the
+**Current code** tab. The **New ideas** tab is for new concepts. Keep ID and Key unchanged, then send the saved
+workbook back to have the changes implemented. A [CSV copy](design/editable/card-editing.csv) is also available.
+
+Changing a description alone does not change an effect. Describe gameplay changes in Requested effects with
+the trigger, amount, duration and drawback. [Effect feasibility](docs/effect-feasibility.md) explains what is
+already supported, where new hooks are needed, and what still requires a PEAK 2.6.b playtest.
+
+To regenerate the editable files or make a text-only review copy:
+
+```bash
+python tools/card_catalog.py export --xlsx   # XLSX requires openpyxl; omit --xlsx for CSV only
+python tools/card_catalog.py import-text design/editable/card-editing.xlsx --output build/cards-reviewed.json
+```
+
+The import writes a separate review copy, keeps mechanics unchanged, and reports gameplay requests for
+implementation. Run `python -m unittest discover -s tests -p 'test_*.py'` to check the catalog round trip.
 
 ## Credits
 Design and code: NotNic. PEAK is by Aggro Crab and Landcrab; this is a fan mod and is not affiliated with them.
