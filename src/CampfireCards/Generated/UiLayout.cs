@@ -40,6 +40,8 @@ namespace CampfireCards.Generated
         public static readonly Color Color = new Color(1f, 1f, 1f, 1f);
         public const string OpeningTitle = "PICK A CARD";
         public const string CampfireTitle = "CAMPFIRE LIT - PICK A CARD";
+        public const string SacrificeTitle = "MOUNTAIN'S BARGAIN - SACRIFICE A CARD";
+        public const string BonusTitle = "BONUS CARDS";
     }
 
     /// <summary>TMP light grey. counts down pickTimeoutSeconds; at 0 a random card of the hand is taken</summary>
@@ -66,7 +68,7 @@ namespace CampfireCards.Generated
         public const float SlideFromY = -400.0f;
     }
 
-    /// <summary>rounded frame in the theme frame colour around a rounded background in the theme bg colour; rarity strip along the top. Button; hover: scale hoverScale and brighten the frame; click: PickMade</summary>
+    /// <summary>rounded frame in the card's rarity colour (cards.json rarityColors) around a rounded background in the theme bg colour; rarity strip along the top. Button; hover: scale hoverScale and brighten the frame; click: PickMade</summary>
     public static class Ui_Card
     {
         public const string Parent = "Fan";
@@ -76,8 +78,6 @@ namespace CampfireCards.Generated
         public const string SoundOn = "cardSwitch";
         public const float FrameWidth = 6.0f;
         public const float RarityStripHeight = 10.0f;
-        public static readonly Color UncommonColor = new Color(0.33f, 0.69f, 0.33f, 1f);
-        public static readonly Color RareColor = new Color(0.98f, 0.8f, 0.3f, 1f);
         public const float HoverFrameBoost = 0.25f;
         public const float CornerRadius = 18.0f;
     }
@@ -96,33 +96,48 @@ namespace CampfireCards.Generated
         public const float GlowSize = 150.0f;
     }
 
+    /// <summary>small caps rarity name in the rarity colour. none</summary>
+    public static class Ui_CardRarity
+    {
+        public const string Parent = "Card";
+        public static readonly Vector2 Size = new Vector2(280f, 22f);
+        public const string Anchor = "top, y=-180";
+        public const string Text = "{rarity}";
+        public const string SoundOn = "none";
+        public const float FontSize = 15.0f;
+        public const float Y = -180.0f;
+    }
+
     /// <summary>TMP bold uppercase white, auto-size. none</summary>
     public static class Ui_CardName
     {
         public const string Parent = "Card";
         public static readonly Vector2 Size = new Vector2(280f, 40f);
-        public const string Anchor = "top, y=-190";
+        public const string Anchor = "top, y=-196";
         public const string Text = "{card.name}";
         public const string SoundOn = "none";
         public const float FontSize = 28.0f;
         public const float MinFontSize = 16.0f;
         public static readonly Color Color = new Color(1f, 1f, 1f, 1f);
-        public const float Y = -190.0f;
+        public const float Y = -202.0f;
     }
 
-    /// <summary>one line per effect from stats.json display strings; good effects green, drawbacks red. none</summary>
+    /// <summary>the card's benefit line in green and its drawback line in red (Mythics show 'No drawback'). none</summary>
     public static class Ui_CardEffects
     {
         public const string Parent = "Card";
         public static readonly Vector2 Size = new Vector2(272f, 150f);
-        public const string Anchor = "top, y=-236";
-        public const string Text = "{effectLines}";
+        public const string Anchor = "top, y=-246";
+        public const string Text = "{positive}\n{negative}";
         public const string SoundOn = "none";
         public const float FontSize = 17.0f;
         public const float MinFontSize = 11.0f;
         public static readonly Color GoodColor = new Color(0.62f, 0.92f, 0.45f, 1f);
         public static readonly Color BadColor = new Color(0.95f, 0.45f, 0.42f, 1f);
-        public const float Y = -236.0f;
+        public const float Y = -246.0f;
+        public const string NoDrawback = "No drawback";
+        public const string GoodPrefix = "+ ";
+        public const string BadPrefix = "- ";
     }
 
     /// <summary>TMP italic, muted. none</summary>
@@ -153,7 +168,7 @@ namespace CampfireCards.Generated
         public const string Template = "{0} is picking a card...";
     }
 
-    /// <summary>one line per card: coloured dot in the card's theme colour plus its name. visible on the island when the player holds any card; hidden in menus</summary>
+    /// <summary>one line per card: a square in the card's rarity colour plus its name. visible on the island when the player holds any card; hidden in menus</summary>
     public static class Ui_MyCardsHud
     {
         public const string Parent = "root";
@@ -178,7 +193,33 @@ namespace CampfireCards.Generated
         public static readonly Color Panel = new Color(0f, 0f, 0f, 0.6f);
         public static readonly Color Color = new Color(1f, 1f, 1f, 1f);
         public const string TookTemplate = "{0} took {1}";
-        public const string SecondWindTemplate = "SECOND WIND! {0} got back up";
+    }
+
+    /// <summary>one line per owned ability card: name, key and state (ready, cooldown seconds, used this biome, anchor placed). visible on the island when the player owns an activated or limited ability</summary>
+    public static class Ui_AbilityBar
+    {
+        public const string Parent = "root";
+        public static readonly Vector2 Size = new Vector2(460f, 120f);
+        public const string Anchor = "bottom right, x=-24, y=150";
+        public const string Text = "{abilityLines}";
+        public const string SoundOn = "none";
+        public const float FontSize = 18.0f;
+        public static readonly Color Color = new Color(1f, 1f, 1f, 0.92f);
+        public static readonly Color ReadyColor = new Color(0.62f, 0.92f, 0.45f, 1f);
+        public static readonly Color WaitColor = new Color(0.85f, 0.85f, 0.85f, 0.8f);
+    }
+
+    /// <summary>dark panel, white text, for choices outside the card fan (pick a card to sacrifice, empty a slot to lock). stays until the choice is made</summary>
+    public static class Ui_Prompt
+    {
+        public const string Parent = "root";
+        public static readonly Vector2 Size = new Vector2(900f, 60f);
+        public const string Anchor = "top center, y=-260";
+        public const string Text = "{message}";
+        public const string SoundOn = "none";
+        public const float FontSize = 24.0f;
+        public static readonly Color Panel = new Color(0f, 0f, 0f, 0.65f);
+        public static readonly Color Color = new Color(1f, 0.92f, 0.6f, 1f);
     }
 
 }

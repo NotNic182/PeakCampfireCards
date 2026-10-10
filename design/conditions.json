@@ -1,0 +1,24 @@
+{
+  "_sheet": "Conditions a card modifier can depend on. One row = one condition, evaluated each tick for the local scout. cards.json mods name these in their 'when' field; Generated/ClimbStats.cs gets the Condition enum.",
+  "_columns": {
+    "id": "condition id (C# identifier)",
+    "meaning": "when it is true",
+    "evaluatedBy": "how the mod decides it"
+  },
+  "rows": [
+    {"id": "always", "meaning": "always", "evaluatedBy": "constant"},
+    {"id": "hangingStill", "meaning": "gripping a climbable wall (not a rope or vine) without moving", "evaluatedBy": "wall-climbing flag and no climb input"},
+    {"id": "crouchStill", "meaning": "crouched and not moving", "evaluatedBy": "crouch flag and no movement input"},
+    {"id": "grounded", "meaning": "standing on the ground", "evaluatedBy": "grounded flag"},
+    {"id": "injury20", "meaning": "Injury is at least 20", "evaluatedBy": "current Injury status >= 0.20"},
+    {"id": "poisonOrSpores20", "meaning": "Poison or Spores is at least 20", "evaluatedBy": "current Poison or Spores status >= 0.20"},
+    {"id": "climbingWithItem", "meaning": "climbing while holding an item", "evaluatedBy": "climbing flag and an item in hand"},
+    {"id": "noBackpack", "meaning": "not wearing a backpack", "evaluatedBy": "backpack slot is empty"},
+    {"id": "wearingBackpack", "meaning": "wearing a backpack", "evaluatedBy": "backpack slot holds a backpack"},
+    {"id": "teammateNear", "meaning": "a living teammate is within the card's radius", "evaluatedBy": "distance to other living scouts"},
+    {"id": "noTeammateNear", "meaning": "no living teammate is within the card's radius", "evaluatedBy": "distance to other living scouts"},
+    {"id": "separatedFromTeam", "meaning": "far from every living teammate (outside the huddle radius)", "evaluatedBy": "distance to other living scouts"},
+    {"id": "momentumActive", "meaning": "Momentum Fiend's sprint bonus is active", "evaluatedBy": "card state machine"},
+    {"id": "pulseActive", "meaning": "Pulse Climber's 1-second boost is active", "evaluatedBy": "card state machine"}
+  ]
+}

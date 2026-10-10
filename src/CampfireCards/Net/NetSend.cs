@@ -10,6 +10,9 @@ namespace CampfireCards.Net
         public static bool IsHost => PhotonNetwork.IsMasterClient || PhotonNetwork.OfflineMode || !PhotonNetwork.InRoom;
         public static int LocalActor => PhotonNetwork.LocalPlayer != null ? PhotonNetwork.LocalPlayer.ActorNumber : 1;
 
+        /// <summary>Solo = offline play, or an online room with nobody else in it.</summary>
+        public static bool IsSolo => PhotonNetwork.OfflineMode || PhotonNetwork.CurrentRoom == null || PhotonNetwork.CurrentRoom.PlayerCount <= 1;
+
         public static int ActorOf(Character c)
         {
             if (c == null) return int.MinValue;
@@ -42,19 +45,15 @@ namespace CampfireCards.Net
             PhotonNetwork.RaiseEvent(code, payload, options, SendOptions.SendReliable);
         }
 
-        public static void Raise(Hello m, ReceiverGroup g) => RaiseRaw(Hello.Code, m.Write(), new RaiseEventOptions { Receivers = g });
-        public static void Raise(PickSessionStart m, ReceiverGroup g) => RaiseRaw(PickSessionStart.Code, m.Write(), new RaiseEventOptions { Receivers = g });
-        public static void Raise(PickMade m, ReceiverGroup g) => RaiseRaw(PickMade.Code, m.Write(), new RaiseEventOptions { Receivers = g });
-        public static void Raise(SecondWindUsed m, ReceiverGroup g) => RaiseRaw(SecondWindUsed.Code, m.Write(), new RaiseEventOptions { Receivers = g });
-        public static void Raise(SessionEnd m, ReceiverGroup g) => RaiseRaw(SessionEnd.Code, m.Write(), new RaiseEventOptions { Receivers = g });
+        public static void Raise(INetEvent e, ReceiverGroup g) => RaiseRaw(e.EventCode, e.Write(), new RaiseEventOptions { Receivers = g });
 
-        public static void RaiseToMaster(Arrival m) => RaiseRaw(Arrival.Code, m.Write(), new RaiseEventOptions { Receivers = ReceiverGroup.MasterClient });
-        public static void RaiseToMaster(StateRequest m) => RaiseRaw(StateRequest.Code, m.Write(), new RaiseEventOptions { Receivers = ReceiverGroup.MasterClient });
+        public static void RaiseToMaster(INetEvent e) => RaiseRaw(e.EventCode, e.Write(), new RaiseEventOptions { Receivers = ReceiverGroup.MasterClient });
 
-        public static void RaiseTo(StateSync m, int actor)
+        /// <summary>Send to one player. To ourselves it is delivered directly (offline play has no loopback for targeted events).</summary>
+        public static void RaiseTo(INetEvent e, int actor)
         {
-            if (actor == LocalActor) { NetHandlers.OnStateSync(m, LocalActor); return; }
-            RaiseRaw(StateSync.Code, m.Write(), new RaiseEventOptions { TargetActors = new[] { actor } });
+            if (actor == LocalActor) { NetDispatcher.Dispatch(e.EventCode, e.Write(), LocalActor); return; }
+            RaiseRaw(e.EventCode, e.Write(), new RaiseEventOptions { TargetActors = new[] { actor } });
         }
     }
 }

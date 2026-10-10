@@ -1,7 +1,7 @@
 # build output
 build/
-src/PeakRounds/bin/
-src/PeakRounds/obj/
+bin/
+obj/
 
 # editors
 .vs/

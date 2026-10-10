@@ -6,7 +6,7 @@
     <AssemblyName>CampfireCards</AssemblyName>
     <RootNamespace>CampfireCards</RootNamespace>
     <Nullable>disable</Nullable>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Product>Campfire Cards</Product>
     <Authors>NotNic</Authors>
     <DebugType>portable</DebugType>
@@ -30,6 +30,7 @@
     <!-- PEAK -->
     <Reference Include="Assembly-CSharp"><HintPath>$(Managed)\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Assembly-CSharp-firstpass"><HintPath>$(Managed)\Assembly-CSharp-firstpass.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Sirenix.Serialization"><HintPath>$(Managed)\Sirenix.Serialization.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Zorro.Core.Runtime"><HintPath>$(Managed)\Zorro.Core.Runtime.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Zorro.UI.Runtime"><HintPath>$(Managed)\Zorro.UI.Runtime.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Zorro.ControllerSupport"><HintPath>$(Managed)\Zorro.ControllerSupport.dll</HintPath><Private>false</Private></Reference>

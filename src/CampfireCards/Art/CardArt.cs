@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CampfireCards.Cards;
 using CampfireCards.Generated;
 using UnityEngine;
 using UnityEngine.UI;
@@ -49,11 +50,11 @@ namespace CampfireCards.Art
         {
             switch (role)
             {
-                case ArtColor.frame: return theme.Frame;
-                case ArtColor.accent: return theme.Accent;
-                case ArtColor.bg: return theme.Bg;
+                case ArtColor.frame: return theme.Frame.ToColor();
+                case ArtColor.accent: return theme.Accent.ToColor();
+                case ArtColor.bg: return theme.Bg.ToColor();
                 case ArtColor.white: return Color.white;
-                case ArtColor.dark: return Color.Lerp(theme.Frame, theme.Bg, 0.6f);
+                case ArtColor.dark: return Color.Lerp(theme.Frame.ToColor(), theme.Bg.ToColor(), 0.6f);
                 default: return Color.white;
             }
         }

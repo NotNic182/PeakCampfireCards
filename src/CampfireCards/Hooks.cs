@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using ExitGames.Client.Photon;
-using HarmonyLib;
+using CampfireCards.Abilities;
 using CampfireCards.Cards;
 using CampfireCards.Generated;
 using CampfireCards.Net;
@@ -22,6 +22,7 @@ namespace CampfireCards
         public static float GroundedSince = -1f;
         public static readonly HashSet<byte> ArrivedSegments = new HashSet<byte>();
 
+        /// <summary>Everything the mod changed goes back to vanilla: cards, flags, timers, stat changes, UI.</summary>
         public static void Reset()
         {
             RunStarted = false;
@@ -30,25 +31,21 @@ namespace CampfireCards
             ArrivedSegments.Clear();
             Effects.Reset();
             PickSession.Reset();
+            Hooks.ResetRunTracking();
+            Hud.ClearMarkers();
         }
 
         public static bool IsGameplayScene(string name) => name != null && (name.Contains("Island") || name.Contains("Level_"));
     }
 
-    /// <summary>The handler bodies behind design/hooks.json. Generated/HarmonyHooks.cs forwards into these.</summary>
-    public static class Hooks
+    /// <summary>
+    /// The handler bodies behind design/hooks.json (Generated/HarmonyHooks.cs forwards into these). This file holds the
+    /// run lifecycle, the per-frame tick and the network entry point; the stat, item and revival hooks live in the
+    /// other Hooks.*.cs files.
+    /// </summary>
+    public static partial class Hooks
     {
-        // ---- reflection into private game members (names verified in design/hooks.json) ----
-        private static readonly Func<Character, bool> CanRegenStamina =
-            AccessTools.MethodDelegate<Func<Character, bool>>(AccessTools.Method(typeof(Character), "CanRegenStamina"));
-        private static readonly AccessTools.FieldRef<CharacterMovement, Character> MovementCharacter =
-            AccessTools.FieldRefAccess<CharacterMovement, Character>("character");
-        private static readonly System.Reflection.MethodInfo AddForceM =
-            AccessTools.Method(typeof(Character), "AddForce", new[] { typeof(Vector3), typeof(float), typeof(float) });
-
-        /// <summary>Set while CharacterMovement.CheckFallDamage runs, so the AddStatus prefix knows the injury is a fall.</summary>
-        private static Character _fallDamageCharacter;
-        private static float _nextArrivalCheck;
+        private static float _nextArrivalCheck, _nextAbilityBar;
         private static bool _photonSubscribed;
 
         // ------------------------------------------------------------------ subscriptions (event / unity rows)
@@ -57,7 +54,6 @@ namespace CampfireCards
             PlayerHandler.CharacterRegistered += OnCharacterRegistered;
             SceneManager.sceneLoaded += OnSceneLoaded;
             SubscribePhoton();
-            SubscribeGlobalEvents();
         }
 
         private static void SubscribePhoton()
@@ -69,30 +65,40 @@ namespace CampfireCards
             _photonSubscribed = true;
         }
 
-        private static void SubscribeGlobalEvents()
-        {
-            GlobalEvents.OnItemConsumed -= OnItemConsumed;
-            GlobalEvents.OnItemConsumed += OnItemConsumed;
-        }
-
         private static IEnumerator ResubscribeNextFrame()
         {
             yield return null;
-            SubscribeGlobalEvents();
             SubscribePhoton();
         }
 
-        // ------------------------------------------------------------------ harmony handlers
+        /// <summary>Per-run bookkeeping inside the hooks (feeders, contexts, item-use batches).</summary>
+        public static void ResetRunTracking()
+        {
+            _lastFeederActor = int.MinValue;
+            _fallDepth = 0;
+            _climbDepth = 0; _climbCtx = null;
+            _batches.Clear();
+        }
+
+        // ------------------------------------------------------------------ run lifecycle
         /// <summary>hooks.json runStart: RunManager.StartRun postfix.</summary>
         public static void OnRunStarted()
         {
             RunState.Reset();
             RunState.RunStarted = true;
             RunState.OnIsland = true;
+            LocalCards.OnRunStarted(Environment.TickCount ^ (NetSend.LocalActor * 7919));
             PickSession.OnRunStarted();
             Hud.Ensure();
-            if (!NetSend.IsHost) NetSend.Raise(new Hello { modVersion = Plugin.Version, cardCount = Deck.Playable.Count, deckHash = Deck.Hash }, Photon.Realtime.ReceiverGroup.Others);
-            Plugin.Log.LogInfo($"Run started. Host={NetSend.IsHost} actor={NetSend.LocalActor} deckReady={Deck.Ready} ({Deck.Playable.Count} cards)");
+            if (!NetSend.IsHost) NetSend.Raise(new Hello { modVersion = Plugin.Version, cardCount = Deck.Count, deckHash = Deck.Hash }, Photon.Realtime.ReceiverGroup.Others);
+            Plugin.Log.LogInfo($"Run started. Host={NetSend.IsHost} actor={NetSend.LocalActor} solo={NetSend.IsSolo} deck={Deck.Count} cards");
+        }
+
+        /// <summary>hooks.json endGame: the run is over (end screen). Cards, timers and stat changes are cleared.</summary>
+        public static void OnRunEnded()
+        {
+            RunState.Reset();
+            Hud.CloseAll();
         }
 
         /// <summary>hooks.json campfireLit prefix: remember the state before the RPC.</summary>
@@ -104,79 +110,13 @@ namespace CampfireCards
         /// <summary>hooks.json campfireLit postfix: Off -> Lit with updateSegment is a real lighting.</summary>
         public static void OnCampfireLit(Campfire __instance, bool updateSegment, float burningFor, Campfire.FireState __state)
         {
-            if (__state == Campfire.FireState.Lit) return;
-            if (!updateSegment) return; // late-join sync or debug jump
+            if (__state == Campfire.FireState.Lit || !updateSegment) return;   // late-join sync, quicksave or debug
+            if (!RunState.RunStarted) return;
             Plugin.Verbose($"Campfire lit -> {__instance.advanceToSegment}");
             var local = Character.localCharacter;
-            if (local != null) Effects.OnCampfire(local);
+            // card effects first, so cards picked at this fire do not fire for it
+            if (local != null) LocalCards.OnCampfireLit(local, __instance);
             PickSession.HostStart(1, (byte)__instance.advanceToSegment);
-        }
-
-        /// <summary>hooks.json addStatus prefix: scale incoming status by toughness, resists and fall damage.</summary>
-        public static void ScaleIncomingStatusPrefix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE statusType, ref float amount)
-        {
-            if (amount <= 0f) return;
-            var ch = __instance.character;
-            if (ch == null) return;
-            var stats = Effects.StatsFor(ch);
-            if (stats == null) return;
-            amount = Effects.ScaleStatus(stats, statusType, amount, _fallDamageCharacter == ch);
-        }
-
-        /// <summary>hooks.json fallDamage prefix: returns false to skip the game's fall damage (bouncy landing).</summary>
-        public static bool OnCheckFallDamagePrefix(CharacterMovement __instance)
-        {
-            var ch = MovementCharacter(__instance);
-            _fallDamageCharacter = ch;
-            if (ch == null) return true;
-            var stats = Effects.StatsFor(ch);
-            if (stats == null) return true;
-            if (stats[(int)ClimbStat.bounceOnLand] > 0.5f && __instance.FallTime() > 1.5f)
-            {
-                _fallDamageCharacter = null;
-                if (ch.IsLocal && AddForceM != null)
-                {
-                    float impulse = Mathf.Clamp(Mathf.Abs(ch.data.avarageLastFrameVelocity.y), 8f, 30f) * 0.9f;
-                    AddForceM.Invoke(ch, new object[] { Vector3.up * impulse, 1f, 1f });
-                    Hud.Toast("BOUNCY!");
-                }
-                return false;
-            }
-            return true;
-        }
-
-        /// <summary>hooks.json fallDamage postfix.</summary>
-        public static void OnCheckFallDamage(CharacterMovement __instance)
-        {
-            _fallDamageCharacter = null;
-        }
-
-        /// <summary>hooks.json staminaTick: extra regen on top of the game's 0.2/s.</summary>
-        public static void OnStaminaTick(Character __instance)
-        {
-            if (!__instance.IsLocal) return;
-            var stats = Effects.StatsFor(__instance);
-            if (stats == null) return;
-            float bonus = stats[(int)ClimbStat.staminaRegen];
-            if (bonus == 0f) return;
-            if (!CanRegenStamina(__instance)) return;
-            __instance.AddStamina(Time.fixedDeltaTime * 0.2f * bonus);
-        }
-
-        /// <summary>hooks.json extraJumps.</summary>
-        public static void OnUpdateExtraJumps(CharacterAfflictions __instance)
-        {
-            var ch = __instance.character;
-            if (ch == null) return;
-            var stats = Effects.StatsFor(ch);
-            if (stats == null) return;
-            __instance.totalExtraJumps += Mathf.RoundToInt(stats[(int)ClimbStat.extraJumps]);
-        }
-
-        /// <summary>hooks.json revive.</summary>
-        public static void OnRevived(Character __instance)
-        {
-            Effects.Apply(__instance);
         }
 
         /// <summary>hooks.json lobbyCreated: log where this host is (net.log), for launchers that list open games.</summary>
@@ -193,21 +133,12 @@ namespace CampfireCards
             }
         }
 
-        /// <summary>hooks.json endGame.</summary>
-        public static void OnRunEnded()
-        {
-            Hud.CloseAll();
-            PickSession.Reset();
-        }
-
-        // ------------------------------------------------------------------ event handlers
         /// <summary>hooks.json characterRegistered.</summary>
         public static void OnCharacterRegistered(Character c)
         {
             if (c == null) return;
             try
             {
-                Effects.Apply(c);
                 int actor = NetSend.ActorOf(c);
                 if (c.IsLocal)
                 {
@@ -223,18 +154,6 @@ namespace CampfireCards
             {
                 Plugin.Log.LogError("OnCharacterRegistered: " + e);
             }
-        }
-
-        /// <summary>hooks.json itemConsumed: lifesteal.</summary>
-        public static void OnItemConsumed(Item item, Character c)
-        {
-            if (c == null || !c.IsLocal) return;
-            var stats = Effects.StatsFor(c);
-            if (stats == null) return;
-            float ls = stats[(int)ClimbStat.lifesteal];
-            if (ls <= 0f) return;
-            c.refs.afflictions.SubtractStatus(CharacterAfflictions.STATUSTYPE.Injury, ls * 0.1f);
-            Hud.Toast($"Lifesteal: eating healed {Mathf.RoundToInt(ls * 10f)}% injury");
         }
 
         /// <summary>hooks.json sceneLoaded.</summary>
@@ -260,7 +179,7 @@ namespace CampfireCards
                     PickSession.OnPlayerLeft(e.Sender);
                     return;
                 }
-                if (e.Code < 90 || e.Code > 99) return;
+                if (e.Code < 90 || e.Code > 119) return;
                 var data = e.CustomData as byte[];
                 if (data == null) return;
                 NetDispatcher.Dispatch(e.Code, data, e.Sender);
@@ -271,58 +190,76 @@ namespace CampfireCards
             }
         }
 
-        private static readonly System.Reflection.MethodInfo WarpM =
-            AccessTools.Method(typeof(Character), "WarpPlayer", new[] { typeof(Vector3), typeof(bool) });
-
-        /// <summary>Testing keys (config Debug.DevKeys): F9 light the current campfire, F10 warp next to it, F11 sample fan.</summary>
-        private static void DevKeys(Character local)
-        {
-            var kb = UnityEngine.InputSystem.Keyboard.current;
-            if (kb == null) return;
-            if (kb.f9Key.wasPressedThisFrame)
-            {
-                Campfire fire = null;
-                try { fire = MapHandler.CurrentCampfire; } catch { }
-                if (fire != null && !fire.Lit) { Plugin.Log.LogInfo("DevKeys: lighting " + fire.name); fire.DebugLight(); }
-                else Plugin.Log.LogInfo("DevKeys: no unlit current campfire");
-            }
-            if (kb.f10Key.wasPressedThisFrame)
-            {
-                Campfire fire = null;
-                try { fire = MapHandler.CurrentCampfire; } catch { }
-                if (fire != null && WarpM != null)
-                {
-                    Vector3 pos = fire.transform.position + fire.transform.forward * 3f + Vector3.up * 1.5f;
-                    Plugin.Log.LogInfo("DevKeys: warping to " + fire.name + " at " + pos);
-                    WarpM.Invoke(local, new object[] { pos, true });
-                }
-            }
-            if (kb.f11Key.wasPressedThisFrame && Deck.Ready)
-            {
-                var hand = Deck.Deal(new System.Random(), Effects.CardsOf(NetSend.LocalActor), Generated.CardTable.HandSize);
-                CardPicker.Ensure().Show(1, hand, 60f, true);
-                Plugin.Log.LogInfo("DevKeys: sample fan " + string.Join(",", hand));
-            }
-        }
-
         // ------------------------------------------------------------------ per frame
         public static void Tick()
         {
+            // contexts are set and cleared inside game methods; nothing legitimately spans frames
+            _fallDepth = 0; _climbDepth = 0; _climbCtx = null;
+
             if (!RunState.OnIsland) return;
             var local = Character.localCharacter;
             if (local == null) return;
 
             Hud.Ensure();
-
             if (!RunState.RunStarted) return;
 
             if (Plugin.DevKeys != null && Plugin.DevKeys.Value) DevKeys(local);
-            Effects.Tick(local);
+
+            PollBiome(local);
+            Effects.Recompute(local);
+            LocalCards.Tick(local, Time.deltaTime);
+            FlushItemUses(local);
+            AbilityKeys(local);
             PickSession.HostTick();
+
+            if (Time.unscaledTime >= _nextAbilityBar)
+            {
+                _nextAbilityBar = Time.unscaledTime + 0.2f;
+                Hud.RefreshAbilityBar(local);
+            }
 
             if (Time.unscaledTime < _nextArrivalCheck) return;
             _nextArrivalCheck = Time.unscaledTime + 0.25f;
+            CheckArrivals(local);
+        }
 
+        private static void PollBiome(Character local)
+        {
+            int seg;
+            try { seg = (int)MapHandler.CurrentSegmentNumber; }
+            catch { return; }
+            if (seg != LocalCards.Biome) LocalCards.OnBiomeStarted(local, seg);
+        }
+
+        /// <summary>Blood Battery and Safety Net keys (config Keys). Ignored while a menu or the card picker has focus.</summary>
+        private static void AbilityKeys(Character local)
+        {
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb == null) return;
+            bool blocked = false;
+            try { blocked = GUIManager.instance != null && (GUIManager.instance.windowBlockingInput || GUIManager.instance.wheelActive); } catch { }
+            if (blocked) return;
+            TryKey(kb, Plugin.BloodBatteryKey, "BloodBattery", local);
+            TryKey(kb, Plugin.SafetyNetKey, "SafetyNet", local);
+        }
+
+        private static void TryKey(UnityEngine.InputSystem.Keyboard kb, BepInEx.Configuration.ConfigEntry<UnityEngine.InputSystem.Key> key, string ability, Character local)
+        {
+            if (key == null || key.Value == UnityEngine.InputSystem.Key.None) return;
+            UnityEngine.InputSystem.Controls.KeyControl control;
+            try { control = kb[key.Value]; } catch { return; }
+            if (control == null || !control.wasPressedThisFrame) return;
+            foreach (var a in LocalCards.Manual)
+            {
+                if (a.Card.Ability != ability) continue;
+                try { a.Activate(local); }
+                catch (Exception e) { Plugin.Log.LogError($"{a.Card.Name} Activate: {e}"); }
+                return;
+            }
+        }
+
+        private static void CheckArrivals(Character local)
+        {
             // opening pick readiness: the beach wake-up is over and we have stood on the ground for a moment
             if (!RunState.SentOpeningArrival)
             {
@@ -355,6 +292,73 @@ namespace CampfireCards
                     }
                 }
             }
+        }
+
+        // ------------------------------------------------------------------ dev keys
+        /// <summary>Testing keys (config Debug.DevKeys): F9 light the current campfire, F10 warp next to it, F11 sample offer, F8 grant a card.</summary>
+        private static void DevKeys(Character local)
+        {
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb == null) return;
+            if (kb.f9Key.wasPressedThisFrame)
+            {
+                Campfire fire = null;
+                try { fire = MapHandler.CurrentCampfire; } catch { }
+                if (fire != null && !fire.Lit) { Plugin.Log.LogInfo("DevKeys: lighting " + fire.name); fire.DebugLight(); }
+                else Plugin.Log.LogInfo("DevKeys: no unlit current campfire");
+            }
+            if (kb.f10Key.wasPressedThisFrame)
+            {
+                Campfire fire = null;
+                try { fire = MapHandler.CurrentCampfire; } catch { }
+                if (fire != null)
+                {
+                    Vector3 pos = fire.transform.position + fire.transform.forward * 3f + Vector3.up * 1.5f;
+                    Plugin.Log.LogInfo("DevKeys: warping to " + fire.name + " at " + pos);
+                    local.photonView.RPC("WarpPlayerRPC", RpcTarget.All, pos, true);
+                }
+            }
+            if (kb.f11Key.wasPressedThisFrame && Deck.Ready)
+            {
+                var hand = Deck.Deal(new System.Random(), Effects.CardsOf(NetSend.LocalActor), Core.CardSettings.Current.OfferCount, NetSend.IsSolo);
+                CardPicker.Ensure().Show(1, hand, 60f, CardPicker.Mode.Test);
+                Plugin.Log.LogInfo("DevKeys: sample offer " + string.Join(",", hand));
+            }
+            if (kb.f8Key.wasPressedThisFrame && NetSend.IsHost)
+            {
+                // re-read the file so GrantCard can be edited while the game runs
+                try { Plugin.Instance.Config.Reload(); } catch (Exception e) { Plugin.Log.LogWarning("Config reload: " + e.Message); }
+                var wanted = (Plugin.DevGrantCard?.Value ?? "").Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var ids = new List<byte>();
+                foreach (var key in wanted)
+                {
+                    var def = Array.Find(CardTable.Cards, c => string.Equals(c.Key, key, StringComparison.OrdinalIgnoreCase));
+                    if (def != null) ids.Add(def.Id); else Plugin.Log.LogWarning("DevKeys: no card " + key);
+                }
+                if (ids.Count > 0)
+                {
+                    Plugin.Log.LogInfo("DevKeys: granting " + string.Join(", ", ids.ConvertAll(Deck.NameOf)));
+                    NetSend.Raise(new CardsGranted { sessionId = PickSession.SessionId, actor = NetSend.LocalActor, cards = ids.ToArray(), reason = 9 }, Photon.Realtime.ReceiverGroup.All);
+                }
+            }
+            if (kb.f7Key.wasPressedThisFrame) DumpEffects(local);
+        }
+
+        /// <summary>Dev: log every channel that differs from neutral and the scout fields the cards drive.</summary>
+        private static void DumpEffects(Character local)
+        {
+            var sb = new System.Text.StringBuilder("DevKeys: effects");
+            foreach (Channel ch in Enum.GetValues(typeof(Channel)))
+            {
+                float v = Effects.Local[ch];
+                float neutral = ChannelTable.Defs[(int)ch].IsMul ? 1f : 0f;
+                if (Mathf.Abs(v - neutral) > 0.0001f) sb.Append($" {ch}={v:0.###}");
+            }
+            var mv = local.refs.movement;
+            sb.Append($" | sprintMultiplier={mv.sprintMultiplier:0.###} jumpImpulse={mv.jumpImpulse:0.###} sprintStaminaUsage={mv.sprintStaminaUsage:0.####}");
+            sb.Append($" maxStamina={local.GetMaxStamina():0.###} statusSum={local.refs.afflictions.statusSum:0.###} stamina={local.data.currentStamina:0.###} extra={local.data.extraStamina:0.###}");
+            sb.Append($" weight={local.refs.afflictions.GetCurrentStatus(CharacterAfflictions.STATUSTYPE.Weight):0.###} biome={LocalCards.Biome}");
+            Plugin.Log.LogInfo(sb.ToString());
         }
     }
 }
