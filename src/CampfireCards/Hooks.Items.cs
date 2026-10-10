@@ -55,6 +55,7 @@ namespace CampfireCards
                 var b = _batches[i];
                 if (b.Frame >= Time.frameCount) continue;
                 _batches.RemoveAt(i);
+                if (b.Food) Plugin.Verbose($"Ate {(b.Item != null ? b.Item.GetItemName() : "?")}: cooked={b.Cooked}, Hunger removed {b.Hunger * 100f:0.#}");
                 if (b.Food) LocalCards.OnFood(local, new FoodEvent { Item = b.Item, Cooked = b.Cooked, HungerRemoved = b.Hunger, InjuryBefore = b.InjuryBefore });
                 if (b.Curative) LocalCards.OnCurative(local, new CurativeEvent { Item = b.Item, Cured = b.Cured });
             }
@@ -168,9 +169,14 @@ namespace CampfireCards
             return _lunch.Decide(item.GetInstanceID(), Time.frameCount, () =>
             {
                 var eater = item.holderCharacter;
-                if (!Mine(eater) || !IsFood(item) || !IsCooked(item)) return false;
+                if (!Mine(eater) || !IsFood(item)) return false;
                 var ll = LocalCards.Get<Ability_LuckyLunch>();
-                return ll != null && ll.TryUse();
+                if (ll == null) return false;
+                bool cooked = IsCooked(item);
+                bool kept = cooked && ll.TryUse();
+                if (!cooked) ll.HintUncooked();
+                Plugin.Verbose($"Lucky Lunch: {item.GetItemName()} cooked={cooked} biome={LocalCards.Biome} -> {(kept ? "kept" : cooked ? "used up (already used this biome)" : "used up (not cooked)")}");
+                return kept;
             });
         }
 

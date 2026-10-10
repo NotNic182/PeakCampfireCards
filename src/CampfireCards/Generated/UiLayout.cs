@@ -179,7 +179,7 @@ namespace CampfireCards.Generated
     {
         public const string Parent = "root";
         public static readonly Vector2 Size = new Vector2(360f, 300f);
-        public const string Anchor = "bottom left, x=20, y=160";
+        public const string Anchor = "bottom left, x=20, y=200 (clear of the status icons above the stamina bar)";
         public const string Text = "{myCards}";
         public const string SoundOn = "none";
         public const float FontSize = 18.0f;

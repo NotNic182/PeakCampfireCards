@@ -34,15 +34,15 @@ def gen_stats(stats, conditions):
     lines.append('    public enum Channel : byte { %s }' % ', '.join(r['id'] for r in rows))
     lines.append('    public enum Condition : byte { %s }' % ', '.join(r['id'] for r in conditions['rows']))
     lines.append('    public enum CapGroup : byte { none, staminaCost, maxStamina }')
-    lines.append('    public struct ChannelDef { public Channel Id; public string Label; public bool IsMul; public CapGroup Cap; }')
+    lines.append('    public struct ChannelDef { public Channel Id; public string Label; public bool IsMul; public CapGroup Cap; public bool HigherIsBetter; }')
     lines.append('    public static class ChannelTable')
     lines.append('    {')
     lines.append('        public const int Count = %d;' % len(rows))
     lines.append('        public static readonly ChannelDef[] Defs = new ChannelDef[]')
     lines.append('        {')
     for r in rows:
-        lines.append('            new ChannelDef { Id = Channel.%s, Label = %s, IsMul = %s, Cap = CapGroup.%s },' % (
-            r['id'], cs_str(r['label']), 'true' if r['op'] == 'mul' else 'false', r['capGroup']))
+        lines.append('            new ChannelDef { Id = Channel.%s, Label = %s, IsMul = %s, Cap = CapGroup.%s, HigherIsBetter = %s },' % (
+            r['id'], cs_str(r['label']), 'true' if r['op'] == 'mul' else 'false', r['capGroup'], 'true' if r['better'] == 'higher' else 'false'))
     lines.append('        };')
     lines.append('    }')
     lines.append('    public static class ConditionTable')

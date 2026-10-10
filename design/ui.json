@@ -307,7 +307,7 @@
         360,
         300
       ],
-      "anchor": "bottom left, x=20, y=160",
+      "anchor": "bottom left, x=20, y=200 (clear of the status icons above the stamina bar)",
       "visual": "one line per card: a square in the card's rarity colour plus its name; a last line names the Current Build key",
       "text": "{myCards}",
       "consts": {

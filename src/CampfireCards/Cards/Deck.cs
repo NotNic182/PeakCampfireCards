@@ -39,6 +39,13 @@ namespace CampfireCards.Cards
             return TryGet(id, out d) ? d.Name : ("card " + id);
         }
 
+        /// <summary>The name of the card with this ability (cards can be renamed in the sheet; messages follow).</summary>
+        public static string NameOfAbility(string ability)
+        {
+            var def = Array.Find(CardTable.Cards, c => c.Ability == ability);
+            return def != null ? def.Name : ability;
+        }
+
         public static ThemeDef ThemeOf(CardDef def)
         {
             var themes = CardTable.Themes;

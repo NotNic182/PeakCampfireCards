@@ -275,12 +275,12 @@
     {
       "id": 1,
       "key": "GeckoGrip",
-      "name": "Gecko Grip",
+      "name": "Sticky Fingers",
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Climbing stamina cost x0.82.",
-      "negative": "Sprinting stamina cost x1.20.",
+      "positive": "Climbing tires you 12% less.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -288,14 +288,7 @@
         [
           "climbStamina",
           "mul",
-          0.82,
-          "always",
-          "self"
-        ],
-        [
-          "sprintStamina",
-          "mul",
-          1.2,
+          0.88,
           "always",
           "self"
         ]
@@ -312,8 +305,8 @@
       "rarity": "uncommon",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Jump height x1.25.",
-      "negative": "Fall Injury received x1.30.",
+      "positive": "Jump 30% higher.",
+      "negative": "30% more fall damage.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -321,7 +314,7 @@
         [
           "jumpHeight",
           "mul",
-          1.25,
+          1.3,
           "always",
           "self"
         ],
@@ -345,8 +338,8 @@
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Slipping and sliding forces x0.50.",
-      "negative": "Climbing speed x0.90.",
+      "positive": "You slip and slide 35% less.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -354,14 +347,7 @@
         [
           "slipForce",
           "mul",
-          0.5,
-          "always",
-          "self"
-        ],
-        [
-          "climbSpeed",
-          "mul",
-          0.9,
+          0.65,
           "always",
           "self"
         ]
@@ -374,27 +360,19 @@
     {
       "id": 4,
       "key": "OverhangArtist",
-      "name": "Overhang Artist",
+      "name": "Parkourist",
       "rarity": "rare",
       "category": "climbing",
       "type": "Conditional passive",
-      "positive": "Regenerate 6 stamina per second while hanging motionless on a wall.",
-      "negative": "Maximum stamina -20.",
+      "positive": "Hang still on a wall to get 4 stamina back every second.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "maxStamina",
-          "add",
-          -0.2,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "OverhangRegen",
       "params": {
-        "regenPerSecond": 0.06
+        "regenPerSecond": 0.04
       },
       "theme": "stone",
       "art": "rope"
@@ -402,19 +380,19 @@
     {
       "id": 5,
       "key": "SecondSpring",
-      "name": "Second Spring",
+      "name": "Bing BOING",
       "rarity": "rare",
       "category": "climbing",
       "type": "Active movement ability",
-      "positive": "Gain one extra midair jump (45 s cooldown).",
-      "negative": "Using the extra jump adds 7.5 Drowsy.",
+      "positive": "Double jump: one extra jump in mid-air, every 35 seconds.",
+      "negative": "Each double jump makes you a bit drowsy (+7.5 Drowsy).",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [],
       "ability": "SecondSpring",
       "params": {
-        "cooldown": 45,
+        "cooldown": 35,
         "drowsy": 0.075
       },
       "theme": "stone",
@@ -423,12 +401,12 @@
     {
       "id": 6,
       "key": "FastFingers",
-      "name": "Fast Fingers",
+      "name": "Diet Energy Drink",
       "rarity": "uncommon",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Climbing speed x1.25.",
-      "negative": "Climbing stamina cost x1.20.",
+      "positive": "You climb 30% faster.",
+      "negative": "Climbing tires you 20% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -436,7 +414,7 @@
         [
           "climbSpeed",
           "mul",
-          1.25,
+          1.3,
           "always",
           "self"
         ],
@@ -456,12 +434,12 @@
     {
       "id": 7,
       "key": "Featherfall",
-      "name": "Featherfall",
+      "name": "Lite Tenderfoot",
       "rarity": "uncommon",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Fall Injury received x0.55.",
-      "negative": "Maximum stamina -15.",
+      "positive": "Falls hurt 25% less.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -469,14 +447,7 @@
         [
           "fallInjury",
           "mul",
-          0.55,
-          "always",
-          "self"
-        ],
-        [
-          "maxStamina",
-          "add",
-          -0.15,
+          0.75,
           "always",
           "self"
         ]
@@ -489,12 +460,12 @@
     {
       "id": 8,
       "key": "LedgeDancer",
-      "name": "Ledge Dancer",
+      "name": "Scout Master Reach",
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Wall-grab reach x1.30.",
-      "negative": "Sprint speed x0.90.",
+      "positive": "Grab walls from 20% farther away.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -502,14 +473,7 @@
         [
           "grabReach",
           "mul",
-          1.3,
-          "always",
-          "self"
-        ],
-        [
-          "sprintSpeed",
-          "mul",
-          0.9,
+          1.2,
           "always",
           "self"
         ]
@@ -522,12 +486,12 @@
     {
       "id": 9,
       "key": "DeepLungs",
-      "name": "Deep Lungs",
+      "name": "Heart of the Cards",
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Passive",
-      "positive": "Maximum stamina +20.",
-      "negative": "Hunger build-up x1.35.",
+      "positive": "Your stamina bar is 25 longer.",
+      "negative": "You get hungry 35% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -535,7 +499,7 @@
         [
           "maxStamina",
           "add",
-          0.2,
+          0.25,
           "always",
           "self"
         ],
@@ -559,8 +523,8 @@
       "rarity": "rare",
       "category": "stamina",
       "type": "Automatic ability",
-      "positive": "Restore 30 stamina when it falls below 20 (once per biome).",
-      "negative": "Triggering it adds 10 Drowsy.",
+      "positive": "Once per biome, when your stamina drops below 20, you get 25 back.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -568,8 +532,7 @@
       "ability": "SecondWind",
       "params": {
         "threshold": 0.2,
-        "restore": 0.3,
-        "drowsy": 0.1
+        "restore": 0.25
       },
       "theme": "pine",
       "art": "star"
@@ -577,12 +540,12 @@
     {
       "id": 11,
       "key": "MarathonLegs",
-      "name": "Marathon Legs",
+      "name": "Runner",
       "rarity": "common",
       "category": "stamina",
       "type": "Passive",
-      "positive": "Sprint stamina cost x0.75.",
-      "negative": "Carried item weight x1.20.",
+      "positive": "Sprinting tires you 15% less.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -590,14 +553,7 @@
         [
           "sprintStamina",
           "mul",
-          0.75,
-          "always",
-          "self"
-        ],
-        [
-          "itemWeight",
-          "mul",
-          1.2,
+          0.85,
           "always",
           "self"
         ]
@@ -614,8 +570,8 @@
       "rarity": "common",
       "category": "stamina",
       "type": "Passive",
-      "positive": "Stamina starts regenerating 0.5 s sooner.",
-      "negative": "Stamina regeneration x0.80.",
+      "positive": "Stamina starts coming back 0.3 seconds sooner.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -623,14 +579,7 @@
         [
           "regenDelay",
           "add",
-          -0.5,
-          "always",
-          "self"
-        ],
-        [
-          "regenRate",
-          "mul",
-          0.8,
+          -0.3,
           "always",
           "self"
         ]
@@ -647,8 +596,8 @@
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Conditional passive",
-      "positive": "Stamina regeneration x1.50 while crouched and still.",
-      "negative": "Sprint speed x0.90.",
+      "positive": "Crouch and stay still to get stamina back 35% faster.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -656,15 +605,8 @@
         [
           "regenRate",
           "mul",
-          1.5,
+          1.35,
           "crouchStill",
-          "self"
-        ],
-        [
-          "sprintSpeed",
-          "mul",
-          0.9,
-          "always",
           "self"
         ]
       ],
@@ -680,8 +622,8 @@
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Passive",
-      "positive": "Sprint speed x1.20.",
-      "negative": "Maximum stamina -12.5.",
+      "positive": "You sprint 25% faster.",
+      "negative": "Your stamina bar is 12.5 shorter.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -689,7 +631,7 @@
         [
           "sprintSpeed",
           "mul",
-          1.2,
+          1.25,
           "always",
           "self"
         ],
@@ -713,8 +655,8 @@
       "rarity": "rare",
       "category": "stamina",
       "type": "Cyclic conditional passive",
-      "positive": "After 3 s of climbing, climbing stamina cost x0.50 for 1 s.",
-      "negative": "Stamina regeneration on the ground x0.80.",
+      "positive": "Climb for 3 seconds straight, and the next second of climbing costs 35% less stamina.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -722,15 +664,8 @@
         [
           "climbStamina",
           "mul",
-          0.5,
+          0.65,
           "pulseActive",
-          "self"
-        ],
-        [
-          "regenRate",
-          "mul",
-          0.8,
-          "grounded",
           "self"
         ]
       ],
@@ -749,23 +684,15 @@
       "rarity": "common",
       "category": "stamina",
       "type": "Campfire-triggered passive",
-      "positive": "+20 bonus stamina whenever a new campfire is lit.",
-      "negative": "Hunger build-up x1.20.",
+      "positive": "Every time a campfire is lit, get 15 extra (yellow) stamina.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "hungerRate",
-          "mul",
-          1.2,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "CampfireBonus",
       "params": {
-        "bonus": 0.2
+        "bonus": 0.15
       },
       "theme": "pine",
       "art": "flame"
@@ -773,12 +700,12 @@
     {
       "id": 17,
       "key": "DesertBlood",
-      "name": "Desert Blood",
+      "name": "Mesa Blood",
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "Heat build-up x0.60.",
-      "negative": "Cold build-up x1.30.",
+      "positive": "You heat up 50% slower.",
+      "negative": "You get cold 30% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -786,7 +713,7 @@
         [
           "heatRate",
           "mul",
-          0.6,
+          0.5,
           "always",
           "self"
         ],
@@ -806,12 +733,12 @@
     {
       "id": 18,
       "key": "WinterCoat",
-      "name": "Winter Coat",
+      "name": "Alpine Coat",
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "Cold build-up x0.60.",
-      "negative": "Heat build-up x1.30.",
+      "positive": "You get cold 50% slower.",
+      "negative": "You heat up 30% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -819,7 +746,7 @@
         [
           "coldRate",
           "mul",
-          0.6,
+          0.5,
           "always",
           "self"
         ],
@@ -839,12 +766,12 @@
     {
       "id": 19,
       "key": "VenomAntibodies",
-      "name": "Venom Antibodies",
+      "name": "Anti Antibodies",
       "rarity": "uncommon",
       "category": "environment",
       "type": "Passive",
-      "positive": "Poison build-up x0.50.",
-      "negative": "Spores build-up x1.30.",
+      "positive": "Poison builds up 35% slower.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -852,14 +779,7 @@
         [
           "poisonRate",
           "mul",
-          0.5,
-          "always",
-          "self"
-        ],
-        [
-          "sporesRate",
-          "mul",
-          1.3,
+          0.65,
           "always",
           "self"
         ]
@@ -876,8 +796,8 @@
       "rarity": "uncommon",
       "category": "environment",
       "type": "Passive",
-      "positive": "Spores build-up x0.50.",
-      "negative": "Drowsy build-up x1.30.",
+      "positive": "Spores build up 35% slower.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -885,14 +805,7 @@
         [
           "sporesRate",
           "mul",
-          0.5,
-          "always",
-          "self"
-        ],
-        [
-          "drowsyRate",
-          "mul",
-          1.3,
+          0.65,
           "always",
           "self"
         ]
@@ -909,8 +822,8 @@
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "Thorns build-up x0.50.",
-      "negative": "Fall Injury received x1.20.",
+      "positive": "New thorns count 40% less.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -918,14 +831,7 @@
         [
           "thornsRate",
           "mul",
-          0.5,
-          "always",
-          "self"
-        ],
-        [
-          "fallInjury",
-          "mul",
-          1.2,
+          0.6,
           "always",
           "self"
         ]
@@ -942,8 +848,8 @@
       "rarity": "uncommon",
       "category": "environment",
       "type": "Conditional passive",
-      "positive": "Heat drains x2.00 faster once you leave the heat.",
-      "negative": "Poison drains x0.75 as fast.",
+      "positive": "Once you're out of the heat, it wears off 60% faster.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -951,14 +857,7 @@
         [
           "heatDecay",
           "mul",
-          2.0,
-          "always",
-          "self"
-        ],
-        [
-          "poisonDecay",
-          "mul",
-          0.75,
+          1.6,
           "always",
           "self"
         ]
@@ -975,8 +874,8 @@
       "rarity": "uncommon",
       "category": "environment",
       "type": "Conditional passive",
-      "positive": "Cold drains x2.00 faster once you leave the cold.",
-      "negative": "Hunger build-up x1.25.",
+      "positive": "Once you're out of the cold, it wears off 60% faster.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -984,14 +883,7 @@
         [
           "coldDecay",
           "mul",
-          2.0,
-          "always",
-          "self"
-        ],
-        [
-          "hungerRate",
-          "mul",
-          1.25,
+          1.6,
           "always",
           "self"
         ]
@@ -1008,8 +900,8 @@
       "rarity": "rare",
       "category": "environment",
       "type": "Conditional passive",
-      "positive": "Climbing stamina cost x0.75 while Poison or Spores is at least 20.",
-      "negative": "Poison and Spores drain x0.70 as fast.",
+      "positive": "While you have 20+ Poison or Spores, climbing tires you 30% less.",
+      "negative": "Poison and Spores wear off 30% slower.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1017,7 +909,7 @@
         [
           "climbStamina",
           "mul",
-          0.75,
+          0.7,
           "poisonOrSpores20",
           "self"
         ],
@@ -1048,8 +940,8 @@
       "rarity": "common",
       "category": "survival",
       "type": "Passive",
-      "positive": "Non-fall Injury received x0.70.",
-      "negative": "Injury healed by items x0.75.",
+      "positive": "Hits that aren't falls hurt 20% less.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1057,14 +949,7 @@
         [
           "nonFallInjury",
           "mul",
-          0.7,
-          "always",
-          "self"
-        ],
-        [
-          "healReceived",
-          "mul",
-          0.75,
+          0.8,
           "always",
           "self"
         ]
@@ -1081,21 +966,14 @@
       "rarity": "uncommon",
       "category": "survival",
       "type": "Passive",
-      "positive": "Injury healed by items x1.40.",
-      "negative": "Poison build-up x1.25.",
+      "positive": "Bandages and medkits heal you 25% more.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [
         [
           "healReceived",
-          "mul",
-          1.4,
-          "always",
-          "self"
-        ],
-        [
-          "poisonRate",
           "mul",
           1.25,
           "always",
@@ -1114,8 +992,8 @@
       "rarity": "uncommon",
       "category": "survival",
       "type": "Conditional passive",
-      "positive": "Climbing and sprinting stamina cost x0.80 while Injury is at least 20.",
-      "negative": "All Injury received x1.20.",
+      "positive": "While you have 20+ Injury, climbing and sprinting tire you 25% less.",
+      "negative": "Every injury hurts 20% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1123,14 +1001,14 @@
         [
           "climbStamina",
           "mul",
-          0.8,
+          0.75,
           "injury20",
           "self"
         ],
         [
           "sprintStamina",
           "mul",
-          0.8,
+          0.75,
           "injury20",
           "self"
         ],
@@ -1154,24 +1032,16 @@
       "rarity": "rare",
       "category": "survival",
       "type": "Automatic ability",
-      "positive": "Remove 25 Poison, Spores or Drowsy when that status reaches 35 (once per biome).",
-      "negative": "Maximum stamina -10.",
+      "positive": "Once per biome, when Poison, Spores or Drowsy reaches 35, 20 of it clears at once.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "maxStamina",
-          "add",
-          -0.1,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "EmergencyPurge",
       "params": {
         "threshold": 0.35,
-        "remove": 0.25
+        "remove": 0.2
       },
       "theme": "berry",
       "art": "cross"
@@ -1183,8 +1053,8 @@
       "rarity": "legendary",
       "category": "survival",
       "type": "Automatic revival",
-      "positive": "Survive one fatal fall: return to a recent safe foothold, revived (once per run).",
-      "negative": "Return with 40 Injury and skip your next card pick.",
+      "positive": "Once per run, a fall that would knock you out puts you back on safe ground instead.",
+      "negative": "You come back with 40 Injury and skip your next card pick.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1203,8 +1073,8 @@
       "rarity": "common",
       "category": "survival",
       "type": "Consumption-triggered passive",
-      "positive": "Food removes Hunger x1.30.",
-      "negative": "Every food you eat adds 5 Drowsy.",
+      "positive": "Food fills you up 20% more.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1212,15 +1082,13 @@
         [
           "foodHunger",
           "mul",
-          1.3,
+          1.2,
           "always",
           "self"
         ]
       ],
-      "ability": "IronStomach",
-      "params": {
-        "drowsy": 0.05
-      },
+      "ability": "",
+      "params": {},
       "theme": "berry",
       "art": "apple"
     },
@@ -1231,8 +1099,8 @@
       "rarity": "rare",
       "category": "survival",
       "type": "Passive",
-      "positive": "Curse build-up x0.40.",
-      "negative": "All Injury received x1.25.",
+      "positive": "Curse builds up 70% slower.",
+      "negative": "Every injury hurts 25% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1240,7 +1108,7 @@
         [
           "curseRate",
           "mul",
-          0.4,
+          0.3,
           "always",
           "self"
         ],
@@ -1264,16 +1132,15 @@
       "rarity": "uncommon",
       "category": "survival",
       "type": "Item-use triggered",
-      "positive": "Curative items also remove 10 from your worst other status.",
-      "negative": "Each curative use adds 5 Hunger.",
+      "positive": "Medical items also clear 7.5 of your worst other status.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [],
       "ability": "CleansingRitual",
       "params": {
-        "bonus": 0.1,
-        "hunger": 0.05
+        "bonus": 0.075
       },
       "theme": "berry",
       "art": "cross"
@@ -1285,8 +1152,8 @@
       "rarity": "rare",
       "category": "inventory",
       "type": "Passive",
-      "positive": "One extra inventory slot.",
-      "negative": "Carried item weight x1.35.",
+      "positive": "One extra pocket.",
+      "negative": "Everything you carry is 35% heavier.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1318,8 +1185,8 @@
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Passive",
-      "positive": "Carried item weight x0.65.",
-      "negative": "Sprint speed x0.90.",
+      "positive": "Everything you carry is 20% lighter.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1327,14 +1194,7 @@
         [
           "itemWeight",
           "mul",
-          0.65,
-          "always",
-          "self"
-        ],
-        [
-          "sprintSpeed",
-          "mul",
-          0.9,
+          0.8,
           "always",
           "self"
         ]
@@ -1347,12 +1207,12 @@
     {
       "id": 35,
       "key": "OneHandedScout",
-      "name": "One-Handed Scout",
+      "name": "One-Saber Scout",
       "rarity": "common",
       "category": "inventory",
       "type": "Conditional passive",
-      "positive": "Weight of the item in your hand x0.50.",
-      "negative": "Climbing while holding an item costs x1.20 stamina.",
+      "positive": "The item in your hands weighs 35% less.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1360,15 +1220,8 @@
         [
           "heldItemWeight",
           "mul",
-          0.5,
+          0.65,
           "always",
-          "self"
-        ],
-        [
-          "climbStamina",
-          "mul",
-          1.2,
-          "climbingWithItem",
           "self"
         ]
       ],
@@ -1380,24 +1233,16 @@
     {
       "id": 36,
       "key": "LuckyLunch",
-      "name": "Lucky Lunch",
+      "name": "Uncooked?",
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Consumption-triggered",
-      "positive": "Your first cooked food in each biome is not used up.",
-      "negative": "All food removes Hunger x0.75.",
+      "positive": "Once per biome, the first cooked food you eat isn't used up.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "foodHunger",
-          "mul",
-          0.75,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "LuckyLunch",
       "params": {},
       "theme": "sun",
@@ -1406,12 +1251,12 @@
     {
       "id": 37,
       "key": "CampChef",
-      "name": "Camp Chef",
+      "name": "Scout Chef",
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Consumption-triggered passive",
-      "positive": "Cooked food removes Hunger x1.40.",
-      "negative": "Eating uncooked food adds 7.5 Poison.",
+      "positive": "Cooked food fills you up 50% more.",
+      "negative": "Eating uncooked food poisons you a little (+7.5 Poison).",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1419,7 +1264,7 @@
         [
           "cookedFoodHunger",
           "mul",
-          1.4,
+          1.5,
           "always",
           "self"
         ]
@@ -1438,8 +1283,8 @@
       "rarity": "rare",
       "category": "inventory",
       "type": "Campfire-triggered",
-      "positive": "A Rope Spool appears for you at each new campfire.",
-      "negative": "Climbing stamina cost x1.12.",
+      "positive": "A free rope spool appears for you at each new campfire.",
+      "negative": "Climbing tires you 8% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1447,7 +1292,7 @@
         [
           "climbStamina",
           "mul",
-          1.12,
+          1.08,
           "always",
           "self"
         ]
@@ -1466,20 +1311,12 @@
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Campfire-triggered",
-      "positive": "A Bandage appears for you at each new campfire.",
-      "negative": "Maximum stamina -10.",
+      "positive": "A free bandage appears for you at each new campfire.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "maxStamina",
-          "add",
-          -0.1,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "CampfireSpawn",
       "params": {
         "item": 1
@@ -1494,8 +1331,8 @@
       "rarity": "legendary",
       "category": "inventory",
       "type": "One-time acquisition",
-      "positive": "Immediately gain 2 more random cards.",
-      "negative": "One inventory slot is locked for the rest of the run.",
+      "positive": "Get 2 more random cards right now.",
+      "negative": "Your third pocket is locked for the rest of the run.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": true,
@@ -1514,8 +1351,8 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "You and teammates within 6 m spend x0.88 stamina climbing.",
-      "negative": "Alone, your climbing stamina cost is x1.15.",
+      "positive": "Near a teammate (6 m), climbing tires you both 15% less.",
+      "negative": "Climbing alone tires you 15% more.",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1523,14 +1360,14 @@
         [
           "climbStamina",
           "mul",
-          0.88,
+          0.85,
           "always",
           "team"
         ],
         [
           "climbStamina",
           "mul",
-          0.88,
+          0.85,
           "teammateNear",
           "self"
         ],
@@ -1552,12 +1389,12 @@
     {
       "id": 42,
       "key": "FieldMedic",
-      "name": "Field Medic",
+      "name": "Tara",
       "rarity": "uncommon",
       "category": "team",
       "type": "Passive",
-      "positive": "Healing items you use on teammates heal x1.50.",
-      "negative": "Healing items you use on yourself heal x0.65.",
+      "positive": "Healing items you use on teammates heal 60% more.",
+      "negative": "Healing items you use on yourself heal 35% less.",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1565,7 +1402,7 @@
         [
           "healGiven",
           "mul",
-          1.5,
+          1.6,
           "always",
           "self"
         ],
@@ -1589,8 +1426,8 @@
       "rarity": "common",
       "category": "team",
       "type": "Passive",
-      "positive": "Carrying a scout weighs x0.50.",
-      "negative": "Sprint stamina cost x1.15.",
+      "positive": "Carrying a scout feels 35% lighter.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1598,14 +1435,7 @@
         [
           "carryScoutWeight",
           "mul",
-          0.5,
-          "always",
-          "self"
-        ],
-        [
-          "sprintStamina",
-          "mul",
-          1.15,
+          0.65,
           "always",
           "self"
         ]
@@ -1622,8 +1452,8 @@
       "rarity": "common",
       "category": "team",
       "type": "Conditional passive",
-      "positive": "Huddling radius and cold removal x1.50.",
-      "negative": "Cold build-up x1.30 while away from every teammate.",
+      "positive": "Huddling warms you 35% more, from 35% farther away.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1631,49 +1461,32 @@
         [
           "huddleStrength",
           "mul",
-          1.5,
+          1.35,
           "always",
-          "self"
-        ],
-        [
-          "coldRate",
-          "mul",
-          1.3,
-          "separatedFromTeam",
           "self"
         ]
       ],
       "ability": "",
-      "params": {
-        "separation": 8
-      },
+      "params": {},
       "theme": "sky",
       "art": "flame"
     },
     {
       "id": 45,
       "key": "HerosArrival",
-      "name": "Hero's Arrival",
+      "name": "Otto",
       "rarity": "rare",
       "category": "team",
       "type": "Revival-triggered",
-      "positive": "First revive of a teammate each biome: you both gain 25 bonus stamina.",
-      "negative": "Maximum stamina -10.",
+      "positive": "The first time you revive a teammate in each biome, you both get 20 extra (yellow) stamina.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
-      "mods": [
-        [
-          "maxStamina",
-          "add",
-          -0.1,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "HerosArrival",
       "params": {
-        "bonus": 0.25
+        "bonus": 0.2
       },
       "theme": "sky",
       "art": "star"
@@ -1685,8 +1498,8 @@
       "rarity": "common",
       "category": "team",
       "type": "Passive",
-      "positive": "Helping-hand reach x1.40.",
-      "negative": "Your climbing speed x0.90.",
+      "positive": "Pull teammates up from 30% farther away.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1694,14 +1507,7 @@
         [
           "helpReach",
           "mul",
-          1.4,
-          "always",
-          "self"
-        ],
-        [
-          "climbSpeed",
-          "mul",
-          0.9,
+          1.3,
           "always",
           "self"
         ]
@@ -1718,8 +1524,8 @@
       "rarity": "rare",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "Teammates within 6 m take x0.75 Injury.",
-      "negative": "You absorb half of what it prevents (max 10 per hit).",
+      "positive": "Teammates near you (6 m) take 30% less injury.",
+      "negative": "You take half of what you saved them (at most 10 per hit).",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1727,7 +1533,7 @@
         [
           "allInjury",
           "mul",
-          0.75,
+          0.7,
           "always",
           "team"
         ]
@@ -1748,8 +1554,8 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "Teammates within 6 m regenerate stamina x1.15.",
-      "negative": "Alone, you regenerate stamina x0.85.",
+      "positive": "Teammates near you (6 m) get stamina back 12% faster.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1757,16 +1563,9 @@
         [
           "regenRate",
           "mul",
-          1.15,
+          1.12,
           "always",
           "team"
-        ],
-        [
-          "regenRate",
-          "mul",
-          0.85,
-          "noTeammateNear",
-          "self"
         ]
       ],
       "ability": "",
@@ -1783,8 +1582,8 @@
       "rarity": "rare",
       "category": "mutation",
       "type": "Passive",
-      "positive": "Sprint speed x1.30 and jump height x1.20.",
-      "negative": "Fall Injury received x1.80.",
+      "positive": "Sprint 35% faster and jump 25% higher.",
+      "negative": "Falls hurt 80% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1792,14 +1591,14 @@
         [
           "sprintSpeed",
           "mul",
-          1.3,
+          1.35,
           "always",
           "self"
         ],
         [
           "jumpHeight",
           "mul",
-          1.2,
+          1.25,
           "always",
           "self"
         ],
@@ -1823,8 +1622,8 @@
       "rarity": "rare",
       "category": "mutation",
       "type": "Acquisition and campfire triggered",
-      "positive": "+30 bonus stamina now and +15 at every later campfire.",
-      "negative": "+10 Curse now and +5 at every later campfire.",
+      "positive": "Get 30 extra (yellow) stamina now, and 20 more at every campfire after.",
+      "negative": "Get 10 Curse now, and 5 more at every campfire after.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1832,7 +1631,7 @@
       "ability": "CursedCrown",
       "params": {
         "bonusNow": 0.3,
-        "bonusFire": 0.15,
+        "bonusFire": 0.2,
         "curseNow": 0.1,
         "curseFire": 0.05
       },
@@ -1846,8 +1645,8 @@
       "rarity": "uncommon",
       "category": "mutation",
       "type": "Random biome-triggered passive",
-      "positive": "Each biome: 60% chance of +25 bonus stamina. Item weight always x0.90.",
-      "negative": "Otherwise you take 20 Injury.",
+      "positive": "Everything you carry is 10% lighter. In each biome, a 65% chance of 25 extra (yellow) stamina.",
+      "negative": "Otherwise, you take 20 Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1862,7 +1661,7 @@
       ],
       "ability": "LoadedDice",
       "params": {
-        "chance": 0.6,
+        "chance": 0.65,
         "bonus": 0.25,
         "injury": 0.2
       },
@@ -1876,15 +1675,15 @@
       "rarity": "legendary",
       "category": "mutation",
       "type": "Manually activated ability",
-      "positive": "Activate for 50 bonus stamina (once per biome).",
-      "negative": "Activating it adds 25 Injury.",
+      "positive": "Once per biome, press B for 60 extra (yellow) stamina.",
+      "negative": "Using it costs you 25 Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [],
       "ability": "BloodBattery",
       "params": {
-        "bonus": 0.5,
+        "bonus": 0.6,
         "injury": 0.25
       },
       "theme": "ember",
@@ -1897,8 +1696,8 @@
       "rarity": "uncommon",
       "category": "mutation",
       "type": "Conditional passive",
-      "positive": "After 2 s of sprinting, sprint speed x1.25 until you stop.",
-      "negative": "Stopping after the boost adds 7.5 Drowsy (30 s cooldown).",
+      "positive": "Sprint for 2 seconds and you speed up 30% until you stop.",
+      "negative": "Stopping after the speed-up makes you a bit drowsy (+7.5 Drowsy, at most every 30 seconds).",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1906,7 +1705,7 @@
         [
           "sprintSpeed",
           "mul",
-          1.25,
+          1.3,
           "momentumActive",
           "self"
         ]
@@ -1927,25 +1726,17 @@
       "rarity": "rare",
       "category": "mutation",
       "type": "Delayed damage",
-      "positive": "75% of fall Injury is delayed 20 s, then only 70% of it lands.",
-      "negative": "Maximum stamina -10.",
+      "positive": "Falls hurt 15% less, and most of the injury only arrives 20 seconds later.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "maxStamina",
-          "add",
-          -0.1,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "DelayedConsequences",
       "params": {
         "defer": 0.75,
         "delay": 20,
-        "keep": 0.7
+        "keep": 0.8
       },
       "theme": "ember",
       "art": "feather"
@@ -1957,8 +1748,8 @@
       "rarity": "legendary",
       "category": "mutation",
       "type": "Passive",
-      "positive": "Maximum stamina +35.",
-      "negative": "All Injury received x1.75.",
+      "positive": "Your stamina bar is 40 longer.",
+      "negative": "Every injury hurts 75% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1966,7 +1757,7 @@
         [
           "maxStamina",
           "add",
-          0.35,
+          0.4,
           "always",
           "self"
         ],
@@ -1990,8 +1781,8 @@
       "rarity": "uncommon",
       "category": "mutation",
       "type": "Equipment-conditional passive",
-      "positive": "Without a backpack: sprint speed x1.25, jump height x1.20.",
-      "negative": "With a backpack: sprint speed x0.85.",
+      "positive": "Without a backpack, sprint 30% faster and jump 20% higher.",
+      "negative": "With a backpack, you sprint 15% slower.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1999,7 +1790,7 @@
         [
           "sprintSpeed",
           "mul",
-          1.25,
+          1.3,
           "noBackpack",
           "self"
         ],
@@ -2030,8 +1821,8 @@
       "rarity": "legendary",
       "category": "wildcard",
       "type": "One-time acquisition",
-      "positive": "Immediately gain 1 more random Common, Uncommon or Rare card.",
-      "negative": "+10 Curse now and only 1 card to choose at the next campfire.",
+      "positive": "Get 1 more random card right now (Common to Rare).",
+      "negative": "Get 10 Curse now, and the next campfire offers you only 1 card.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": true,
@@ -2047,27 +1838,19 @@
     {
       "id": 58,
       "key": "ScavengersInstinct",
-      "name": "Scavenger's Instinct",
+      "name": "Scavenger's Initiative",
       "rarity": "rare",
       "category": "wildcard",
       "type": "Proximity visualization",
-      "positive": "See food, items and luggage within 15 m through terrain.",
-      "negative": "Hunger build-up x1.30.",
+      "positive": "See food, items and luggage within 12 m, even through rock.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "hungerRate",
-          "mul",
-          1.3,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "ScavengersInstinct",
       "params": {
-        "radius": 15
+        "radius": 12
       },
       "theme": "dusk",
       "art": "sun"
@@ -2079,24 +1862,16 @@
       "rarity": "uncommon",
       "category": "wildcard",
       "type": "Consumption-triggered",
-      "positive": "Eating with at least 20 Injury removes 10 Injury.",
-      "negative": "All food removes Hunger x0.70.",
+      "positive": "Eating while you have 20+ Injury heals 7.5 Injury.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "foodHunger",
-          "mul",
-          0.7,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "HungryHands",
       "params": {
         "threshold": 0.2,
-        "heal": 0.1
+        "heal": 0.075
       },
       "theme": "dusk",
       "art": "apple"
@@ -2108,8 +1883,8 @@
       "rarity": "legendary",
       "category": "wildcard",
       "type": "Manually placed revival anchor",
-      "positive": "Once per biome, place an anchor: if you go down, you are revived there.",
-      "negative": "Maximum stamina -20.",
+      "positive": "Once per biome, press N to set an anchor. If you pass out, you wake up there.",
+      "negative": "Your stamina bar is 15 shorter.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -2117,7 +1892,7 @@
         [
           "maxStamina",
           "add",
-          -0.2,
+          -0.15,
           "always",
           "self"
         ]
@@ -2136,8 +1911,8 @@
       "rarity": "rare",
       "category": "wildcard",
       "type": "Passive",
-      "positive": "Petrify build-up x0.50.",
-      "negative": "Bonus stamina received x0.75.",
+      "positive": "You turn to stone 35% slower.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -2145,14 +1920,7 @@
         [
           "petrifyRate",
           "mul",
-          0.5,
-          "always",
-          "self"
-        ],
-        [
-          "bonusStaminaGain",
-          "mul",
-          0.75,
+          0.65,
           "always",
           "self"
         ]
@@ -2169,8 +1937,8 @@
       "rarity": "legendary",
       "category": "wildcard",
       "type": "Acquisition-triggered",
-      "positive": "Sacrifice one of your cards for +35 maximum stamina.",
-      "negative": "+5 Curse at every later campfire.",
+      "positive": "Give up one of your cards: your stamina bar becomes 35 longer.",
+      "negative": "Get 5 Curse at every campfire after.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -2193,11 +1961,11 @@
     {
       "id": 63,
       "key": "MountainsHeir",
-      "name": "The Mountain's Heir",
+      "name": "Scoutmaster",
       "rarity": "mythic",
       "category": "mythic",
       "type": "Permanent Mythic passive",
-      "positive": "Climbing costs no stamina. No fall Injury. Sprint speed x1.25.",
+      "positive": "Climbing never tires you, falls never hurt, and you sprint 25% faster.",
       "negative": "",
       "flavor": "The mountain no longer challenges you. It obeys you.",
       "multiplayerOnly": false,
@@ -2237,7 +2005,7 @@
       "rarity": "mythic",
       "category": "mythic",
       "type": "Permanent Mythic team aura",
-      "positive": "Within 15 m: +35 max stamina, x0.40 Injury and status build-up. Once per biome, revives the first scout to go down.",
+      "positive": "Everyone within 15 m of you (you too) gets a stamina bar 35 longer and takes 60% less injury and statuses. Once per biome, the first scout nearby who passes out is revived.",
       "negative": "",
       "flavor": "Where you stand, no Scout is left behind.",
       "multiplayerOnly": false,

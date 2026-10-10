@@ -194,7 +194,7 @@ namespace CampfireCards.Net
             var def = System.Array.Find(CardTable.Cards, c => c.Ability == "HerosArrival");
             float max = def != null ? CardSettings.Current.Param(def, "bonus", 0.25f) : 0.25f;
             me.AddExtraStamina(Mathf.Min(m.amount, max));
-            Hud.Toast($"HERO'S ARRIVAL! {NetSend.NameOf(sender)} brought you back strong");
+            Hud.Toast($"{Deck.NameOfAbility("HerosArrival").ToUpperInvariant()}! {NetSend.NameOf(sender)} brought you back strong");
         }
 
         public static void OnSpawnItem(SpawnItem m, int sender)

@@ -102,6 +102,8 @@ def main():
     for r in stats['rows']:
         if r['op'] not in ('mul', 'add'):
             problem('stats %s: op must be mul or add' % r['id'])
+        if r.get('better') not in ('lower', 'higher'):
+            problem('stats %s: better must be lower or higher' % r['id'])
         if r['capGroup'] not in ('none', 'staminaCost', 'maxStamina'):
             problem('stats %s: unknown capGroup %s' % (r['id'], r['capGroup']))
         if ('Channel.' + r['id']) not in src:
@@ -147,8 +149,17 @@ def main():
             counts[r['rarity']] += 1
         if r['rarity'] == 'mythic' and r.get('negative'):
             problem('cards %s: a Mythic has no drawback' % label)
-        if r['rarity'] != 'mythic' and not r.get('negative'):
-            problem('cards %s: a normal card needs a drawback' % label)
+        # a card with no drawback text (every Mythic, and normal cards without a catch) may only move channels the
+        # helpful way (stats.json better); a hidden drawback would contradict what the card says
+        if not r.get('negative'):
+            for i, m in enumerate(r.get('mods') or []):
+                if not (isinstance(m, list) and len(m) == 5) or m[0] not in stat_ids or m[1] == 'set':
+                    continue
+                ch, op, val = m[0], m[1], m[2]
+                higher = stat_ids[ch].get('better') == 'higher'
+                neutral = 1 if op == 'mul' else 0
+                if (higher and val < neutral) or (not higher and val > neutral):
+                    problem('cards %s mod %d: no drawback is shown, but %s %s %s hurts' % (label, i, ch, op, val))
         if r['category'] == 'team' and not r['multiplayerOnly']:
             problem('cards %s: team cards are multiplayer-only' % label)
         if r['theme'] not in cards['themes']:

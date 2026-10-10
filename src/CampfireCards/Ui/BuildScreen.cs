@@ -208,7 +208,7 @@ namespace CampfireCards.Ui
                 list.Add("<color=#" + Hex(Ui_BuildScreen.ActiveColor) + ">" + Deck.NameOf(m.CardId) + "</color> (" + string.Join(", ", owners) + ")");
             }
             if (Effects.SharedBurdenOwner != int.MinValue && Effects.SharedBurdenOwner != me)
-                list.Add("<color=#" + Hex(Ui_BuildScreen.ActiveColor) + ">Shared Burden</color> (" + NetSend.NameOf(Effects.SharedBurdenOwner) + "): Injury "
+                list.Add("<color=#" + Hex(Ui_BuildScreen.ActiveColor) + ">" + Deck.NameOfAbility("SharedBurden") + "</color> (" + NetSend.NameOf(Effects.SharedBurdenOwner) + "): Injury "
                          + BuildStats.Format(Effects.SharedBurdenFactor, true, null));
             return list;
         }

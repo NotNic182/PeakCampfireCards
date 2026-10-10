@@ -273,6 +273,20 @@
       "verified": "Character.cs:1616 public float GetMaxStamina(); notes_status 9"
     },
     {
+      "id": "staminaBarFrame",
+      "kind": "harmony",
+      "targetType": "StaminaBar",
+      "targetMember": "Update",
+      "signature": "",
+      "prefixArgs": "",
+      "prefixBool": false,
+      "postfixArgs": "StaminaBar __instance",
+      "handler": "OnStaminaBarUpdate",
+      "runsOn": "local",
+      "purpose": "maxStamina on the HUD: the frame and the right edge of the status-segment row follow the card-adjusted maximum, so a max-stamina penalty visibly shortens the bar with Hunger and the other statuses right after the stamina, and a bonus lengthens it (vanilla assumes max stamina + statuses = 100%)",
+      "verified": "StaminaBar.cs:83-137 (Start fills afflictions; Update sizes MaxStamina to GetMaxStamina() and the frame to max(1, statusSum)); HUD prefab read from data.unity3d: Bar/LayoutGroup is a HorizontalLayoutGroup aligned MiddleRight, stretched across the bar, holding the BarAffliction segments, and MaxStamina is its child with LayoutElement.ignoreLayout, anchored left"
+    },
+    {
       "id": "bonusStamina",
       "kind": "harmony",
       "targetType": "Character",

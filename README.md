@@ -2,7 +2,7 @@
 
 A roguelike card mod for PEAK. On the beach, and every time your group lights a campfire, each climber is offered
 three cards and keeps one. Cards last for the whole run and change how you climb, eat, fall, heal and recover.
-Almost every card has a catch. The deck has 64 cards in five rarities.
+About half of the cards have a catch. The deck has 64 cards in five rarities.
 
 By default everyone chooses at the same time, so nobody waits for three other players. The **last climber to reach
 the fire still comes first**: they are dealt first (first claim on a Mythic) and head the pick order shown at the top
@@ -48,119 +48,121 @@ next to it, the value that always applies.
 
 ## The cards
 
+About half of the cards have a catch (a drawback); the rest are smaller, pure upgrades.
+
 ### Climbing
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Gecko Grip | Common | Climbing stamina cost x0.82. | Sprinting stamina cost x1.20. |
-| Surefooted | Common | Slipping and sliding forces x0.50. | Climbing speed x0.90. |
-| Ledge Dancer | Common | Wall-grab reach x1.30. | Sprint speed x0.90. |
-| Mountain Goat | Uncommon | Jump height x1.25. | Fall Injury received x1.30. |
-| Fast Fingers | Uncommon | Climbing speed x1.25. | Climbing stamina cost x1.20. |
-| Featherfall | Uncommon | Fall Injury received x0.55. | Maximum stamina -15. |
-| Overhang Artist | Rare | Regenerate 6 stamina per second while hanging motionless on a wall. | Maximum stamina -20. |
-| Second Spring | Rare | Gain one extra midair jump (45 s cooldown). | Using the extra jump adds 7.5 Drowsy. |
+| Sticky Fingers | Common | Climbing tires you 12% less. | None |
+| Mountain Goat | Uncommon | Jump 30% higher. | 30% more fall damage. |
+| Surefooted | Common | You slip and slide 35% less. | None |
+| Parkourist | Rare | Hang still on a wall to get 4 stamina back every second. | None |
+| Bing BOING | Rare | Double jump: one extra jump in mid-air, every 35 seconds. | Each double jump makes you a bit drowsy (+7.5 Drowsy). |
+| Diet Energy Drink | Uncommon | You climb 30% faster. | Climbing tires you 20% more. |
+| Lite Tenderfoot | Uncommon | Falls hurt 25% less. | None |
+| Scout Master Reach | Common | Grab walls from 20% farther away. | None |
 
 ### Environment
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Desert Blood | Common | Heat build-up x0.60. | Cold build-up x1.30. |
-| Winter Coat | Common | Cold build-up x0.60. | Heat build-up x1.30. |
-| Thornbreaker | Common | Thorns build-up x0.50. | Fall Injury received x1.20. |
-| Venom Antibodies | Uncommon | Poison build-up x0.50. | Spores build-up x1.30. |
-| Spore Lungs | Uncommon | Spores build-up x0.50. | Drowsy build-up x1.30. |
-| Heat Shedding | Uncommon | Heat drains x2.00 faster once you leave the heat. | Poison drains x0.75 as fast. |
-| Frostwalker | Uncommon | Cold drains x2.00 faster once you leave the cold. | Hunger build-up x1.25. |
-| Toxic Adaptation | Rare | Climbing stamina cost x0.75 while Poison or Spores is at least 20. | Poison and Spores drain x0.70 as fast. |
+| Mesa Blood | Common | You heat up 50% slower. | You get cold 30% faster. |
+| Alpine Coat | Common | You get cold 50% slower. | You heat up 30% faster. |
+| Anti Antibodies | Uncommon | Poison builds up 35% slower. | None |
+| Spore Lungs | Uncommon | Spores build up 35% slower. | None |
+| Thornbreaker | Common | New thorns count 40% less. | None |
+| Heat Shedding | Uncommon | Once you're out of the heat, it wears off 60% faster. | None |
+| Frostwalker | Uncommon | Once you're out of the cold, it wears off 60% faster. | None |
+| Toxic Adaptation | Rare | While you have 20+ Poison or Spores, climbing tires you 30% less. | Poison and Spores wear off 30% slower. |
 
 ### Inventory
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| One-Handed Scout | Common | Weight of the item in your hand x0.50. | Climbing while holding an item costs x1.20 stamina. |
-| Ultralight | Uncommon | Carried item weight x0.65. | Sprint speed x0.90. |
-| Lucky Lunch | Uncommon | Your first cooked food in each biome is not used up. | All food removes Hunger x0.75. |
-| Camp Chef | Uncommon | Cooked food removes Hunger x1.40. | Eating uncooked food adds 7.5 Poison. |
-| Supply Scout | Uncommon | A Bandage appears for you at each new campfire. | Maximum stamina -10. |
-| Pack Rat | Rare | One extra inventory slot. | Carried item weight x1.35. |
-| Rope Baron | Rare | A Rope Spool appears for you at each new campfire. | Climbing stamina cost x1.12. |
-| Double Deal | Legendary | Immediately gain 2 more random cards. | One inventory slot is locked for the rest of the run. |
+| Pack Rat | Rare | One extra pocket. | Everything you carry is 35% heavier. |
+| Ultralight | Uncommon | Everything you carry is 20% lighter. | None |
+| One-Saber Scout | Common | The item in your hands weighs 35% less. | None |
+| Uncooked? | Uncommon | Once per biome, the first cooked food you eat isn't used up. | None |
+| Scout Chef | Uncommon | Cooked food fills you up 50% more. | Eating uncooked food poisons you a little (+7.5 Poison). |
+| Rope Baron | Rare | A free rope spool appears for you at each new campfire. | Climbing tires you 8% more. |
+| Supply Scout | Uncommon | A free bandage appears for you at each new campfire. | None |
+| Double Deal | Legendary | Get 2 more random cards right now. | Your third pocket is locked for the rest of the run. |
 
 ### Mutation
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Loaded Dice | Uncommon | Each biome: 60% chance of +25 bonus stamina. Item weight always x0.90. | Otherwise you take 20 Injury. |
-| Momentum Fiend | Uncommon | After 2 s of sprinting, sprint speed x1.25 until you stop. | Stopping after the boost adds 7.5 Drowsy (30 s cooldown). |
-| Packless Nomad | Uncommon | Without a backpack: sprint speed x1.25, jump height x1.20. | With a backpack: sprint speed x0.85. |
-| Rocket Ankles | Rare | Sprint speed x1.30 and jump height x1.20. | Fall Injury received x1.80. |
-| Cursed Crown | Rare | +30 bonus stamina now and +15 at every later campfire. | +10 Curse now and +5 at every later campfire. |
-| Delayed Consequences | Rare | 75% of fall Injury is delayed 20 s, then only 70% of it lands. | Maximum stamina -10. |
-| Blood Battery | Legendary | Activate for 50 bonus stamina (once per biome). | Activating it adds 25 Injury. |
-| Glass Heart | Legendary | Maximum stamina +35. | All Injury received x1.75. |
+| Rocket Ankles | Rare | Sprint 35% faster and jump 25% higher. | Falls hurt 80% more. |
+| Cursed Crown | Rare | Get 30 extra (yellow) stamina now, and 20 more at every campfire after. | Get 10 Curse now, and 5 more at every campfire after. |
+| Loaded Dice | Uncommon | Everything you carry is 10% lighter. In each biome, a 65% chance of 25 extra (yellow) stamina. | Otherwise, you take 20 Injury. |
+| Blood Battery | Legendary | Once per biome, press B for 60 extra (yellow) stamina. | Using it costs you 25 Injury. |
+| Momentum Fiend | Uncommon | Sprint for 2 seconds and you speed up 30% until you stop. | Stopping after the speed-up makes you a bit drowsy (+7.5 Drowsy, at most every 30 seconds). |
+| Delayed Consequences | Rare | Falls hurt 15% less, and most of the injury only arrives 20 seconds later. | None |
+| Glass Heart | Legendary | Your stamina bar is 40 longer. | Every injury hurts 75% more. |
+| Packless Nomad | Uncommon | Without a backpack, sprint 30% faster and jump 20% higher. | With a backpack, you sprint 15% slower. |
 
 ### Mythic
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| The Mountain's Heir | Mythic | Climbing costs no stamina. No fall Injury. Sprint speed x1.25. | None |
-| The Eternal Campfire | Mythic | Within 15 m: +35 max stamina, x0.40 Injury and status build-up. Once per biome, revives the first scout to go down. | None |
+| Scoutmaster | Mythic | Climbing never tires you, falls never hurt, and you sprint 25% faster. | None |
+| The Eternal Campfire | Mythic | Everyone within 15 m of you (you too) gets a stamina bar 35 longer and takes 60% less injury and statuses. Once per biome, the first scout nearby who passes out is revived. | None |
 
 ### Stamina
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Marathon Legs | Common | Sprint stamina cost x0.75. | Carried item weight x1.20. |
-| Quick Recovery | Common | Stamina starts regenerating 0.5 s sooner. | Stamina regeneration x0.80. |
-| Half Tank | Common | +20 bonus stamina whenever a new campfire is lit. | Hunger build-up x1.20. |
-| Deep Lungs | Uncommon | Maximum stamina +20. | Hunger build-up x1.35. |
-| Quiet Breathing | Uncommon | Stamina regeneration x1.50 while crouched and still. | Sprint speed x0.90. |
-| Cardio Tax | Uncommon | Sprint speed x1.20. | Maximum stamina -12.5. |
-| Second Wind | Rare | Restore 30 stamina when it falls below 20 (once per biome). | Triggering it adds 10 Drowsy. |
-| Pulse Climber | Rare | After 3 s of climbing, climbing stamina cost x0.50 for 1 s. | Stamina regeneration on the ground x0.80. |
+| Heart of the Cards | Uncommon | Your stamina bar is 25 longer. | You get hungry 35% faster. |
+| Second Wind | Rare | Once per biome, when your stamina drops below 20, you get 25 back. | None |
+| Runner | Common | Sprinting tires you 15% less. | None |
+| Quick Recovery | Common | Stamina starts coming back 0.3 seconds sooner. | None |
+| Quiet Breathing | Uncommon | Crouch and stay still to get stamina back 35% faster. | None |
+| Cardio Tax | Uncommon | You sprint 25% faster. | Your stamina bar is 12.5 shorter. |
+| Pulse Climber | Rare | Climb for 3 seconds straight, and the next second of climbing costs 35% less stamina. | None |
+| Half Tank | Common | Every time a campfire is lit, get 15 extra (yellow) stamina. | None |
 
 ### Survival
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Bone Plating | Common | Non-fall Injury received x0.70. | Injury healed by items x0.75. |
-| Iron Stomach | Common | Food removes Hunger x1.30. | Every food you eat adds 5 Drowsy. |
-| Efficient Medic | Uncommon | Injury healed by items x1.40. | Poison build-up x1.25. |
-| Pain Engine | Uncommon | Climbing and sprinting stamina cost x0.80 while Injury is at least 20. | All Injury received x1.20. |
-| Cleansing Ritual | Uncommon | Curative items also remove 10 from your worst other status. | Each curative use adds 5 Hunger. |
-| Emergency Purge | Rare | Remove 25 Poison, Spores or Drowsy when that status reaches 35 (once per biome). | Maximum stamina -10. |
-| Curse Bargain | Rare | Curse build-up x0.40. | All Injury received x1.25. |
-| Phoenix Clause | Legendary | Survive one fatal fall: return to a recent safe foothold, revived (once per run). | Return with 40 Injury and skip your next card pick. |
+| Bone Plating | Common | Hits that aren't falls hurt 20% less. | None |
+| Efficient Medic | Uncommon | Bandages and medkits heal you 25% more. | None |
+| Pain Engine | Uncommon | While you have 20+ Injury, climbing and sprinting tire you 25% less. | Every injury hurts 20% more. |
+| Emergency Purge | Rare | Once per biome, when Poison, Spores or Drowsy reaches 35, 20 of it clears at once. | None |
+| Phoenix Clause | Legendary | Once per run, a fall that would knock you out puts you back on safe ground instead. | You come back with 40 Injury and skip your next card pick. |
+| Iron Stomach | Common | Food fills you up 20% more. | None |
+| Curse Bargain | Rare | Curse builds up 70% slower. | Every injury hurts 25% more. |
+| Cleansing Ritual | Uncommon | Medical items also clear 7.5 of your worst other status. | None |
 
 ### Team
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Rescue Harness (team) | Common | Carrying a scout weighs x0.50. | Sprint stamina cost x1.15. |
-| Heat Huddle (team) | Common | Huddling radius and cold removal x1.50. | Cold build-up x1.30 while away from every teammate. |
-| Long Arm (team) | Common | Helping-hand reach x1.40. | Your climbing speed x0.90. |
-| Belay Buddy (team) | Uncommon | You and teammates within 6 m spend x0.88 stamina climbing. | Alone, your climbing stamina cost is x1.15. |
-| Field Medic (team) | Uncommon | Healing items you use on teammates heal x1.50. | Healing items you use on yourself heal x0.65. |
-| Camp Choir (team) | Uncommon | Teammates within 6 m regenerate stamina x1.15. | Alone, you regenerate stamina x0.85. |
-| Hero's Arrival (team) | Rare | First revive of a teammate each biome: you both gain 25 bonus stamina. | Maximum stamina -10. |
-| Shared Burden (team) | Rare | Teammates within 6 m take x0.75 Injury. | You absorb half of what it prevents (max 10 per hit). |
+| Belay Buddy (team) | Uncommon | Near a teammate (6 m), climbing tires you both 15% less. | Climbing alone tires you 15% more. |
+| Tara (team) | Uncommon | Healing items you use on teammates heal 60% more. | Healing items you use on yourself heal 35% less. |
+| Rescue Harness (team) | Common | Carrying a scout feels 35% lighter. | None |
+| Heat Huddle (team) | Common | Huddling warms you 35% more, from 35% farther away. | None |
+| Otto (team) | Rare | The first time you revive a teammate in each biome, you both get 20 extra (yellow) stamina. | None |
+| Long Arm (team) | Common | Pull teammates up from 30% farther away. | None |
+| Shared Burden (team) | Rare | Teammates near you (6 m) take 30% less injury. | You take half of what you saved them (at most 10 per hit). |
+| Camp Choir (team) | Uncommon | Teammates near you (6 m) get stamina back 12% faster. | None |
 
 ### Wildcard
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Hungry Hands | Uncommon | Eating with at least 20 Injury removes 10 Injury. | All food removes Hunger x0.70. |
-| Scavenger's Instinct | Rare | See food, items and luggage within 15 m through terrain. | Hunger build-up x1.30. |
-| Stoneblood | Rare | Petrify build-up x0.50. | Bonus stamina received x0.75. |
-| Double Down | Legendary | Immediately gain 1 more random Common, Uncommon or Rare card. | +10 Curse now and only 1 card to choose at the next campfire. |
-| Safety Net | Legendary | Once per biome, place an anchor: if you go down, you are revived there. | Maximum stamina -20. |
-| Mountain's Bargain | Legendary | Sacrifice one of your cards for +35 maximum stamina. | +5 Curse at every later campfire. |
+| Double Down | Legendary | Get 1 more random card right now (Common to Rare). | Get 10 Curse now, and the next campfire offers you only 1 card. |
+| Scavenger's Initiative | Rare | See food, items and luggage within 12 m, even through rock. | None |
+| Hungry Hands | Uncommon | Eating while you have 20+ Injury heals 7.5 Injury. | None |
+| Safety Net | Legendary | Once per biome, press N to set an anchor. If you pass out, you wake up there. | Your stamina bar is 15 shorter. |
+| Stoneblood | Rare | You turn to stone 35% slower. | None |
+| Mountain's Bargain | Legendary | Give up one of your cards: your stamina bar becomes 35 longer. | Get 5 Curse at every campfire after. |
 
 ## Playing together
 Co-op for up to 4, exactly like PEAK: host a game and invite friends through Steam. Every player needs the same
 version of the mod with the same card settings. When they differ, both sides get a warning that names what differs
-(for example "rarity weights" or "cards: Gecko Grip"). Sound, key and debug settings are your own and never count.
+(for example "rarity weights" or "cards: Sticky Fingers"). Sound, key and debug settings are your own and never count.
 
 The host is in charge:
 - It deals the offers and checks every pick: a card must come from your own offer, in the current session, once.
@@ -191,16 +193,15 @@ A campfire lit while a pick is still running gets its own pick right after it. L
   inventory, hotbar, HUD and network code, so a fourth pocket would break every player's inventory. Pack Rat is
   therefore off by default; if you turn it on, only its weight drawback applies.
 - Double Deal's lock never deletes anything: an item already in your third pocket stays there.
-- Lucky Lunch keeps the food in hand. Food that leaves a peel spawns no peel that time.
-- Field Medic, Bone Plating and Efficient Medic scale the Injury that items heal. Healing from the Healing Amulet
+- Uncooked? keeps the food in hand. Food that leaves a peel spawns no peel that time.
+- Tara, Bone Plating and Efficient Medic scale the Injury that items heal. Healing from the Healing Amulet
   and dart is not scaled.
 - Cleansing Ritual counts medical items (bandages, first aid, antidote, cure-all, roots, aloe) used on you;
   berries and packaged snacks are not curative.
-- Scavenger's Instinct marks items with labels drawn over the screen rather than outlines.
-- With more than 100 maximum stamina, PEAK's stamina bar draws past its frame. This is only cosmetic.
+- Scavenger's Initiative marks items with labels drawn over the screen rather than outlines.
 - Other players see your card speed boosts with a small delay (their copy of your scout is corrected by the game).
 - Continuing a quicksaved run starts with no cards.
-- Revives from the Book of Bones and the Scout Effigy do not count for Hero's Arrival.
+- Revives from the Book of Bones and the Scout Effigy do not count for Otto.
 - Thornbreaker halves thorns as they stick to you; thorns already in you when you get the card, or when you leave
   the Eternal Campfire's aura, keep their value. PEAK counts Thorns in steps of one thorn, so an odd thorn is
   rounded up: one thorn alone is never removed.

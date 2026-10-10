@@ -144,7 +144,7 @@ namespace CampfireCards.Ui
             {
                 _pendingSacrifice = cards;
                 _pendingSacrificeCallback = onChosen;
-                Hud.ShowPrompt("Mountain's Bargain: choose a card to sacrifice after this pick");
+                Hud.ShowPrompt(Deck.NameOfAbility("MountainsBargain") + ": choose a card to sacrifice after this pick");
                 return;
             }
             _onSacrifice = onChosen;
