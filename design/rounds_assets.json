@@ -1,0 +1,173 @@
+{
+ "_sheet": "What the mod reads from the player's own ROUNDS install at runtime. One row = one asset or file. Nothing here is shipped; it is loaded from the ROUNDS folder found through Steam's library list. Verified against research/rounds-out/rounds_inventory.json (preflight checks names and formats).",
+ "_columns": {
+  "id": "identifier used in code (Generated/RoundsAssets.cs)",
+  "kind": "file | monobehaviour | texture | sprite | audio | scene",
+  "file": "path under the ROUNDS install",
+  "name": "asset name (for audio/texture/sprite) or class name (for monobehaviour)",
+  "format": "what the bytes are",
+  "usedFor": "where it shows up in the mashup",
+  "required": "true = the mashup cannot deal cards without it; false = graceful fallback",
+  "fallback": "what happens when it is missing",
+  "readWith": "AssetsTools.NET (assets files) | FSB5+NVorbis (audio) | LoadRawTextureData (textures)"
+ },
+ "install": {
+  "steamAppId": 1557740,
+  "exe": "ROUNDS.exe",
+  "dataFolder": "ROUNDS_Data",
+  "managed": "ROUNDS_Data/Managed",
+  "unityVersion": "2022.3.34f1",
+  "configOverride": "BepInEx config PeakRounds.cfg key RoundsPath"
+ },
+ "rows": [
+  {
+   "id": "SharedAssets0",
+   "kind": "file",
+   "file": "ROUNDS_Data/sharedassets0.assets",
+   "name": "sharedassets0.assets",
+   "format": "Unity serialized file (7.4 MB), type trees stripped",
+   "usedFor": "the 67 pool card prefabs, card art textures, UI sounds",
+   "required": true,
+   "fallback": "no cards: RoundsMissingNotice",
+   "readWith": "AssetsTools.NET"
+  },
+  {
+   "id": "GlobalGameManagers",
+   "kind": "file",
+   "file": "ROUNDS_Data/globalgamemanagers.assets",
+   "name": "globalgamemanagers.assets",
+   "format": "Unity serialized file (0.36 MB) holding the MonoScript class names",
+   "usedFor": "resolving which MonoBehaviour is a CardInfo",
+   "required": true,
+   "fallback": "no cards",
+   "readWith": "AssetsTools.NET"
+  },
+  {
+   "id": "Level0",
+   "kind": "scene",
+   "file": "ROUNDS_Data/level0",
+   "name": "Card Choice",
+   "format": "Unity scene file; CardChoice MonoBehaviour with cards[] (the live pool) and cardThemes[] (9 theme colours)",
+   "usedFor": "which cards are in ROUNDS's real pool and the exact theme colours",
+   "required": false,
+   "fallback": "pool = all sharedassets0 CardInfo; theme colours from the built-in table copied from this scene (research/rounds_themes.json)",
+   "readWith": "AssetsTools.NET"
+  },
+  {
+   "id": "ManagedDlls",
+   "kind": "file",
+   "file": "ROUNDS_Data/Managed/Assembly-CSharp.dll (+ UnityEngine.UI.dll, Unity.Localization.dll)",
+   "name": "Assembly-CSharp.dll",
+   "format": ".NET assemblies, read as metadata only with Mono.Cecil",
+   "usedFor": "building MonoBehaviour field layouts (CardInfo, CardInfoStat, LocalizedString, CardChoice, CardThemeColor, Image)",
+   "required": true,
+   "fallback": "no cards",
+   "readWith": "AssetsTools.NET.MonoCecil"
+  },
+  {
+   "id": "CardInfo",
+   "kind": "monobehaviour",
+   "file": "ROUNDS_Data/sharedassets0.assets",
+   "name": "CardInfo",
+   "format": "fields: cardName, cardDestription, m_localizedCardName, m_localizedCardDescription, cardStats[] {positive, amount, simepleAmount, stat, m_localizedStat}, rarity, cardArt, sprite, cardColor, allowMultiple, colorTheme",
+   "usedFor": "card name, text, stats, rarity, theme",
+   "required": true,
+   "fallback": "none",
+   "readWith": "AssetsTools.NET"
+  },
+  {
+   "id": "EnglishStrings",
+   "kind": "file",
+   "file": "ROUNDS_Data/StreamingAssets/aa/StandaloneWindows64/localization-string-tables-english(unitedstates)(en-us)_assets_all.bundle",
+   "name": "StringTableCards_en-US",
+   "format": "UnityFS bundle; StringTable m_TableData [{m_Id, m_Localized}]",
+   "usedFor": "current English card names, descriptions, stat labels and AMOUNT_* phrases",
+   "required": false,
+   "fallback": "legacy cardName/cardDestription/stat strings stored on each card",
+   "readWith": "AssetsTools.NET"
+  },
+  {
+   "id": "CardBG",
+   "kind": "texture",
+   "file": "ROUNDS_Data/sharedassets0.assets (+ .resS)",
+   "name": "CardBG",
+   "format": "Texture2D 600x815 RGBA32 (format 4)",
+   "usedFor": "card background",
+   "required": false,
+   "fallback": "flat colour panel",
+   "readWith": "LoadRawTextureData"
+  },
+  {
+   "id": "SquareSprite",
+   "kind": "texture",
+   "file": "ROUNDS_Data/sharedassets0.assets (+ .resS)",
+   "name": "Square",
+   "format": "Texture2D 4x4 RGBA32",
+   "usedFor": "card frame",
+   "required": false,
+   "fallback": "Unity white texture",
+   "readWith": "LoadRawTextureData"
+  },
+  {
+   "id": "CardIcons",
+   "kind": "texture",
+   "file": "ROUNDS_Data/sharedassets0.assets (+ .resS)",
+   "name": "Icons_*_2 and Icons_Default (27 textures)",
+   "format": "Texture2D 868x600 DXT5 (format 12)",
+   "usedFor": "card icon (CardInfo.sprite -> Sprite.m_RD.texture)",
+   "required": false,
+   "fallback": "no icon",
+   "readWith": "LoadRawTextureData"
+  },
+  {
+   "id": "SfxCardPick",
+   "kind": "audio",
+   "file": "ROUNDS_Data/sharedassets0.assets (+ sharedassets0.resource)",
+   "name": "UI_Card_Pick_01..05",
+   "format": "AudioClip Vorbis in FSB5, stereo 48 kHz 1.8 s",
+   "usedFor": "a card is picked",
+   "required": false,
+   "fallback": "silent",
+   "readWith": "FSB5+NVorbis"
+  },
+  {
+   "id": "SfxCardSwitch",
+   "kind": "audio",
+   "file": "ROUNDS_Data/sharedassets0.assets (+ sharedassets0.resource)",
+   "name": "UI_Card_Switch_01..08",
+   "format": "AudioClip Vorbis in FSB5, mono 48 kHz 0.16 s",
+   "usedFor": "cursor moves onto a card",
+   "required": false,
+   "fallback": "silent",
+   "readWith": "FSB5+NVorbis"
+  },
+  {
+   "id": "SfxCardsAppear",
+   "kind": "audio",
+   "file": "ROUNDS_Data/sharedassets0.assets (+ sharedassets0.resource)",
+   "name": "UI_Cards_Appear_01..03",
+   "format": "AudioClip Vorbis in FSB5, stereo 48 kHz 0.74 s",
+   "usedFor": "the fan slides in",
+   "required": false,
+   "fallback": "silent",
+   "readWith": "FSB5+NVorbis"
+  },
+  {
+   "id": "SfxHover",
+   "kind": "audio",
+   "file": "ROUNDS_Data/sharedassets0.assets (+ sharedassets0.resource)",
+   "name": "UI_Button_Hover_01..05",
+   "format": "AudioClip Vorbis in FSB5, mono 48 kHz 0.03 s",
+   "usedFor": "hover tick",
+   "required": false,
+   "fallback": "silent",
+   "readWith": "FSB5+NVorbis"
+  }
+ ],
+ "audioKeys": {
+  "cardsAppear": "SfxCardsAppear",
+  "cardSwitch": "SfxCardSwitch",
+  "cardPick": "SfxCardPick",
+  "hover": "SfxHover"
+ }
+}

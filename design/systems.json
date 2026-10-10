@@ -1,0 +1,101 @@
+{
+ "_sheet": "Systems of the mod. One row = one C# class with one job. Preflight checks that each class exists in src and that every sheet it owns is referenced from it.",
+ "_columns": {
+  "id": "system name",
+  "class": "C# type in namespace PeakRounds",
+  "owns": "sheets or generated tables this class is built from",
+  "responsibility": "one line",
+  "dependsOn": "other system ids, comma separated; - = none",
+  "testedBy": "how it was verified (filled in during testing)"
+ },
+ "rows": [
+  {
+   "id": "Plugin",
+   "class": "PeakRounds.Plugin",
+   "owns": "hooks.json (Generated/HarmonyHooks.cs), config",
+   "responsibility": "BepInEx entry: config, Harmony PatchAll, event subscriptions, per-frame tick, scene changes",
+   "dependsOn": "Hooks,Net,Ui",
+   "testedBy": "Loaded by BepInEx 5.4.23.3 in PEAK 2.6.b on 2026-10-09 (LogOutput.log: plugin loaded, Harmony patches applied, no errors after fixes)"
+  },
+  {
+   "id": "Hooks",
+   "class": "PeakRounds.Hooks",
+   "owns": "hooks.json handlers",
+   "responsibility": "the handler bodies the generated patches call; turns game moments into Session/Effects calls",
+   "dependsOn": "Session,Effects,HostLog",
+   "testedBy": "In-game: RunManager.StartRun -> opening session; Campfire.Light_Rpc -> campfire session (DevKeys F9 + real flow); SteamLobbyHandler.OnLobbyCreated -> net.log line; CharacterRegistered re-apply; effects log line after each pick"
+  },
+  {
+   "id": "RoundsLocator",
+   "class": "PeakRounds.Rounds.RoundsLocator",
+   "owns": "rounds_assets.json install block",
+   "responsibility": "find the ROUNDS folder: config override, then Steam libraryfolders.vdf + appmanifest_1557740.acf installdir, then every library's common/ROUNDS",
+   "dependsOn": "-",
+   "testedBy": "Found C:\\Program Files (x86)\\Steam\\steamapps\\common\\ROUNDS via Steam manifest on this PC (log line \"ROUNDS 2022.3.34f1 at ...\")"
+  },
+  {
+   "id": "RoundsReader",
+   "class": "PeakRounds.Rounds.RoundsReader",
+   "owns": "rounds_assets.json rows (Generated/RoundsAssets.cs)",
+   "responsibility": "open ROUNDS's assets with AssetsTools.NET, read every pool CardInfo (name, text, stats, rarity, theme, icon), textures and sound clips; builds RoundsCard records matched to cards.json by GameObject name",
+   "dependsOn": "RoundsLocator,Audio",
+   "testedBy": "Read 67 cards (67 in pool), 29 textures, 21/21 sounds, 147 strings, themes from level0 in 0.3-0.8 s (background thread) on every launch"
+  },
+  {
+   "id": "Deck",
+   "class": "PeakRounds.Cards.Deck",
+   "owns": "cards.json (Generated/CardTable.cs), stats.json (Generated/ClimbStats.cs)",
+   "responsibility": "the playable deck = cards.json rows with inDeck and a matching RoundsCard; deals a hand with ROUNDS rarity weights and allowMultiple rules from a seed",
+   "dependsOn": "RoundsReader",
+   "testedBy": "58 playable cards built; hands dealt with rarity weights (hands logged); allowMultiple respected"
+  },
+  {
+   "id": "Effects",
+   "class": "PeakRounds.Cards.Effects",
+   "owns": "stats.json formulas",
+   "responsibility": "per-character card lists -> summed ClimbStats -> applied to the character's public fields (all clients) and consulted by the Harmony hooks (owner)",
+   "dependsOn": "Deck",
+   "testedBy": "Effects log after picks: Tank -> sprintMultiplier 2.00 -> 1.98; baseline captured (jump 400, throw 5-50, hunger 0.0005); hook-only stats (toughness/regen) covered by the Harmony prefixes loading without error"
+  },
+  {
+   "id": "Session",
+   "class": "PeakRounds.Cards.PickSession",
+   "owns": "net.json 91/92/94/97 flow, ui.json timing",
+   "responsibility": "host: collects arrivals, orders players last-arrival-first, deals hands, advances turns, times out; everyone: tracks whose turn it is and opens the picker on their own turn",
+   "dependsOn": "Deck,Net,Ui",
+   "testedBy": "Opening pick on the beach and campfire pick after Light_Rpc, both host-ordered; click pick (session 10001 card 40, 10002 card 59); 60 s host timeout auto-pick verified (card 8, card 56); out-of-turn guard in place; multi-player order untested (solo only)"
+  },
+  {
+   "id": "Net",
+   "class": "PeakRounds.Net.NetSend + PeakRounds.Net.NetHandlers + PeakRounds.Net.NetDispatcher (generated)",
+   "owns": "net.json (Generated/NetEvents.cs)",
+   "responsibility": "RaiseEvent send helpers, EventReceived dispatch, late-joiner StateSync",
+   "dependsOn": "-",
+   "testedBy": "RaiseEvent round trip through Photon (codes 91/92/94 seen in logs, self-delivery via ReceiverGroup.All); StateSync self path; late joiner untested (solo)"
+  },
+  {
+   "id": "Ui",
+   "class": "PeakRounds.Ui.CardPicker (MenuWindow) + PeakRounds.Ui.Hud",
+   "owns": "ui.json (Generated/UiLayout.cs)",
+   "responsibility": "runtime-built uGUI: picker fan, waiting banner, my-cards HUD, toasts, ROUNDS-missing notice",
+   "dependsOn": "RoundsReader,Audio",
+   "testedBy": "Card fan with ROUNDS icons/colours/rarity strips/stats/descriptions/mountain lines rendered (shots 33, 35); MenuWindow blocks input and shows cursor; HUD list, toast and countdown shown"
+  },
+  {
+   "id": "Audio",
+   "class": "PeakRounds.Rounds.Fsb5Vorbis",
+   "owns": "rounds_assets.json audio rows",
+   "responsibility": "FSB5 container -> Vorbis packets -> Ogg stream (headers rebuilt from the CRC table) -> NVorbis PCM -> UnityEngine.AudioClip",
+   "dependsOn": "-",
+   "testedBy": "21/21 ROUNDS UI clips decoded (FSB5 Vorbis -> PCM) at load; playback not verified by ear (no audio capture in the test rig)"
+  },
+  {
+   "id": "HostLog",
+   "class": "PeakRounds.Net.HostLog",
+   "owns": "melty recipe multiplayer.connect.address",
+   "responsibility": "writes 'Hosting at <lobby id>' to %LOCALAPPDATA%/PeakRounds/net.log when this player creates a Steam lobby",
+   "dependsOn": "-",
+   "testedBy": "net.log received \"Hosting at <lobby id>\" on every Host Game (three lobbies logged on 2026-10-09)"
+  }
+ ]
+}
