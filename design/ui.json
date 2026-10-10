@@ -1,0 +1,406 @@
+{
+ "_sheet": "Card picker UI (uGUI, built at runtime, no asset bundle). One row = one UI element. Generated/UiLayout.cs gets a static class per row with its Size, Text template and every entry of consts (numbers become float consts, 4-number arrays become Colors, strings become string consts). Fonts: the game's own TMP font found at runtime; ROUNDS supplies textures (CardBG, icons) and colours.",
+ "_columns": {
+  "id": "element name",
+  "parent": "parent element id or root",
+  "size": "[w,h] in reference pixels (CanvasScaler 1920x1080)",
+  "anchor": "where it sits",
+  "visual": "what it looks like, in words",
+  "text": "static text, or {var} placeholders",
+  "consts": "named numbers / colours / strings the code needs for this element",
+  "behaviour": "interaction and animation",
+  "soundOn": "rounds_assets.json audioKeys entry played, or none"
+ },
+ "canvas": {
+  "referenceResolution": [
+   1920,
+   1080
+  ],
+  "sortingOrder": 500
+ },
+ "timing": {
+  "pickTimeoutSeconds": 60,
+  "fanSlideInSeconds": 0.35,
+  "cardStaggerSeconds": 0.08,
+  "hoverScale": 1.08,
+  "selectedFlashSeconds": 0.5,
+  "toastSeconds": 3.0,
+  "missingNoticeSeconds": 12.0,
+  "openingPickDelaySeconds": 2.0
+ },
+ "rows": [
+  {
+   "id": "PickerWindow",
+   "parent": "root",
+   "size": [
+    1920,
+    1080
+   ],
+   "anchor": "stretch",
+   "visual": "MenuWindow subclass (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop",
+   "text": "",
+   "consts": {
+    "Backdrop": [
+     0,
+     0,
+     0,
+     0.72
+    ]
+   },
+   "behaviour": "Open() when it is the local player's turn; Close() after a pick or timeout; the game blocks movement and shows the cursor through MenuWindow",
+   "soundOn": "cardsAppear"
+  },
+  {
+   "id": "Title",
+   "parent": "PickerWindow",
+   "size": [
+    1400,
+    90
+   ],
+   "anchor": "top center, y=-70",
+   "visual": "TMP bold uppercase white on a soft dark band",
+   "text": "{reasonTitle}",
+   "consts": {
+    "FontSize": 56,
+    "Color": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "OpeningTitle": "PICK A CARD",
+    "CampfireTitle": "CAMPFIRE LIT - PICK A CARD"
+   },
+   "behaviour": "reasonTitle depends on the session reason",
+   "soundOn": "none"
+  },
+  {
+   "id": "Subtitle",
+   "parent": "PickerWindow",
+   "size": [
+    1400,
+    40
+   ],
+   "anchor": "below Title, y=-130",
+   "visual": "TMP light grey",
+   "text": "Real ROUNDS cards from your install. {timeLeft}s",
+   "consts": {
+    "FontSize": 26,
+    "Color": [
+     0.85,
+     0.85,
+     0.85,
+     1
+    ]
+   },
+   "behaviour": "counts down pickTimeoutSeconds; at 0 a random card of the hand is taken",
+   "soundOn": "none"
+  },
+  {
+   "id": "Fan",
+   "parent": "PickerWindow",
+   "size": [
+    1700,
+    600
+   ],
+   "anchor": "center, y=-20",
+   "visual": "HorizontalLayoutGroup, middle center",
+   "text": "",
+   "consts": {
+    "Spacing": 24,
+    "SlideFromY": -400
+   },
+   "behaviour": "holds handSize Card elements; slides up over fanSlideInSeconds with cardStaggerSeconds between cards",
+   "soundOn": "none"
+  },
+  {
+   "id": "Card",
+   "parent": "Fan",
+   "size": [
+    300,
+    470
+   ],
+   "anchor": "layout",
+   "visual": "Background = ROUNDS CardBG tinted with the theme bgColor (alpha 1); Frame = ROUNDS Square 9-sliced tinted theme targetColor; rarity strip at the top",
+   "text": "",
+   "consts": {
+    "FrameWidth": 6,
+    "RarityStripHeight": 10,
+    "UncommonColor": [
+     0.33,
+     0.69,
+     0.33,
+     1
+    ],
+    "RareColor": [
+     0.86,
+     0.34,
+     0.86,
+     1
+    ],
+    "BgMinBrightness": 0.09,
+    "HoverFrameBoost": 0.25
+   },
+   "behaviour": "Button; hover: scale hoverScale and brighten the frame; click: PickMade",
+   "soundOn": "cardSwitch"
+  },
+  {
+   "id": "CardIcon",
+   "parent": "Card",
+   "size": [
+    200,
+    120
+   ],
+   "anchor": "top, y=-46",
+   "visual": "ROUNDS icon texture (CardInfo.sprite or Icons_Default), preserve aspect, tinted theme targetColor",
+   "text": "",
+   "consts": {
+    "Alpha": 0.95,
+    "Y": -46
+   },
+   "behaviour": "none",
+   "soundOn": "none"
+  },
+  {
+   "id": "CardMonogram",
+   "parent": "Card",
+   "size": [
+    200,
+    120
+   ],
+   "anchor": "top, y=-46 (same slot as CardIcon)",
+   "visual": "when ROUNDS has no icon sprite for the card: the card's first letter, huge, in the theme targetColor",
+   "text": "{firstLetter}",
+   "consts": {
+    "Y": -46,
+    "FontSize": 96,
+    "Alpha": 0.9
+   },
+   "behaviour": "none",
+   "soundOn": "none"
+  },
+  {
+   "id": "CardName",
+   "parent": "Card",
+   "size": [
+    280,
+    44
+   ],
+   "anchor": "top, y=-172",
+   "visual": "TMP bold uppercase white, auto-size",
+   "text": "{rounds.name}",
+   "consts": {
+    "FontSize": 30,
+    "MinFontSize": 18,
+    "Color": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "Y": -172
+   },
+   "behaviour": "none",
+   "soundOn": "none"
+  },
+  {
+   "id": "CardStats",
+   "parent": "Card",
+   "size": [
+    272,
+    86
+   ],
+   "anchor": "top, y=-218",
+   "visual": "TMP, one line per ROUNDS stat, amount coloured like ROUNDS's displayer",
+   "text": "{rounds.stat}  {rounds.amount}",
+   "consts": {
+    "FontSize": 16,
+    "PositiveColor": [
+     0.55,
+     0.85,
+     0.35,
+     1
+    ],
+    "NegativeColor": [
+     0.9,
+     0.35,
+     0.35,
+     1
+    ],
+    "LabelColor": [
+     0.9,
+     0.9,
+     0.9,
+     1
+    ],
+    "Y": -218
+   },
+   "behaviour": "none",
+   "soundOn": "none"
+  },
+  {
+   "id": "CardDescription",
+   "parent": "Card",
+   "size": [
+    272,
+    50
+   ],
+   "anchor": "top, y=-304",
+   "visual": "TMP italic grey",
+   "text": "{rounds.description}",
+   "consts": {
+    "FontSize": 14,
+    "Color": [
+     0.8,
+     0.8,
+     0.8,
+     1
+    ],
+    "Y": -304
+   },
+   "behaviour": "hidden when ROUNDS has no description for the card",
+   "soundOn": "none"
+  },
+  {
+   "id": "CardMountain",
+   "parent": "Card",
+   "size": [
+    284,
+    104
+   ],
+   "anchor": "bottom, y=10",
+   "visual": "dark panel with warm text",
+   "text": "ON THE MOUNTAIN\n{mountainLines}",
+   "consts": {
+    "FontSize": 14,
+    "Color": [
+     1,
+     0.9,
+     0.6,
+     1
+    ],
+    "Panel": [
+     0,
+     0,
+     0,
+     0.45
+    ],
+    "Header": "ON THE MOUNTAIN",
+    "Y": 10
+   },
+   "behaviour": "mountainLines from stats.json display strings for this card's effects",
+   "soundOn": "none"
+  },
+  {
+   "id": "WaitingBanner",
+   "parent": "root",
+   "size": [
+    700,
+    60
+   ],
+   "anchor": "top center, y=-120",
+   "visual": "dark panel, white text",
+   "text": "{playerName} is picking a card...",
+   "consts": {
+    "FontSize": 28,
+    "Panel": [
+     0,
+     0,
+     0,
+     0.6
+    ],
+    "Color": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "Template": "{0} is picking a card..."
+   },
+   "behaviour": "shown to everyone who is not picking while a session runs; not a MenuWindow (no input block)",
+   "soundOn": "none"
+  },
+  {
+   "id": "MyCardsHud",
+   "parent": "root",
+   "size": [
+    360,
+    300
+   ],
+   "anchor": "bottom left, x=20, y=160",
+   "visual": "one line per card: coloured dot in the theme colour plus the ROUNDS name",
+   "text": "{myCards}",
+   "consts": {
+    "FontSize": 18,
+    "Color": [
+     1,
+     1,
+     1,
+     0.9
+    ],
+    "Header": "YOUR ROUNDS CARDS"
+   },
+   "behaviour": "visible on the island when the player holds any card; hidden in menus",
+   "soundOn": "none"
+  },
+  {
+   "id": "Toast",
+   "parent": "root",
+   "size": [
+    900,
+    60
+   ],
+   "anchor": "top center, y=-200",
+   "visual": "dark panel, white text",
+   "text": "{message}",
+   "consts": {
+    "FontSize": 26,
+    "Panel": [
+     0,
+     0,
+     0,
+     0.6
+    ],
+    "Color": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "TookTemplate": "{0} took {1}",
+    "PhoenixTemplate": "PHOENIX! {0} got back up"
+   },
+   "behaviour": "toastSeconds notices",
+   "soundOn": "none"
+  },
+  {
+   "id": "RoundsMissingNotice",
+   "parent": "root",
+   "size": [
+    1000,
+    80
+   ],
+   "anchor": "top center, y=-200",
+   "visual": "red panel, white text",
+   "text": "PEAK x ROUNDS: ROUNDS is not installed on this PC, so no cards can be dealt. Install ROUNDS on Steam and restart.",
+   "consts": {
+    "FontSize": 26,
+    "Panel": [
+     0.4,
+     0,
+     0,
+     0.75
+    ],
+    "Color": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "ReadFailedText": "PEAK x ROUNDS: ROUNDS was found but its cards could not be read ({0}). No cards this climb."
+   },
+   "behaviour": "shown for missingNoticeSeconds when the island loads and the ROUNDS install was not found or could not be read",
+   "soundOn": "none"
+  }
+ ]
+}

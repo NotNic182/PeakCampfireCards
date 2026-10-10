@@ -1,0 +1,19 @@
+# build output
+build/
+src/PeakRounds/bin/
+src/PeakRounds/obj/
+
+# editors
+.vs/
+.vscode/
+*.user
+*.suo
+
+# python
+__pycache__/
+*.pyc
+
+# never commit secrets
+*.token
+tok
+.env
