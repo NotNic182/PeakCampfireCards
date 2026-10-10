@@ -145,6 +145,7 @@ namespace CampfireCards.Generated
     [HarmonyPatch(typeof(CharacterGrabbing), "Reach")]
     internal static class Patch_helpReach
     {
+        [HarmonyPrefix] static void Prefix(CharacterGrabbing __instance) { CampfireCards.Hooks.OnReachPrefix(__instance); }
         [HarmonyPostfix] static void Postfix(CharacterGrabbing __instance) { CampfireCards.Hooks.OnReach(__instance); }
     }
 
@@ -197,7 +198,7 @@ namespace CampfireCards.Generated
     [HarmonyPatch(typeof(Character), "GetFedItemRPC", new Type[] { typeof(int) })]
     internal static class Patch_fedItem
     {
-        [HarmonyPrefix] static void Prefix(Character __instance, int itemPhotonID) { CampfireCards.Hooks.OnFedItemPrefix(__instance, itemPhotonID); }
+        [HarmonyPrefix] static bool Prefix(Character __instance, int itemPhotonID) { return CampfireCards.Hooks.OnFedItemPrefix(__instance, itemPhotonID); }
     }
 
     [HarmonyPatch(typeof(RespawnChest), "Interact_CastFinished", new Type[] { typeof(Character) })]
@@ -279,6 +280,70 @@ namespace CampfireCards.Generated
     internal static class Patch_endGame
     {
         [HarmonyPostfix] static void Postfix() { CampfireCards.Hooks.OnRunEnded(); }
+    }
+
+    [HarmonyPatch(typeof(ThornOnMe), "GetInteractTime", new Type[] { typeof(Character) })]
+    internal static class Patch_thornInteractTime
+    {
+        [HarmonyPostfix] static void Postfix(ThornOnMe __instance, ref float __result) { CampfireCards.Hooks.OnThornInteractTime(__instance, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(ThornOnMe), "GetPopOutTime", new Type[] { typeof(bool) })]
+    internal static class Patch_thornPopOutTime
+    {
+        [HarmonyPostfix] static void Postfix(ThornOnMe __instance, ref float __result) { CampfireCards.Hooks.OnThornPopOutTime(__instance, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(Character), "ApplyPostReviveStatus", new Type[] { typeof(CharacterAfflictions) })]
+    internal static class Patch_reviveCurse
+    {
+        [HarmonyPrefix] static void Prefix(CharacterAfflictions afflictions, out float __state) { CampfireCards.Hooks.OnPostReviveStatusPrefix(afflictions, out __state); }
+        [HarmonyPostfix] static void Postfix(CharacterAfflictions afflictions, float __state) { CampfireCards.Hooks.OnPostReviveStatus(afflictions, __state); }
+    }
+
+    [HarmonyPatch(typeof(Character), "HandleDeath")]
+    internal static class Patch_carriedDeath
+    {
+        [HarmonyPrefix] static void Prefix(Character __instance, out float __state) { CampfireCards.Hooks.OnCarriedDeathPrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(Character __instance, float __state) { CampfireCards.Hooks.OnCarriedDeath(__instance, __state); }
+    }
+
+    [HarmonyPatch(typeof(Dynamite), "RPC_Explode")]
+    internal static class Patch_dynamiteSource
+    {
+        [HarmonyPrefix] static void Prefix(out CampfireCards.DynamiteSpawnState __state) { CampfireCards.Hooks.OnDynamiteSourcePrefix(out __state); }
+        [HarmonyFinalizer] static Exception Finalizer(Exception __exception, CampfireCards.DynamiteSpawnState __state) { return CampfireCards.Hooks.OnDynamiteSourceFinalizer(__exception, __state); }
+    }
+
+    [HarmonyPatch(typeof(AOE), "Explode")]
+    internal static class Patch_blastContext
+    {
+        [HarmonyPrefix] static void Prefix(AOE __instance, out bool __state) { CampfireCards.Hooks.OnBlastContextPrefix(__instance, out __state); }
+        [HarmonyFinalizer] static Exception Finalizer(Exception __exception, bool __state) { return CampfireCards.Hooks.OnBlastContextFinalizer(__exception, __state); }
+    }
+
+    [HarmonyPatch(typeof(Item), "CanUsePrimary")]
+    internal static class Patch_canEatPrimary
+    {
+        [HarmonyPostfix] static void Postfix(Item __instance, ref bool __result) { CampfireCards.Hooks.OnCanEat(__instance, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(Item), "CanUseSecondary")]
+    internal static class Patch_canEatSecondary
+    {
+        [HarmonyPostfix] static void Postfix(Item __instance, ref bool __result) { CampfireCards.Hooks.OnCanFeedCooked(__instance, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(Item), "FinishCastPrimary")]
+    internal static class Patch_eatPrimary
+    {
+        [HarmonyPrefix] static bool Prefix(Item __instance) { return CampfireCards.Hooks.OnFinishFoodCastPrefix(__instance); }
+    }
+
+    [HarmonyPatch(typeof(Item), "FinishCastSecondary")]
+    internal static class Patch_eatSecondary
+    {
+        [HarmonyPrefix] static bool Prefix(Item __instance) { return CampfireCards.Hooks.OnFinishFoodFeedPrefix(__instance); }
     }
 
 }

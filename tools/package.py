@@ -21,6 +21,11 @@ FILES = [
     (os.path.join(ROOT, 'design', 'editable', 'README.md'), 'design/editable/README.md'),
     (os.path.join(ROOT, 'docs', 'effect-feasibility.md'), 'docs/effect-feasibility.md'),
     (os.path.join(ROOT, 'docs', 'research', 'peak-api-2.5.json'), 'docs/research/peak-api-2.5.json'),
+    (os.path.join(ROOT, 'docs', 'research', 'peak-api-redesign.json'), 'docs/research/peak-api-redesign.json'),
+    (os.path.join(ROOT, 'docs', 'research', 'card-edit-review.json'), 'docs/research/card-edit-review.json'),
+    (os.path.join(ROOT, 'docs', 'card-edit-review.md'), 'docs/card-edit-review.md'),
+    (os.path.join(ROOT, 'design', 'editable', 'card-edit-review.xlsx'), 'design/editable/card-edit-review.xlsx'),
+    (os.path.join(ROOT, 'design', 'reviews', 'card-editing-submitted.xlsx'), 'design/reviews/card-editing-submitted.xlsx'),
 ]
 
 

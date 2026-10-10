@@ -83,6 +83,7 @@ namespace CampfireCards
             _batches.Clear();
             _thorns.Reset();
             _lunch.Reset();
+            _dynamiteSpawnDepth = 0; _dynamiteBlast = false;
             ResetCampfireSpawns();
         }
 
@@ -261,7 +262,7 @@ namespace CampfireCards
             if (seg != LocalCards.Biome) LocalCards.OnBiomeStarted(local, seg);
         }
 
-        /// <summary>Blood Battery and Safety Net keys (config Keys). Ignored while a menu or the card picker has focus.</summary>
+        /// <summary>Only one activation per keypress. Overlapping bindings ask the player to assign separate keys.</summary>
         private static void AbilityKeys(Character local)
         {
             var kb = UnityEngine.InputSystem.Keyboard.current;
@@ -269,8 +270,24 @@ namespace CampfireCards
             bool blocked = false;
             try { blocked = GUIManager.instance != null && (GUIManager.instance.windowBlockingInput || GUIManager.instance.wheelActive); } catch { }
             if (blocked) return;
-            TryKey(kb, Plugin.BloodBatteryKey, "BloodBattery", local);
-            TryKey(kb, Plugin.SafetyNetKey, "SafetyNet", local);
+            if (!local.data.dead && !local.data.passedOut && !local.data.fullyPassedOut)
+            {
+                var handled = new HashSet<UnityEngine.InputSystem.Key>();
+                foreach (var a in LocalCards.Manual)
+                {
+                    var key = AbilityKey(a.Card.Ability);
+                    if (key == null || !handled.Add(key.Value) || !WasPressed(kb, key)) continue;
+                    var choices = new List<Ability>();
+                    foreach (var other in LocalCards.Manual)
+                    {
+                        var otherKey = AbilityKey(other.Card.Ability);
+                        if (otherKey != null && otherKey.Value == key.Value) choices.Add(other);
+                    }
+                    if (choices.Count > 1) { Hud.Toast("These abilities share a key. Assign separate keys in the config."); break; }
+                    try { a.Activate(local); }
+                    catch (Exception e) { Plugin.Log.LogError($"{a.Card.Name} Activate: {e}"); }
+                }
+            }
             if (WasPressed(kb, Plugin.BuildScreenKey)) BuildScreen.Toggle(local);
         }
 
@@ -281,15 +298,15 @@ namespace CampfireCards
             catch { return false; }
         }
 
-        private static void TryKey(UnityEngine.InputSystem.Keyboard kb, BepInEx.Configuration.ConfigEntry<UnityEngine.InputSystem.Key> key, string ability, Character local)
+        private static BepInEx.Configuration.ConfigEntry<UnityEngine.InputSystem.Key> AbilityKey(string ability)
         {
-            if (!WasPressed(kb, key)) return;
-            foreach (var a in LocalCards.Manual)
+            switch (ability)
             {
-                if (a.Card.Ability != ability) continue;
-                try { a.Activate(local); }
-                catch (Exception e) { Plugin.Log.LogError($"{a.Card.Name} Activate: {e}"); }
-                return;
+                case "SecondWind": return Plugin.SecondWindKey;
+                case "EmergencyPurge": return Plugin.EmergencyPurgeKey;
+                case "BloodBattery": return Plugin.BloodBatteryKey;
+                case "SafetyNet": return Plugin.SafetyNetKey;
+                default: return null;
             }
         }
 

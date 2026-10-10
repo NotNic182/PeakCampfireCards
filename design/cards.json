@@ -67,7 +67,8 @@
   },
   "spawnItems": [
     "RopeSpool",
-    "Bandages"
+    "Bandages",
+    "BalloonBunch"
   ],
   "themes": {
     "ember": {
@@ -275,12 +276,12 @@
     {
       "id": 1,
       "key": "GeckoGrip",
-      "name": "Piton-Free Fingers",
+      "name": "Piton Fingers",
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Climbing tires you 12% less.",
-      "negative": "",
+      "positive": "Lose stamina 12% slower when climbing.",
+      "negative": "Sprinting stamina drains 12% faster",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -289,6 +290,13 @@
           "climbStamina",
           "mul",
           0.88,
+          "always",
+          "self"
+        ],
+        [
+          "sprintStamina",
+          "mul",
+          1.12,
           "always",
           "self"
         ]
@@ -301,7 +309,7 @@
     {
       "id": 2,
       "key": "MountainGoat",
-      "name": "Budget Scout Cannon",
+      "name": "Mini Scout Cannon",
       "rarity": "uncommon",
       "category": "climbing",
       "type": "Passive",
@@ -334,20 +342,27 @@
     {
       "id": 3,
       "key": "Surefooted",
-      "name": "Swipity, No Slippity",
+      "name": "To The Bone",
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
-      "positive": "You slip and slide 35% less.",
-      "negative": "",
+      "positive": "You take 35% less cold when climbing on blue ice.",
+      "negative": "Takes 10% longer to warm back up.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [
         [
-          "slipForce",
+          "coldRate",
           "mul",
           0.65,
+          "climbingColdSurface",
+          "self"
+        ],
+        [
+          "coldDecay",
+          "mul",
+          0.9090909090909091,
           "always",
           "self"
         ]
@@ -365,11 +380,19 @@
       "category": "climbing",
       "type": "Conditional passive",
       "positive": "Hang still on a wall to get 4 stamina back every second.",
-      "negative": "",
+      "negative": "Climbing speed is reduced by 30%",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [],
+      "mods": [
+        [
+          "climbSpeed",
+          "mul",
+          0.7,
+          "always",
+          "self"
+        ]
+      ],
       "ability": "OverhangRegen",
       "params": {
         "regenPerSecond": 0.04
@@ -384,7 +407,7 @@
       "rarity": "rare",
       "category": "climbing",
       "type": "Active movement ability",
-      "positive": "Double jump: one extra jump in mid-air, every 35 seconds.",
+      "positive": "Double jump: one extra jump in mid-air. (35 second cooldown)",
       "negative": "Each double jump makes you a bit drowsy (+7.5 Drowsy).",
       "flavor": "",
       "multiplayerOnly": false,
@@ -439,7 +462,7 @@
       "category": "climbing",
       "type": "Passive",
       "positive": "Falls hurt 25% less.",
-      "negative": "",
+      "negative": "Dynamite explosions deal 3 times as much Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -448,6 +471,13 @@
           "fallInjury",
           "mul",
           0.75,
+          "always",
+          "self"
+        ],
+        [
+          "dynamiteInjury",
+          "mul",
+          3,
           "always",
           "self"
         ]
@@ -460,12 +490,12 @@
     {
       "id": 8,
       "key": "LedgeDancer",
-      "name": "Myres' Long Arm",
+      "name": "Daddy",
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
       "positive": "Grab walls from 20% farther away.",
-      "negative": "",
+      "negative": "Stamina drains 10% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -474,6 +504,13 @@
           "grabReach",
           "mul",
           1.2,
+          "always",
+          "self"
+        ],
+        [
+          "staminaUsage",
+          "mul",
+          1.1,
           "always",
           "self"
         ]
@@ -486,7 +523,7 @@
     {
       "id": 9,
       "key": "DeepLungs",
-      "name": "Scout Cookie Addiction",
+      "name": "Cookie Addiction",
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Passive",
@@ -523,7 +560,7 @@
       "rarity": "rare",
       "category": "stamina",
       "type": "Automatic ability",
-      "positive": "Once per biome, when your stamina drops below 20, you get 25 back.",
+      "positive": "Below 20 stamina, press V to restore 25 stamina (5-minute cooldown).",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -532,7 +569,8 @@
       "ability": "SecondWind",
       "params": {
         "threshold": 0.2,
-        "restore": 0.25
+        "restore": 0.25,
+        "cooldown": 300
       },
       "theme": "pine",
       "art": "star"
@@ -545,7 +583,7 @@
       "category": "stamina",
       "type": "Passive",
       "positive": "Sprinting tires you 15% less.",
-      "negative": "",
+      "negative": "Climbing uses 15% more stamina.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -554,6 +592,13 @@
           "sprintStamina",
           "mul",
           0.85,
+          "always",
+          "self"
+        ],
+        [
+          "climbStamina",
+          "mul",
+          1.15,
           "always",
           "self"
         ]
@@ -566,12 +611,12 @@
     {
       "id": 12,
       "key": "QuickRecovery",
-      "name": "Scout's Microbreak",
+      "name": "HOLD",
       "rarity": "common",
       "category": "stamina",
       "type": "Passive",
       "positive": "Stamina starts coming back 0.3 seconds sooner.",
-      "negative": "",
+      "negative": "Stamina bar shrinks 15%",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -580,6 +625,13 @@
           "regenDelay",
           "add",
           -0.3,
+          "always",
+          "self"
+        ],
+        [
+          "maxStamina",
+          "add",
+          -0.15,
           "always",
           "self"
         ]
@@ -592,12 +644,12 @@
     {
       "id": 13,
       "key": "QuietBreathing",
-      "name": "Gloom Meditation",
+      "name": "Meditation",
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Conditional passive",
       "positive": "Crouch and stay still to get stamina back 35% faster.",
-      "negative": "",
+      "negative": "Nothing. You're already crouched down staying still",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -618,7 +670,7 @@
     {
       "id": 14,
       "key": "CardioTax",
-      "name": "Myres Made Me Run",
+      "name": "I'm getting Scoutmastered",
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Passive",
@@ -651,7 +703,7 @@
     {
       "id": 15,
       "key": "PulseClimber",
-      "name": "Endurance Badge Grind",
+      "name": "Endurance Badge",
       "rarity": "rare",
       "category": "stamina",
       "type": "Cyclic conditional passive",
@@ -684,28 +736,26 @@
       "rarity": "common",
       "category": "stamina",
       "type": "Campfire-triggered passive",
-      "positive": "Every time a campfire is lit, get 15 extra (yellow) stamina.",
-      "negative": "",
+      "positive": "Every time a campfire is lit, all your Hunger clears.",
+      "negative": "You can't eat cooked food, even when a teammate feeds you.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [],
-      "ability": "CampfireBonus",
-      "params": {
-        "bonus": 0.15
-      },
+      "ability": "CampfireMeal",
+      "params": {},
       "theme": "pine",
       "art": "flame"
     },
     {
       "id": 17,
       "key": "DesertBlood",
-      "name": "Cool Cucumber Complex",
+      "name": "Cool, Calm, and Collected.",
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "You heat up 50% slower.",
-      "negative": "You get cold 30% faster.",
+      "positive": "You burn 50% slower.",
+      "negative": "You freeze 30% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -733,12 +783,12 @@
     {
       "id": 18,
       "key": "WinterCoat",
-      "name": "Bundled Up Badge",
+      "name": "Just hot.",
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "You get cold 50% slower.",
-      "negative": "You heat up 30% faster.",
+      "positive": "You freeze 50% slower.",
+      "negative": "You burn 30% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -771,7 +821,7 @@
       "category": "environment",
       "type": "Passive",
       "positive": "Poison builds up 35% slower.",
-      "negative": "",
+      "negative": "You burn and freeze 25% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -780,6 +830,20 @@
           "poisonRate",
           "mul",
           0.65,
+          "always",
+          "self"
+        ],
+        [
+          "heatRate",
+          "mul",
+          1.25,
+          "always",
+          "self"
+        ],
+        [
+          "coldRate",
+          "mul",
+          1.25,
           "always",
           "self"
         ]
@@ -823,7 +887,7 @@
       "category": "environment",
       "type": "Passive",
       "positive": "New thorns count 40% less.",
-      "negative": "",
+      "negative": "Takes twice as long to remove the thorns.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -832,6 +896,13 @@
           "thornsRate",
           "mul",
           0.6,
+          "always",
+          "self"
+        ],
+        [
+          "thornRemovalTime",
+          "mul",
+          2,
           "always",
           "self"
         ]
@@ -844,12 +915,12 @@
     {
       "id": 22,
       "key": "HeatShedding",
-      "name": "Aloe Aftercare",
+      "name": "Aloe",
       "rarity": "uncommon",
       "category": "environment",
       "type": "Conditional passive",
       "positive": "Once you're out of the heat, it wears off 60% faster.",
-      "negative": "",
+      "negative": "You burn 15% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -858,6 +929,13 @@
           "heatDecay",
           "mul",
           1.6,
+          "always",
+          "self"
+        ],
+        [
+          "heatRate",
+          "mul",
+          1.15,
           "always",
           "self"
         ]
@@ -870,12 +948,12 @@
     {
       "id": 23,
       "key": "Frostwalker",
-      "name": "Heat Pack Afterglow",
+      "name": "Heat Pack",
       "rarity": "uncommon",
       "category": "environment",
       "type": "Conditional passive",
       "positive": "Once you're out of the cold, it wears off 60% faster.",
-      "negative": "",
+      "negative": "You freeze 15% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -884,6 +962,13 @@
           "coldDecay",
           "mul",
           1.6,
+          "always",
+          "self"
+        ],
+        [
+          "coldRate",
+          "mul",
+          1.15,
           "always",
           "self"
         ]
@@ -900,8 +985,8 @@
       "rarity": "rare",
       "category": "environment",
       "type": "Conditional passive",
-      "positive": "While you have 20+ Poison or Spores, climbing tires you 30% less.",
-      "negative": "Poison and Spores wear off 30% slower.",
+      "positive": "Above 20 Poison, climbing uses 40% less stamina.",
+      "negative": "Poison wears off 30% slower.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -909,19 +994,12 @@
         [
           "climbStamina",
           "mul",
-          0.7,
-          "poisonOrSpores20",
+          0.6,
+          "poisonAbove20",
           "self"
         ],
         [
           "poisonDecay",
-          "mul",
-          0.7,
-          "always",
-          "self"
-        ],
-        [
-          "sporesDecay",
           "mul",
           0.7,
           "always",
@@ -936,33 +1014,29 @@
     {
       "id": 25,
       "key": "BonePlating",
-      "name": "BingBong Safety Briefing",
+      "name": "BingBong",
       "rarity": "common",
       "category": "survival",
       "type": "Passive",
-      "positive": "Hits that aren't falls hurt 20% less.",
+      "positive": "Every 10 minutes while alive, gain Infinite Stamina, Invincibility or Low Gravity for 20 seconds.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "nonFallInjury",
-          "mul",
-          0.8,
-          "always",
-          "self"
-        ]
-      ],
-      "ability": "",
-      "params": {},
+      "mods": [],
+      "ability": "MushroomCycle",
+      "params": {
+        "interval": 600,
+        "duration": 20,
+        "lowGravity": 1
+      },
       "theme": "berry",
       "art": "shield"
     },
     {
       "id": 26,
       "key": "EfficientMedic",
-      "name": "Medkit Merit Badge",
+      "name": "Tara",
       "rarity": "uncommon",
       "category": "survival",
       "type": "Passive",
@@ -988,12 +1062,12 @@
     {
       "id": 27,
       "key": "PainEngine",
-      "name": "Walk It Off, Scout",
+      "name": "Walk It Off",
       "rarity": "uncommon",
       "category": "survival",
       "type": "Conditional passive",
-      "positive": "While you have 20+ Injury, climbing and sprinting tire you 25% less.",
-      "negative": "Every injury hurts 20% more.",
+      "positive": "While you have 20+ Injury, climbing and sprinting use 25% less stamina .",
+      "negative": "Every injury hurts 10% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1015,7 +1089,7 @@
         [
           "allInjury",
           "mul",
-          1.2,
+          1.1,
           "always",
           "self"
         ]
@@ -1032,7 +1106,7 @@
       "rarity": "rare",
       "category": "survival",
       "type": "Automatic ability",
-      "positive": "Once per biome, when Poison, Spores or Drowsy reaches 35, 20 of it clears at once.",
+      "positive": "Once per biome, press K when Poison, Spores or Drowsy reaches 35 to clear 20 of the worst one.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1049,20 +1123,18 @@
     {
       "id": 29,
       "key": "PhoenixClause",
-      "name": "BingBong Flight Insurance",
+      "name": "BingBong Parachute",
       "rarity": "legendary",
       "category": "survival",
       "type": "Automatic revival",
       "positive": "Once per run, a fall that would knock you out puts you back on safe ground instead.",
-      "negative": "You come back with 40 Injury and skip your next card pick.",
+      "negative": "If used, prevents the next card pick.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [],
       "ability": "PhoenixClause",
-      "params": {
-        "injury": 0.4
-      },
+      "params": {},
       "theme": "berry",
       "art": "flame"
     },
@@ -1099,16 +1171,16 @@
       "rarity": "rare",
       "category": "survival",
       "type": "Passive",
-      "positive": "Curse builds up 70% slower.",
+      "positive": "Reviving does not add Curse.",
       "negative": "Every injury hurts 25% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [
         [
-          "curseRate",
+          "reviveCurse",
           "mul",
-          0.3,
+          0,
           "always",
           "self"
         ],
@@ -1128,7 +1200,7 @@
     {
       "id": 32,
       "key": "CleansingRitual",
-      "name": "Tenacity Tincture",
+      "name": "Mini  Tenacity",
       "rarity": "uncommon",
       "category": "survival",
       "type": "Item-use triggered",
@@ -1152,28 +1224,21 @@
       "rarity": "rare",
       "category": "inventory",
       "type": "Passive",
-      "positive": "One extra pocket.",
-      "negative": "Everything you carry is 35% heavier.",
+      "positive": "All carried weight is cut in half, including your backpack and a carried scout.",
+      "negative": "Your third pocket is locked for the rest of the run.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [
         [
-          "invSlots",
-          "add",
-          1,
-          "always",
-          "self"
-        ],
-        [
-          "itemWeight",
+          "totalWeight",
           "mul",
-          1.35,
+          0.5,
           "always",
           "self"
         ]
       ],
-      "ability": "PackRat",
+      "ability": "PocketTradeoff",
       "params": {},
       "theme": "sun",
       "art": "rock"
@@ -1185,16 +1250,23 @@
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Passive",
-      "positive": "Everything you carry is 20% lighter.",
-      "negative": "",
+      "positive": "Items in your hands weigh 25% less.",
+      "negative": "Items inside your backpack weigh 10% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [
         [
-          "itemWeight",
+          "heldItemWeight",
           "mul",
-          0.8,
+          0.75,
+          "always",
+          "self"
+        ],
+        [
+          "backpackItemWeight",
+          "mul",
+          1.1,
           "always",
           "self"
         ]
@@ -1238,11 +1310,19 @@
       "category": "inventory",
       "type": "Consumption-triggered",
       "positive": "Once per biome, the first cooked food you eat isn't used up.",
-      "negative": "",
+      "negative": "Uncooked food cures hunger 50% less.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [],
+      "mods": [
+        [
+          "uncookedFoodHunger",
+          "mul",
+          0.5,
+          "always",
+          "self"
+        ]
+      ],
       "ability": "LuckyLunch",
       "params": {},
       "theme": "sun",
@@ -1279,27 +1359,27 @@
     {
       "id": 38,
       "key": "RopeBaron",
-      "name": "Lord of the Spools",
+      "name": "Balright",
       "rarity": "rare",
       "category": "inventory",
       "type": "Campfire-triggered",
-      "positive": "A free rope spool appears for you at each new campfire.",
-      "negative": "Climbing tires you 8% more.",
+      "positive": "A Balloon Bunch appears for you at the next campfire (once per run).",
+      "negative": "Every stamina use costs 10% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [
         [
-          "climbStamina",
+          "staminaUsage",
           "mul",
-          1.08,
+          1.1,
           "always",
           "self"
         ]
       ],
-      "ability": "CampfireSpawn",
+      "ability": "NextCampfireSpawn",
       "params": {
-        "item": 0
+        "item": 2
       },
       "theme": "sun",
       "art": "rope"
@@ -1332,14 +1412,18 @@
       "category": "inventory",
       "type": "One-time acquisition",
       "positive": "Get 2 more random cards right now.",
-      "negative": "Your third pocket is locked for the rest of the run.",
+      "negative": "Gain one random, permanent drawback: +15% climbing cost, +15% sprint cost, +20% Injury or +20% Hunger.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": true,
       "mods": [],
       "ability": "DoubleDeal",
       "params": {
-        "bonusCards": 2
+        "bonusCards": 2,
+        "climbPenalty": 1.15,
+        "sprintPenalty": 1.15,
+        "injuryPenalty": 1.2,
+        "hungerPenalty": 1.2
       },
       "theme": "sun",
       "art": "star"
@@ -1351,7 +1435,7 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "Near a teammate (6 m), climbing tires you both 15% less.",
+      "positive": "Climbing near a teammate uses 15% less stamina for you both.",
       "negative": "Climbing alone tires you 15% more.",
       "flavor": "",
       "multiplayerOnly": true,
@@ -1389,7 +1473,7 @@
     {
       "id": 42,
       "key": "FieldMedic",
-      "name": "Tara's First Aid Badge",
+      "name": "First Aid Badge",
       "rarity": "uncommon",
       "category": "team",
       "type": "Passive",
@@ -1427,7 +1511,7 @@
       "category": "team",
       "type": "Passive",
       "positive": "Carrying a scout feels 35% lighter.",
-      "negative": "",
+      "negative": "While you carry a passed-out scout, their paused death timer drains at 15% of normal speed (or 15% faster if already draining).",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1436,6 +1520,13 @@
           "carryScoutWeight",
           "mul",
           0.65,
+          "always",
+          "self"
+        ],
+        [
+          "carriedDeathRate",
+          "mul",
+          1.15,
           "always",
           "self"
         ]
@@ -1453,7 +1544,7 @@
       "category": "team",
       "type": "Conditional passive",
       "positive": "Huddling warms you 35% more, from 35% farther away.",
-      "negative": "",
+      "negative": "With no teammate within 6 m, you get cold 20% faster.",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1464,10 +1555,19 @@
           1.35,
           "always",
           "self"
+        ],
+        [
+          "coldRate",
+          "mul",
+          1.2,
+          "noTeammateNear",
+          "self"
         ]
       ],
       "ability": "",
-      "params": {},
+      "params": {
+        "radius": 6
+      },
       "theme": "sky",
       "art": "flame"
     },
@@ -1478,7 +1578,7 @@
       "rarity": "rare",
       "category": "team",
       "type": "Revival-triggered",
-      "positive": "The first time you revive a teammate in each biome, you both get 20 extra (yellow) stamina.",
+      "positive": "The first time you revive a teammate in each biome, you both get full extra stamina bar.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
@@ -1486,7 +1586,7 @@
       "mods": [],
       "ability": "HerosArrival",
       "params": {
-        "bonus": 0.2
+        "bonus": 1
       },
       "theme": "sky",
       "art": "star"
@@ -1494,12 +1594,12 @@
     {
       "id": 46,
       "key": "LongArm",
-      "name": "Long-Distance Uppies",
+      "name": "You're alright, you're alright",
       "rarity": "common",
       "category": "team",
       "type": "Passive",
       "positive": "Pull teammates up from 30% farther away.",
-      "negative": "",
+      "negative": "Starting a teammate pull costs you 10 stamina (once per reach).",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1512,8 +1612,10 @@
           "self"
         ]
       ],
-      "ability": "",
-      "params": {},
+      "ability": "HelpCost",
+      "params": {
+        "stamina": 0.1
+      },
       "theme": "sky",
       "art": "rope"
     },
@@ -1555,7 +1657,7 @@
       "category": "team",
       "type": "Proximity aura",
       "positive": "Teammates near you (6 m) get stamina back 12% faster.",
-      "negative": "",
+      "negative": "With no teammate within 6 m, every stamina use costs you 10% more.",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1566,6 +1668,13 @@
           1.12,
           "always",
           "team"
+        ],
+        [
+          "staminaUsage",
+          "mul",
+          1.1,
+          "noTeammateNear",
+          "self"
         ]
       ],
       "ability": "",
@@ -1583,7 +1692,7 @@
       "category": "mutation",
       "type": "Passive",
       "positive": "Sprint 35% faster and jump 25% higher.",
-      "negative": "Falls hurt 80% more.",
+      "negative": "Falls hurt 40% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1605,7 +1714,7 @@
         [
           "fallInjury",
           "mul",
-          1.8,
+          1.4,
           "always",
           "self"
         ]
@@ -1622,8 +1731,8 @@
       "rarity": "rare",
       "category": "mutation",
       "type": "Acquisition and campfire triggered",
-      "positive": "Get 30 extra (yellow) stamina now, and 20 more at every campfire after.",
-      "negative": "Get 10 Curse now, and 5 more at every campfire after.",
+      "positive": "Get 30 extra stamina now, and 20 more at every campfire after.",
+      "negative": "Get 10 Curse now, and 2 more at every campfire after.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1633,7 +1742,7 @@
         "bonusNow": 0.3,
         "bonusFire": 0.2,
         "curseNow": 0.1,
-        "curseFire": 0.05
+        "curseFire": 0.02
       },
       "theme": "ember",
       "art": "star"
@@ -1645,7 +1754,7 @@
       "rarity": "uncommon",
       "category": "mutation",
       "type": "Random biome-triggered passive",
-      "positive": "Everything you carry is 10% lighter. In each biome, a 65% chance of 25 extra (yellow) stamina.",
+      "positive": "Everything you carry is 10% lighter. In each biome, a 65% chance of 25 extra stamina.",
       "negative": "Otherwise, you take 20 Injury.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1675,8 +1784,8 @@
       "rarity": "legendary",
       "category": "mutation",
       "type": "Manually activated ability",
-      "positive": "Once per biome, press B for 60 extra (yellow) stamina.",
-      "negative": "Using it costs you 25 Injury.",
+      "positive": "Once per biome, press B for 60 extra stamina.",
+      "negative": "Using it costs you 15 Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1684,7 +1793,7 @@
       "ability": "BloodBattery",
       "params": {
         "bonus": 0.6,
-        "injury": 0.25
+        "injury": 0.15
       },
       "theme": "ember",
       "art": "droplet"
@@ -1749,7 +1858,7 @@
       "category": "mutation",
       "type": "Passive",
       "positive": "Your stamina bar is 40 longer.",
-      "negative": "Every injury hurts 75% more.",
+      "negative": "Every injury hurts 50% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1764,7 +1873,7 @@
         [
           "allInjury",
           "mul",
-          1.75,
+          1.5,
           "always",
           "self"
         ]
@@ -1912,7 +2021,7 @@
       "category": "wildcard",
       "type": "Passive",
       "positive": "You turn to stone 35% slower.",
-      "negative": "",
+      "negative": "Fall damage hurts 15% more",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1921,6 +2030,13 @@
           "petrifyRate",
           "mul",
           0.65,
+          "always",
+          "self"
+        ],
+        [
+          "fallInjury",
+          "mul",
+          1.15,
           "always",
           "self"
         ]
@@ -1933,7 +2049,7 @@
     {
       "id": 62,
       "key": "MountainsBargain",
-      "name": "Myres' Fine Print",
+      "name": "Fine Print",
       "rarity": "legendary",
       "category": "wildcard",
       "type": "Acquisition-triggered",
@@ -1961,7 +2077,7 @@
     {
       "id": 63,
       "key": "MountainsHeir",
-      "name": "Myres' Favorite Scout",
+      "name": "Scoutmaster",
       "rarity": "mythic",
       "category": "mythic",
       "type": "Permanent Mythic passive",

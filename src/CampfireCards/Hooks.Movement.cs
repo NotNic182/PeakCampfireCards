@@ -57,8 +57,8 @@ namespace CampfireCards
         /// </summary>
         public static bool OnUseStaminaPrefix(Character __instance, ref float usage, ref bool __result)
         {
-            if (usage <= 0f || _climbCtx == null || _climbCtx != __instance || !Mine(__instance)) return true;
-            usage *= Effects.Local[Channel.climbStamina];
+            if (usage <= 0f || !Mine(__instance)) return true;
+            usage *= Core.StatComposites.StaminaCost(Effects.Local, _climbCtx == __instance && _climbDepth > 0);
             if (usage <= 0f)
             {
                 __result = true;
@@ -68,6 +68,24 @@ namespace CampfireCards
         }
 
         // ------------------------------------------------------------------ reach
+        public static void OnReachPrefix(CharacterGrabbing __instance)
+        {
+            var helper = GrabbingCharacter(__instance);
+            if (!Mine(helper) || !helper.data.isReaching || helper.data.dead || helper.data.passedOut) return;
+            var cost = LocalCards.Get<Ability_HelpCost>();
+            if (cost == null) return;
+            float reach = 4f * Effects.Local[Channel.helpReach];
+            foreach (var target in Character.AllCharacters)
+            {
+                if (target == null || target == helper || target.isBot || target.data.dead) continue;
+                if (Vector3.Distance(helper.Center, target.Center) > reach) continue;
+                if (Vector3.Angle(helper.data.lookDirection, target.Center - helper.Center) > 60f) continue;
+                if (!CharacterGrabbing.TargetCanBeHelped(target, helper)) continue;
+                cost.OnPull(helper);
+                return;
+            }
+        }
+
         /// <summary>hooks.json wallReach: grabReach lengthens the wall-attach ray (vanilla 1.25 m from the camera).</summary>
         public static void OnTryWallClimbPrefix(CharacterClimbing __instance, ref float raycastDistance)
         {

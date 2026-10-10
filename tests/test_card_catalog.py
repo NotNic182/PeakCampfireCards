@@ -30,7 +30,7 @@ class CardCatalogTests(unittest.TestCase):
         self.assertEqual(self.rows[0]['name'], result['rows'][0]['name'])
         self.assertEqual(self.rows[0]['benefit'], result['rows'][0]['positive'])
         self.assertEqual(self.sheet['rows'][0]['mods'], result['rows'][0]['mods'])
-        self.assertEqual([], suggestions)
+        self.assertEqual([('SporeLungs', next(r for r in self.rows if r['key'] == 'SporeLungs')['requested_effects'])], suggestions)
 
     def test_unchanged_catalog_does_not_change_design_or_gameplay(self):
         result, _ = catalog.import_text(self.sheet, self.rows)
@@ -50,12 +50,13 @@ class CardCatalogTests(unittest.TestCase):
         self.rows[0]['requested_effects'] = 'Half size, double stamina, fragile to falling rocks'
         result, suggestions = catalog.import_text(self.sheet, self.rows)
         self.assertEqual(self.sheet, result)
-        self.assertEqual([(self.rows[0]['key'], self.rows[0]['requested_effects'])], suggestions)
+        self.assertIn((self.rows[0]['key'], self.rows[0]['requested_effects']), suggestions)
+        self.assertIn('SporeLungs', [key for key, _ in suggestions])
 
-    def test_disabled_unimplemented_card_is_visible(self):
+    def test_redesigned_inventory_card_reports_upgrade_behavior(self):
         pack_rat = next(r for r in self.rows if r['key'] == 'PackRat')
-        self.assertEqual('no', pack_rat['enabled_by_default'])
-        self.assertIn('not implemented', pack_rat['notes'])
+        self.assertEqual('yes', pack_rat['enabled_by_default'])
+        self.assertIn('previous Enabled=false is preserved', pack_rat['notes'])
 
 
 if __name__ == '__main__': unittest.main()

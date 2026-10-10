@@ -22,7 +22,12 @@ string Signature(MethodDefinition m) => string.Join(",", m.Parameters.Select(p =
 bool HasMember(string type, string member)
 {
     var t = Find(type);
-    return t != null && (t.Fields.Any(f => f.Name == member) || t.Properties.Any(p => p.Name == member) || t.Methods.Any(m => m.Name == member));
+    while (t != null)
+    {
+        if (t.Fields.Any(f => f.Name == member) || t.Properties.Any(p => p.Name == member) || t.Methods.Any(m => m.Name == member)) return true;
+        t = t.BaseType == null ? null : Find(t.BaseType.FullName);
+    }
+    return false;
 }
 object Capability(string name, string caveat, params (string type, string member)[] needs)
 {
@@ -38,6 +43,14 @@ var capabilities = new[]
     Capability("Immediate death / very large Injury", "These are different outcomes: Injury can cause a pass-out; ghost death must use PEAK's owner/network death flow. Not invoked by this probe.", ("Character", "DieInstantlyLocal"), ("Character", "RPCA_Die"), ("CharacterAfflictions", "AddStatus")),
     Capability("Custom gravity / fall control", "Rigid-body changes require live climbing, rope, carry and network checks; no gravity card is installed.", ("CharacterRagdoll", "rigidbodies"), ("Bodypart", "Rig")),
     Capability("Event-driven tradeoffs", "Existing ability handlers can combine these callbacks; every new trigger still needs logic and balancing.", ("Campfire", "Light_Rpc"), ("Character", "AddExtraStamina"), ("Character", "AddStamina"), ("CharacterAfflictions", "SubtractStatus")),
+    Capability("Cold-applying climbing surfaces", "The surface status flag identifies cold-emitting walls; visual blue-ice asset coverage requires a 2.6.b playtest.", ("CharacterData", "climbMod"), ("ClimbModifierSurface", "applyStatus"), ("ClimbModifierSurface", "statusType")),
+    Capability("Thorn extraction duration", "Both native interaction time methods are hooked; live UI timing and teammate extraction need testing.", ("ThornOnMe", "isThorn"), ("ThornOnMe", "character"), ("ThornOnMe", "GetInteractTime"), ("ThornOnMe", "GetPopOutTime")),
+    Capability("Dynamite damage provenance", "Original code tags AOEs created by a dynamite RPC and scopes Injury scaling during their explosions. Chain reactions need runtime checks.", ("Dynamite", "RPC_Explode"), ("AOE", "Explode")),
+    Capability("Revive-only Curse prevention", "Scales only new Curse from ApplyPostReviveStatus; revival routes and other Curse sources need live coverage.", ("Character", "ApplyPostReviveStatus"), ("CharacterAfflictions", "SetStatus")),
+    Capability("Carried scout death progress", "Scales observed positive native timer progress, preserving resets and pauses. The carrier is inspected on the victim's client.", ("CharacterData", "carrier"), ("CharacterData", "deathTimer"), ("Character", "HandleDeath")),
+    Capability("Timed native mushroom powers", "Native add/remove and serialization remain responsible for buff lifetime and sync; overlap with consumed buffs needs a playtest.", ("CharacterAfflictions", "AddAffliction"), ("CharacterAfflictions", "HasAfflictionType"), ("Affliction_InfiniteStamina", "climbDelay"), ("Affliction_Invincibility", "totalTime"), ("Affliction_LowGravity", "lowGravAmount")),
+    Capability("Cooked food rejection", "Owner cast and recipient RPC paths are checked. Food classification and feeding consumption order still need a live test.", ("Item", "CanUsePrimary"), ("Item", "CanUseSecondary"), ("Item", "FinishCastPrimary"), ("Item", "FinishCastSecondary"), ("Character", "GetFedItemRPC")),
+    Capability("Native Balloon Bunch reward", "TryGetItem metadata does not prove the prefab exists. Published item catalogs list BalloonBunch; spawn placement is still untested.", ("ItemDatabase", "TryGetItem")),
 };
 var hookChecks = new List<object>();
 int missingHooks = 0;

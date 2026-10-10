@@ -193,6 +193,11 @@ def gen_hooks(hooks):
             ps = split_params(post)
             call = ', '.join(m + n for _, m, n in ps)
             lines.append('        [HarmonyPostfix] static void Postfix(%s) { CampfireCards.Hooks.%s(%s); }' % (post, r['handler'], call))
+        final = r.get('finalizerArgs', '')
+        if final:
+            ps = split_params(final)
+            call = ', '.join(m + n for _, m, n in ps)
+            lines.append('        [HarmonyFinalizer] static Exception Finalizer(%s) { return CampfireCards.Hooks.%sFinalizer(%s); }' % (final, r['handler'], call))
         lines.append('    }')
         lines.append('')
     lines.append('}')

@@ -17,8 +17,13 @@ FIELDS = ['id', 'key', 'rarity', 'category', 'enabled_by_default', 'name', 'bene
           'current_ability', 'current_parameters']
 TEXT_FIELDS = {'name': 'name', 'benefit': 'positive', 'drawback': 'negative', 'flavor': 'flavor'}
 NOTES = {
-    'PackRat': 'DISABLED: extra pocket is not implemented. If enabled, only the 35% weight penalty works.',
-    'DoubleDeal': 'Pocket lock keeps items already in the pocket; it blocks new use of that pocket.',
+    'PackRat': 'Now halves total weight and blocks new items in the third pocket; existing items remain retrievable. Enabled by default on a fresh config; previous Enabled=false is preserved.',
+    'DoubleDeal': 'Two bonus cards and one permanent random penalty. The selected penalty is shown in Current Build and retained in state sync.',
+    'SporeLungs': 'Requested Mandrake/Zombie immunity plus next-biome zombie spawn is pending. The existing spores resistance remains; see docs/card-edit-review.md.',
+    'BonePlating': 'Native timed Infinite Stamina, Invincibility or Low Gravity. Low Gravity is floating, not free flight. Ghost time pauses the ten-minute clock.',
+    'SecondWind': 'Manual V; below 20 stamina, restore 25, five-minute cooldown. Key configurable.',
+    'EmergencyPurge': 'Manual K; clear 20 from the worst Poison/Spores/Drowsy status at 35+, once per biome. Key configurable.',
+    'BloodBattery': 'Manual B; spend 15 Injury for 60 bonus stamina, once per biome. Key configurable.',
     'LuckyLunch': 'Preserved food stays in hand; no peel is spawned for the preserved use.',
     'EfficientMedic': 'Item healing only; healing amulet and healing dart are not scaled.',
     'FieldMedic': 'Item healing only; healing amulet and healing dart are not scaled.',
@@ -35,11 +40,13 @@ def catalog(sheet):
     for c in sheet['rows']:
         row = {field: '' for field in FIELDS}
         row.update(id=c['id'], key=c['key'], rarity=c['rarity'], category=c['category'],
-                   enabled_by_default='no' if c['key'] == 'PackRat' else 'yes',
+                   enabled_by_default='yes',
                    name=c['name'], benefit=c['positive'], drawback=c['negative'],
                    flavor=c.get('flavor', ''), notes=NOTES.get(c['key'], ''),
                    current_modifiers=json.dumps(c['mods'], ensure_ascii=False),
                    current_ability=c['ability'], current_parameters=json.dumps(c['params'], ensure_ascii=False))
+        if c['key'] == 'SporeLungs':
+            row['requested_effects'] = 'Pending paired replacement: Mandrakes and Zombies do not affect you; a Zombie spawns somewhere random in the next biome.'
         rows.append(row)
     return rows
 
@@ -58,12 +65,12 @@ def write_workbook(rows, path):
     wb = Workbook()
     guide = wb.active; guide.title = 'Read me'
     instructions = [
-        ('Campfire Cards — edit and send back', 'PEAK target: 2.6.b. Source: design/cards.json, mod 0.5.1. All 64 cards are included.'),
+        ('Campfire Cards — edit and send back', 'PEAK target: 2.6.b. Source: design/cards.json, mod 0.6.0. All 64 cards are included. See card-edit-review.xlsx for your submitted requests and their implementation status.'),
         ('Edit the blue columns on Cards', 'Name, Benefit, Drawback, Flavor, Requested effects. Existing text is copied exactly from the mod.'),
         ('Changing gameplay', 'Write mechanics in plain English in Requested effects, including numbers, trigger, duration, and drawback. Text edits alone do not change gameplay.'),
         ('Keep these unchanged', 'ID and Key identify the card for reimport. Rarity, Category and Enabled by default are reference fields.'),
         ('No drawback', 'Leave Drawback blank; the game shows its standard no-drawback message.'),
-        ('Current implementation', 'Notes flag known limitations. Current code shows the actual modifiers, ability handler and parameters. PackRat is disabled by default.'),
+        ('Current implementation', 'Notes flag known limitations. Current code shows the actual modifiers, ability handler and parameters. Existing Enabled settings are preserved during upgrade.'),
         ('Numbers in the code', 'Multiplier 0.8 = 20% less, 1.3 = 30% more. Stamina/status amounts 0.1 = 10 game units; cooldowns/delays are seconds, radii metres, chance 0.65 = 65%.'),
         ('New ideas', 'Use New ideas for new card concepts. See docs/effect-feasibility.md for supported effects and what still needs a playtest.'),
         ('Return the file', 'Save as .xlsx and send it back. CSV is also provided for Excel, Sheets, LibreOffice or a text editor.'),

@@ -142,6 +142,10 @@
     {
      "name": "sessionId",
      "type": "int"
+    },
+    {
+     "name": "penaltyVariants",
+     "type": "byte[]"
     }
    ],
    "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card)",
@@ -404,6 +408,40 @@
    ],
    "purpose": "the host removes a scout who died before choosing; every client advances the session without granting a card; stale and repeated skips do nothing",
    "handler": "OnPickSkipped"
+  },
+  {
+   "code": 108,
+   "name": "CardPenalty",
+   "sender": "the card owner",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "actor",
+     "type": "int"
+    },
+    {
+     "name": "variant",
+     "type": "byte"
+    }
+   ],
+   "purpose": "Clown Luggage Special chooses one permanent penalty; its first valid choice is retained and included in state sync.",
+   "handler": "OnCardPenalty"
+  },
+  {
+   "code": 109,
+   "name": "CardRewardUsed",
+   "sender": "host",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "actor",
+     "type": "int"
+    }
+   ],
+   "purpose": "The host spawned the one-time Balloon Bunch; retain the used bit in pickFlags for state sync and host migration.",
+   "handler": "OnCardRewardUsed"
   }
  ]
 }
