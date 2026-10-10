@@ -1,0 +1,107 @@
+{
+  "_sheet": "Card art motifs. One row = one motif a card can use (cards.json art column). Each motif is a stack of layers drawn in the card's art window (260x150, origin at its centre, y up). Shapes are generated in code (no image files); colours come from the card's theme. Generated/ArtTable.cs gets one ArtMotif per row.",
+  "_columns": {
+    "id": "motif id referenced by cards.json",
+    "description": "what it should read as",
+    "layers": "ordered back to front; each {shape, color, size:[w,h], pos:[x,y], rot, anim, amp, speed, phase, alpha}"
+  },
+  "shapes": ["circle", "ring", "triangle", "diamond", "star", "spark", "drop", "flame", "chevron", "crescent", "wave", "rounded", "plus", "shield"],
+  "colors": ["frame", "accent", "bg", "white", "dark"],
+  "anims": {
+    "none": "static",
+    "bob": "moves up and down by amp px, speed cycles/s",
+    "slide": "moves left and right by amp px, speed cycles/s",
+    "spin": "rotates speed degrees/s",
+    "pulse": "scale 1 +- amp, speed cycles/s",
+    "drift": "rises amp px over 1/speed s then restarts, fading out (negative amp falls)",
+    "flicker": "fast irregular scale and alpha wobble of size amp",
+    "orbit": "circles its pos at radius amp, speed cycles/s",
+    "sway": "rotates +- amp degrees, speed cycles/s"
+  },
+  "rows": [
+    {"id": "peak", "description": "three mountains under a bobbing sun", "layers": [
+      {"shape": "circle", "color": "accent", "size": [40, 40], "pos": [70, 42], "rot": 0, "anim": "bob", "amp": 4, "speed": 0.4, "phase": 0, "alpha": 0.9},
+      {"shape": "triangle", "color": "dark", "size": [230, 110], "pos": [30, -22], "rot": 0, "anim": "none", "amp": 0, "speed": 0, "phase": 0, "alpha": 0.9},
+      {"shape": "triangle", "color": "frame", "size": [160, 120], "pos": [-40, -16], "rot": 0, "anim": "none", "amp": 0, "speed": 0, "phase": 0, "alpha": 1},
+      {"shape": "triangle", "color": "white", "size": [46, 34], "pos": [-40, 27], "rot": 0, "anim": "none", "amp": 0, "speed": 0, "phase": 0, "alpha": 0.95}
+    ]},
+    {"id": "flame", "description": "campfire flame with rising sparks", "layers": [
+      {"shape": "flame", "color": "frame", "size": [96, 124], "pos": [0, -6], "rot": 0, "anim": "flicker", "amp": 0.06, "speed": 7, "phase": 0, "alpha": 1},
+      {"shape": "flame", "color": "accent", "size": [54, 72], "pos": [0, -24], "rot": 0, "anim": "flicker", "amp": 0.1, "speed": 9, "phase": 0.3, "alpha": 1},
+      {"shape": "spark", "color": "accent", "size": [14, 14], "pos": [-28, 20], "rot": 0, "anim": "drift", "amp": 50, "speed": 0.7, "phase": 0, "alpha": 1},
+      {"shape": "spark", "color": "accent", "size": [10, 10], "pos": [22, 26], "rot": 0, "anim": "drift", "amp": 46, "speed": 0.9, "phase": 0.5, "alpha": 1},
+      {"shape": "spark", "color": "white", "size": [8, 8], "pos": [4, 34], "rot": 0, "anim": "drift", "amp": 40, "speed": 1.1, "phase": 0.2, "alpha": 1}
+    ]},
+    {"id": "spring", "description": "stacked chevrons bouncing upward", "layers": [
+      {"shape": "chevron", "color": "dark", "size": [100, 36], "pos": [0, -42], "rot": 0, "anim": "bob", "amp": 4, "speed": 1.2, "phase": 0, "alpha": 0.9},
+      {"shape": "chevron", "color": "frame", "size": [100, 36], "pos": [0, -10], "rot": 0, "anim": "bob", "amp": 6, "speed": 1.2, "phase": 0.15, "alpha": 1},
+      {"shape": "chevron", "color": "accent", "size": [100, 36], "pos": [0, 22], "rot": 0, "anim": "bob", "amp": 8, "speed": 1.2, "phase": 0.3, "alpha": 1}
+    ]},
+    {"id": "shield", "description": "a sturdy shield with a pulsing ring", "layers": [
+      {"shape": "ring", "color": "accent", "size": [140, 140], "pos": [0, 0], "rot": 0, "anim": "pulse", "amp": 0.06, "speed": 0.8, "phase": 0, "alpha": 0.5},
+      {"shape": "shield", "color": "frame", "size": [92, 112], "pos": [0, -2], "rot": 0, "anim": "none", "amp": 0, "speed": 0, "phase": 0, "alpha": 1},
+      {"shape": "shield", "color": "dark", "size": [64, 80], "pos": [0, 0], "rot": 0, "anim": "none", "amp": 0, "speed": 0, "phase": 0, "alpha": 0.8},
+      {"shape": "plus", "color": "accent", "size": [36, 36], "pos": [0, 4], "rot": 0, "anim": "pulse", "amp": 0.1, "speed": 0.8, "phase": 0.25, "alpha": 1}
+    ]},
+    {"id": "snowflake", "description": "a slowly turning snowflake with falling flakes", "layers": [
+      {"shape": "plus", "color": "frame", "size": [110, 110], "pos": [0, 0], "rot": 45, "anim": "spin", "amp": 0, "speed": 12, "phase": 0, "alpha": 0.9},
+      {"shape": "plus", "color": "accent", "size": [110, 110], "pos": [0, 0], "rot": 0, "anim": "spin", "amp": 0, "speed": 12, "phase": 0, "alpha": 1},
+      {"shape": "circle", "color": "white", "size": [22, 22], "pos": [0, 0], "rot": 0, "anim": "none", "amp": 0, "speed": 0, "phase": 0, "alpha": 1},
+      {"shape": "circle", "color": "white", "size": [8, 8], "pos": [-80, 60], "rot": 0, "anim": "drift", "amp": -110, "speed": 0.35, "phase": 0, "alpha": 0.9},
+      {"shape": "circle", "color": "white", "size": [6, 6], "pos": [76, 60], "rot": 0, "anim": "drift", "amp": -110, "speed": 0.3, "phase": 0.5, "alpha": 0.9}
+    ]},
+    {"id": "droplet", "description": "a drop with ripples", "layers": [
+      {"shape": "ring", "color": "accent", "size": [130, 40], "pos": [0, -46], "rot": 0, "anim": "pulse", "amp": 0.15, "speed": 0.6, "phase": 0, "alpha": 0.5},
+      {"shape": "ring", "color": "frame", "size": [90, 26], "pos": [0, -46], "rot": 0, "anim": "pulse", "amp": 0.15, "speed": 0.6, "phase": 0.4, "alpha": 0.7},
+      {"shape": "drop", "color": "frame", "size": [70, 96], "pos": [0, 10], "rot": 0, "anim": "bob", "amp": 5, "speed": 0.6, "phase": 0, "alpha": 1},
+      {"shape": "circle", "color": "white", "size": [14, 14], "pos": [-12, 2], "rot": 0, "anim": "bob", "amp": 5, "speed": 0.6, "phase": 0, "alpha": 0.8}
+    ]},
+    {"id": "sun", "description": "a blazing sun with turning rays", "layers": [
+      {"shape": "spark", "color": "frame", "size": [150, 150], "pos": [0, 0], "rot": 0, "anim": "spin", "amp": 0, "speed": 15, "phase": 0, "alpha": 0.8},
+      {"shape": "spark", "color": "accent", "size": [120, 120], "pos": [0, 0], "rot": 45, "anim": "spin", "amp": 0, "speed": -10, "phase": 0, "alpha": 0.8},
+      {"shape": "circle", "color": "accent", "size": [70, 70], "pos": [0, 0], "rot": 0, "anim": "pulse", "amp": 0.05, "speed": 1, "phase": 0, "alpha": 1},
+      {"shape": "circle", "color": "white", "size": [34, 34], "pos": [0, 0], "rot": 0, "anim": "pulse", "amp": 0.08, "speed": 1, "phase": 0.2, "alpha": 0.9}
+    ]},
+    {"id": "wind", "description": "gusts streaming past", "layers": [
+      {"shape": "wave", "color": "dark", "size": [210, 22], "pos": [0, 36], "rot": 0, "anim": "slide", "amp": 14, "speed": 0.5, "phase": 0, "alpha": 0.9},
+      {"shape": "wave", "color": "frame", "size": [180, 22], "pos": [10, 0], "rot": 0, "anim": "slide", "amp": 18, "speed": 0.5, "phase": 0.3, "alpha": 1},
+      {"shape": "wave", "color": "accent", "size": [140, 20], "pos": [-14, -36], "rot": 0, "anim": "slide", "amp": 22, "speed": 0.5, "phase": 0.6, "alpha": 1}
+    ]},
+    {"id": "rope", "description": "a knotted rope swinging", "layers": [
+      {"shape": "rounded", "color": "dark", "size": [10, 150], "pos": [0, 0], "rot": 0, "anim": "sway", "amp": 4, "speed": 0.5, "phase": 0, "alpha": 0.9},
+      {"shape": "ring", "color": "frame", "size": [34, 34], "pos": [0, 46], "rot": 0, "anim": "slide", "amp": 2, "speed": 0.5, "phase": 0, "alpha": 1},
+      {"shape": "ring", "color": "frame", "size": [34, 34], "pos": [0, 12], "rot": 0, "anim": "slide", "amp": 4, "speed": 0.5, "phase": 0, "alpha": 1},
+      {"shape": "ring", "color": "accent", "size": [34, 34], "pos": [0, -22], "rot": 0, "anim": "slide", "amp": 6, "speed": 0.5, "phase": 0, "alpha": 1},
+      {"shape": "ring", "color": "accent", "size": [34, 34], "pos": [0, -56], "rot": 0, "anim": "slide", "amp": 8, "speed": 0.5, "phase": 0, "alpha": 1}
+    ]},
+    {"id": "star", "description": "a bright star with orbiting sparks", "layers": [
+      {"shape": "circle", "color": "frame", "size": [130, 130], "pos": [0, 0], "rot": 0, "anim": "pulse", "amp": 0.06, "speed": 0.7, "phase": 0, "alpha": 0.25},
+      {"shape": "star", "color": "accent", "size": [104, 104], "pos": [0, 0], "rot": 0, "anim": "spin", "amp": 0, "speed": 18, "phase": 0, "alpha": 1},
+      {"shape": "spark", "color": "white", "size": [18, 18], "pos": [0, 0], "rot": 0, "anim": "orbit", "amp": 66, "speed": 0.3, "phase": 0, "alpha": 1},
+      {"shape": "spark", "color": "white", "size": [12, 12], "pos": [0, 0], "rot": 0, "anim": "orbit", "amp": 66, "speed": 0.3, "phase": 0.5, "alpha": 1}
+    ]},
+    {"id": "feather", "description": "a feather drifting down", "layers": [
+      {"shape": "crescent", "color": "frame", "size": [110, 64], "pos": [0, 8], "rot": -20, "anim": "sway", "amp": 14, "speed": 0.4, "phase": 0, "alpha": 1},
+      {"shape": "crescent", "color": "accent", "size": [70, 40], "pos": [6, 12], "rot": -20, "anim": "sway", "amp": 14, "speed": 0.4, "phase": 0, "alpha": 0.9},
+      {"shape": "circle", "color": "white", "size": [8, 8], "pos": [-60, 40], "rot": 0, "anim": "drift", "amp": -90, "speed": 0.4, "phase": 0.2, "alpha": 0.8}
+    ]},
+    {"id": "rock", "description": "a stone flying along an arc", "layers": [
+      {"shape": "circle", "color": "accent", "size": [8, 8], "pos": [-60, -10], "rot": 0, "anim": "flicker", "amp": 0.2, "speed": 3, "phase": 0, "alpha": 0.6},
+      {"shape": "circle", "color": "accent", "size": [8, 8], "pos": [-30, 18], "rot": 0, "anim": "flicker", "amp": 0.2, "speed": 3, "phase": 0.3, "alpha": 0.7},
+      {"shape": "circle", "color": "accent", "size": [8, 8], "pos": [4, 32], "rot": 0, "anim": "flicker", "amp": 0.2, "speed": 3, "phase": 0.6, "alpha": 0.8},
+      {"shape": "diamond", "color": "frame", "size": [54, 46], "pos": [52, 18], "rot": 0, "anim": "spin", "amp": 0, "speed": 120, "phase": 0, "alpha": 1},
+      {"shape": "circle", "color": "dark", "size": [80, 50], "pos": [-70, -50], "rot": 0, "anim": "none", "amp": 0, "speed": 0, "phase": 0, "alpha": 0.9}
+    ]},
+    {"id": "apple", "description": "a snack with a swaying leaf", "layers": [
+      {"shape": "circle", "color": "frame", "size": [96, 90], "pos": [0, -8], "rot": 0, "anim": "pulse", "amp": 0.03, "speed": 0.8, "phase": 0, "alpha": 1},
+      {"shape": "circle", "color": "white", "size": [18, 18], "pos": [-22, 10], "rot": 0, "anim": "none", "amp": 0, "speed": 0, "phase": 0, "alpha": 0.7},
+      {"shape": "drop", "color": "accent", "size": [26, 40], "pos": [14, 48], "rot": -40, "anim": "sway", "amp": 12, "speed": 0.6, "phase": 0, "alpha": 1}
+    ]},
+    {"id": "cross", "description": "a first-aid cross with a healing glow", "layers": [
+      {"shape": "circle", "color": "accent", "size": [130, 130], "pos": [0, 0], "rot": 0, "anim": "pulse", "amp": 0.08, "speed": 0.6, "phase": 0, "alpha": 0.2},
+      {"shape": "rounded", "color": "white", "size": [110, 110], "pos": [0, 0], "rot": 0, "anim": "none", "amp": 0, "speed": 0, "phase": 0, "alpha": 0.15},
+      {"shape": "plus", "color": "frame", "size": [90, 90], "pos": [0, 0], "rot": 0, "anim": "pulse", "amp": 0.06, "speed": 0.6, "phase": 0.2, "alpha": 1},
+      {"shape": "spark", "color": "white", "size": [14, 14], "pos": [40, 40], "rot": 0, "anim": "drift", "amp": 30, "speed": 0.6, "phase": 0, "alpha": 1}
+    ]}
+  ]
+}

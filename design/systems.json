@@ -2,7 +2,7 @@
  "_sheet": "Systems of the mod. One row = one C# class with one job. Preflight checks that each class exists in src and that every sheet it owns is referenced from it.",
  "_columns": {
   "id": "system name",
-  "class": "C# type in namespace PeakRounds",
+  "class": "C# type in namespace CampfireCards",
   "owns": "sheets or generated tables this class is built from",
   "responsibility": "one line",
   "dependsOn": "other system ids, comma separated; - = none",
@@ -11,91 +11,83 @@
  "rows": [
   {
    "id": "Plugin",
-   "class": "PeakRounds.Plugin",
+   "class": "CampfireCards.Plugin",
    "owns": "hooks.json (Generated/HarmonyHooks.cs), config",
    "responsibility": "BepInEx entry: config, Harmony PatchAll, event subscriptions, per-frame tick, scene changes",
    "dependsOn": "Hooks,Net,Ui",
-   "testedBy": "Loaded by BepInEx 5.4.23.3 in PEAK 2.6.b on 2026-10-09 (LogOutput.log: plugin loaded, Harmony patches applied, no errors after fixes)"
+   "testedBy": "Loads in PEAK 2.6.b with BepInEx 5.4.23.3 (v0.2.0 log: deck built, no errors)"
   },
   {
    "id": "Hooks",
-   "class": "PeakRounds.Hooks",
+   "class": "CampfireCards.Hooks",
    "owns": "hooks.json handlers",
    "responsibility": "the handler bodies the generated patches call; turns game moments into Session/Effects calls",
    "dependsOn": "Session,Effects,HostLog",
-   "testedBy": "In-game: RunManager.StartRun -> opening session; Campfire.Light_Rpc -> campfire session (DevKeys F9 + real flow); SteamLobbyHandler.OnLobbyCreated -> net.log line; CharacterRegistered re-apply; effects log line after each pick"
-  },
-  {
-   "id": "RoundsLocator",
-   "class": "PeakRounds.Rounds.RoundsLocator",
-   "owns": "rounds_assets.json install block",
-   "responsibility": "find the ROUNDS folder: config override, then Steam libraryfolders.vdf + appmanifest_1557740.acf installdir, then every library's common/ROUNDS",
-   "dependsOn": "-",
-   "testedBy": "Found C:\\Program Files (x86)\\Steam\\steamapps\\common\\ROUNDS via Steam manifest on this PC (log line \"ROUNDS 2022.3.34f1 at ...\")"
-  },
-  {
-   "id": "RoundsReader",
-   "class": "PeakRounds.Rounds.RoundsReader",
-   "owns": "rounds_assets.json rows (Generated/RoundsAssets.cs)",
-   "responsibility": "open ROUNDS's assets with AssetsTools.NET, read every pool CardInfo (name, text, stats, rarity, theme, icon), textures and sound clips; builds RoundsCard records matched to cards.json by GameObject name",
-   "dependsOn": "RoundsLocator,Audio",
-   "testedBy": "Read 67 cards (67 in pool), 29 textures, 21/21 sounds, 147 strings, themes from level0 in 0.3-0.8 s (background thread) on every launch"
+   "testedBy": "Run start opened the opening pick on a hosted run and on Continue Run; lobby id logged on Host Game"
   },
   {
    "id": "Deck",
-   "class": "PeakRounds.Cards.Deck",
+   "class": "CampfireCards.Cards.Deck",
    "owns": "cards.json (Generated/CardTable.cs), stats.json (Generated/ClimbStats.cs)",
-   "responsibility": "the playable deck = cards.json rows with inDeck and a matching RoundsCard; deals a hand with ROUNDS rarity weights and allowMultiple rules from a seed",
-   "dependsOn": "RoundsReader",
-   "testedBy": "58 playable cards built; hands dealt with rarity weights (hands logged); allowMultiple respected"
+   "responsibility": "the playable deck = every cards.json row; deals a hand with rarity weights and the unique rule from a seed; builds each card's effect lines",
+   "dependsOn": "-",
+   "testedBy": "8 placeholder cards built, hash logged; hands dealt with rarity weights"
   },
   {
    "id": "Effects",
-   "class": "PeakRounds.Cards.Effects",
+   "class": "CampfireCards.Cards.Effects",
    "owns": "stats.json formulas",
    "responsibility": "per-character card lists -> summed ClimbStats -> applied to the character's public fields (all clients) and consulted by the Harmony hooks (owner)",
    "dependsOn": "Deck",
-   "testedBy": "Effects log after picks: Tank -> sprintMultiplier 2.00 -> 1.98; baseline captured (jump 400, throw 5-50, hunger 0.0005); hook-only stats (toughness/regen) covered by the Harmony prefixes loading without error"
+   "testedBy": "Picked the jump card: jump impulse 400 -> 480 (+20%) in the effects log"
   },
   {
    "id": "Session",
-   "class": "PeakRounds.Cards.PickSession",
+   "class": "CampfireCards.Cards.PickSession",
    "owns": "net.json 91/92/94/97 flow, ui.json timing",
    "responsibility": "host: collects arrivals, orders players last-arrival-first, deals hands, advances turns, times out; everyone: tracks whose turn it is and opens the picker on their own turn",
    "dependsOn": "Deck,Net,Ui",
-   "testedBy": "Opening pick on the beach and campfire pick after Light_Rpc, both host-ordered; click pick (session 10001 card 40, 10002 card 59); 60 s host timeout auto-pick verified (card 8, card 56); out-of-turn guard in place; multi-player order untested (solo only)"
+   "testedBy": "Opening pick by click recorded once (session 10001); host timeout and campfire flow carried over from 0.1.0 tests"
   },
   {
    "id": "Net",
-   "class": "PeakRounds.Net.NetSend + PeakRounds.Net.NetHandlers + PeakRounds.Net.NetDispatcher (generated)",
+   "class": "CampfireCards.Net.NetSend + CampfireCards.Net.NetHandlers + CampfireCards.Net.NetDispatcher (generated)",
    "owns": "net.json (Generated/NetEvents.cs)",
    "responsibility": "RaiseEvent send helpers, EventReceived dispatch, late-joiner StateSync",
    "dependsOn": "-",
-   "testedBy": "RaiseEvent round trip through Photon (codes 91/92/94 seen in logs, self-delivery via ReceiverGroup.All); StateSync self path; late joiner untested (solo)"
+   "testedBy": "PickSessionStart / PickMade round trip through Photon on a hosted lobby; multiplayer joins not yet tested"
   },
   {
    "id": "Ui",
-   "class": "PeakRounds.Ui.CardPicker (MenuWindow) + PeakRounds.Ui.Hud",
+   "class": "CampfireCards.Ui.CardPicker (MenuWindow) + CampfireCards.Ui.Hud",
    "owns": "ui.json (Generated/UiLayout.cs)",
-   "responsibility": "runtime-built uGUI: picker fan, waiting banner, my-cards HUD, toasts, ROUNDS-missing notice",
-   "dependsOn": "RoundsReader,Audio",
-   "testedBy": "Card fan with ROUNDS icons/colours/rarity strips/stats/descriptions/mountain lines rendered (shots 33, 35); MenuWindow blocks input and shows cursor; HUD list, toast and countdown shown"
+   "responsibility": "runtime-built uGUI: picker fan of cards, waiting banner, my-cards HUD, toasts",
+   "dependsOn": "Deck,Art,Sfx",
+   "testedBy": "Five-card fan rendered with frames, rarity strips, art windows, names, coloured effect lines and flavour (checked from an in-game screenshot)"
   },
   {
-   "id": "Audio",
-   "class": "PeakRounds.Rounds.Fsb5Vorbis",
-   "owns": "rounds_assets.json audio rows",
-   "responsibility": "FSB5 container -> Vorbis packets -> Ogg stream (headers rebuilt from the CRC table) -> NVorbis PCM -> UnityEngine.AudioClip",
+   "id": "Art",
+   "class": "CampfireCards.Art.CardArt + CampfireCards.Art.Shapes",
+   "owns": "art.json (Generated/ArtTable.cs), cards.json themes",
+   "responsibility": "draws each shape as a generated anti-aliased sprite (cached) and stacks a motif's layers in the card's art window, animating them",
    "dependsOn": "-",
-   "testedBy": "21/21 ROUNDS UI clips decoded (FSB5 Vorbis -> PCM) at load; playback not verified by ear (no audio capture in the test rig)"
+   "testedBy": "All motifs used by the deck drawn and animated in game (star, snowflake, spring, rope, rock seen)"
+  },
+  {
+   "id": "Sfx",
+   "class": "CampfireCards.Art.Sfx",
+   "owns": "sounds.json (Generated/SoundTable.cs)",
+   "responsibility": "synthesises the UI sounds into AudioClips at load and plays them",
+   "dependsOn": "-",
+   "testedBy": "Sounds synthesise without errors; not checked by ear"
   },
   {
    "id": "HostLog",
-   "class": "PeakRounds.Net.HostLog",
-   "owns": "melty recipe multiplayer.connect.address",
-   "responsibility": "writes 'Hosting at <lobby id>' to %LOCALAPPDATA%/PeakRounds/net.log when this player creates a Steam lobby",
+   "class": "CampfireCards.Net.HostLog",
+   "owns": "net.log line format",
+   "responsibility": "writes 'Hosting at <lobby id>' to %LOCALAPPDATA%/CampfireCards/net.log when this player creates a Steam lobby, for launchers that list open games",
    "dependsOn": "-",
-   "testedBy": "net.log received \"Hosting at <lobby id>\" on every Host Game (three lobbies logged on 2026-10-09)"
+   "testedBy": "net.log line written on Host Game"
   }
  ]
 }

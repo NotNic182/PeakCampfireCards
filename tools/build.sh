@@ -13,5 +13,5 @@ done
 python -I tools/gen.py
 python -I tools/preflight.py $RELEASE
 PEAKARG=""; [ -n "$PEAK_DIR" ] && PEAKARG="-p:PeakDir=$PEAK_DIR"
-dotnet build src/PeakRounds/PeakRounds.csproj -c Release -nologo -v m $PEAKARG
+dotnet build src/CampfireCards/CampfireCards.csproj -c Release -nologo -v m $PEAKARG
 python -I tools/package.py $INSTALL
