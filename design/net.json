@@ -1,23 +1,195 @@
 {
-  "_sheet": "Network events between the players of one PEAK lobby. One row = one Photon RaiseEvent code the mod sends. Generated/NetEvents.cs gets a struct per row with Write/Read (BinaryWriter/BinaryReader, little endian) built from the fields column.",
-  "_columns": {
-    "code": "Photon event code, byte. PEAK uses 1,2,3,4,18; PUN reserves 200+; the mod owns 90-99",
-    "name": "struct name",
-    "sender": "who sends it",
-    "receivers": "Photon ReceiverGroup or 'target' (TargetActors)",
-    "reliable": "SendReliable",
-    "fields": "ordered list of {name, type}; types: byte, bool, int, float, double, string, byte[], int[]",
-    "purpose": "one line",
-    "handler": "method in PeakRounds.Net that the dispatcher calls with the decoded struct and the sender actor number"
+ "_sheet": "Network events between the players of one PEAK lobby. One row = one Photon RaiseEvent code the mod sends. Generated/NetEvents.cs gets a struct per row with Write/Read (BinaryWriter/BinaryReader, little endian) built from the fields column.",
+ "_columns": {
+  "code": "Photon event code, byte. PEAK uses 1,2,3,4,18; PUN reserves 200+; the mod owns 90-99",
+  "name": "struct name",
+  "sender": "who sends it",
+  "receivers": "Photon ReceiverGroup or 'target' (TargetActors)",
+  "reliable": "SendReliable",
+  "fields": "ordered list of {name, type}; types: byte, bool, int, float, double, string, byte[], int[]",
+  "purpose": "one line",
+  "handler": "method in CampfireCards.Net that the dispatcher calls with the decoded struct and the sender actor number"
+ },
+ "rows": [
+  {
+   "code": 90,
+   "name": "Hello",
+   "sender": "anyone entering a room",
+   "receivers": "Others",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "modVersion",
+     "type": "string"
+    },
+    {
+     "name": "cardCount",
+     "type": "int"
+    },
+    {
+     "name": "deckHash",
+     "type": "int"
+    }
+   ],
+   "purpose": "announce the mod, its card count and a hash of the deck so players on different versions get a warning",
+   "handler": "OnHello"
   },
-  "rows": [
-    {"code": 90, "name": "Hello", "sender": "anyone entering a room", "receivers": "Others", "reliable": true, "fields": [{"name": "modVersion", "type": "string"}, {"name": "hasRounds", "type": "bool"}, {"name": "cardCount", "type": "int"}], "purpose": "announce the mod and whether this player's ROUNDS install was read (same deck needed on everyone)", "handler": "OnHello"},
-    {"code": 91, "name": "PickSessionStart", "sender": "host", "receivers": "All", "reliable": true, "fields": [{"name": "sessionId", "type": "int"}, {"name": "reason", "type": "byte"}, {"name": "order", "type": "int[]"}, {"name": "hands", "type": "byte[]"}, {"name": "handSize", "type": "byte"}, {"name": "timeoutSeconds", "type": "float"}], "purpose": "a pick session begins: turn order (actor numbers, last to the fire first) and each player's dealt hand (handSize card ids per player, in order). reason: 0 opening, 1 campfire", "handler": "OnPickSessionStart"},
-    {"code": 92, "name": "PickMade", "sender": "the picking player", "receivers": "All", "reliable": true, "fields": [{"name": "sessionId", "type": "int"}, {"name": "actor", "type": "int"}, {"name": "cardId", "type": "byte"}, {"name": "auto", "type": "bool"}], "purpose": "a player took a card: everyone adds it to that player's cards, applies effects, advances the turn", "handler": "OnPickMade"},
-    {"code": 93, "name": "StateSync", "sender": "host", "receivers": "target", "reliable": true, "fields": [{"name": "actors", "type": "int[]"}, {"name": "counts", "type": "byte[]"}, {"name": "cards", "type": "byte[]"}, {"name": "phoenixUsed", "type": "byte[]"}, {"name": "sessionId", "type": "int"}], "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards)", "handler": "OnStateSync"},
-    {"code": 94, "name": "Arrival", "sender": "each player", "receivers": "MasterClient", "reliable": true, "fields": [{"name": "segment", "type": "byte"}, {"name": "time", "type": "double"}], "purpose": "this player first came within the campfire's rest radius: time is PhotonNetwork.Time so the host can order picks last-arrival-first", "handler": "OnArrival"},
-    {"code": 95, "name": "StateRequest", "sender": "a player who has no state yet", "receivers": "MasterClient", "reliable": true, "fields": [{"name": "modVersion", "type": "string"}], "purpose": "ask the host for StateSync", "handler": "OnStateRequest"},
-    {"code": 96, "name": "PhoenixUsed", "sender": "the owner", "receivers": "All", "reliable": true, "fields": [{"name": "actor", "type": "int"}], "purpose": "Phoenix fired for this player: everyone marks it used and shows the notice", "handler": "OnPhoenixUsed"},
-    {"code": 97, "name": "SessionEnd", "sender": "host", "receivers": "All", "reliable": true, "fields": [{"name": "sessionId", "type": "int"}], "purpose": "all turns done or timed out: close waiting banners", "handler": "OnSessionEnd"}
-  ]
+  {
+   "code": 91,
+   "name": "PickSessionStart",
+   "sender": "host",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "sessionId",
+     "type": "int"
+    },
+    {
+     "name": "reason",
+     "type": "byte"
+    },
+    {
+     "name": "order",
+     "type": "int[]"
+    },
+    {
+     "name": "hands",
+     "type": "byte[]"
+    },
+    {
+     "name": "handSize",
+     "type": "byte"
+    },
+    {
+     "name": "timeoutSeconds",
+     "type": "float"
+    }
+   ],
+   "purpose": "a pick session begins: turn order (actor numbers, last to the fire first) and each player's dealt hand (handSize card ids per player, in order). reason: 0 opening, 1 campfire",
+   "handler": "OnPickSessionStart"
+  },
+  {
+   "code": 92,
+   "name": "PickMade",
+   "sender": "the picking player",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "sessionId",
+     "type": "int"
+    },
+    {
+     "name": "actor",
+     "type": "int"
+    },
+    {
+     "name": "cardId",
+     "type": "byte"
+    },
+    {
+     "name": "auto",
+     "type": "bool"
+    }
+   ],
+   "purpose": "a player took a card: everyone adds it to that player's cards, applies effects, advances the turn",
+   "handler": "OnPickMade"
+  },
+  {
+   "code": 93,
+   "name": "StateSync",
+   "sender": "host",
+   "receivers": "target",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "actors",
+     "type": "int[]"
+    },
+    {
+     "name": "counts",
+     "type": "byte[]"
+    },
+    {
+     "name": "cards",
+     "type": "byte[]"
+    },
+    {
+     "name": "secondWindUsed",
+     "type": "byte[]"
+    },
+    {
+     "name": "sessionId",
+     "type": "int"
+    }
+   ],
+   "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards)",
+   "handler": "OnStateSync"
+  },
+  {
+   "code": 94,
+   "name": "Arrival",
+   "sender": "each player",
+   "receivers": "MasterClient",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "segment",
+     "type": "byte"
+    },
+    {
+     "name": "time",
+     "type": "double"
+    }
+   ],
+   "purpose": "this player first came within the campfire's rest radius: time is PhotonNetwork.Time so the host can order picks last-arrival-first",
+   "handler": "OnArrival"
+  },
+  {
+   "code": 95,
+   "name": "StateRequest",
+   "sender": "a player who has no state yet",
+   "receivers": "MasterClient",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "modVersion",
+     "type": "string"
+    }
+   ],
+   "purpose": "ask the host for StateSync",
+   "handler": "OnStateRequest"
+  },
+  {
+   "code": 96,
+   "name": "SecondWindUsed",
+   "sender": "the owner",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "actor",
+     "type": "int"
+    }
+   ],
+   "purpose": "Second Wind fired for this player: everyone marks it used and shows the notice",
+   "handler": "OnSecondWindUsed"
+  },
+  {
+   "code": 97,
+   "name": "SessionEnd",
+   "sender": "host",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "sessionId",
+     "type": "int"
+    }
+   ],
+   "purpose": "all turns done or timed out: close waiting banners",
+   "handler": "OnSessionEnd"
+  }
+ ]
 }

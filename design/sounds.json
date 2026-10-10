@@ -1,0 +1,16 @@
+{
+  "_sheet": "UI sounds, synthesised in code when the plugin loads (no audio files). One row = one sound; ui.json soundOn refers to these ids. Generated/SoundTable.cs gets one SoundDef per row.",
+  "_columns": {
+    "id": "sound id",
+    "kind": "tick (short sine click) | chime (decaying bell notes, one after another) | whoosh (filtered noise sweeping from freqs[0] to freqs[1])",
+    "duration": "seconds",
+    "freqs": "Hz; tick uses the first, chime plays each in turn, whoosh sweeps first to second",
+    "volume": "0-1",
+    "use": "when it plays"
+  },
+  "rows": [
+    {"id": "cardsAppear", "kind": "whoosh", "duration": 0.45, "freqs": [350, 1600], "volume": 0.35, "use": "the card fan slides in"},
+    {"id": "cardSwitch", "kind": "tick", "duration": 0.05, "freqs": [2200], "volume": 0.25, "use": "the cursor moves onto a card"},
+    {"id": "cardPick", "kind": "chime", "duration": 0.9, "freqs": [659.25, 987.77, 1318.51], "volume": 0.4, "use": "a card is picked"}
+  ]
+}
