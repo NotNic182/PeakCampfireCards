@@ -26,31 +26,43 @@ namespace CampfireCards.Tests
         [InlineData(CardRarity.Mythic, 2)]
         public void RarityCounts(CardRarity r, int count) => Assert.Equal(count, CardTable.Cards.Count(c => c.Rarity == r));
 
+        /// <summary>A modifier that moves its channel the harmful way (stats.json "better").</summary>
+        private static bool Hurts(ModDef m)
+        {
+            if (m.Op == ModOp.set) return false;
+            float neutral = m.Op == ModOp.mul ? 1f : 0f;
+            bool higher = ChannelTable.Defs[(int)m.Channel].HigherIsBetter;
+            return higher ? m.Value < neutral : m.Value > neutral;
+        }
+
         [Fact]
         public void MythicsHaveNoDrawbacks()
         {
             foreach (var c in CardTable.Cards.Where(c => c.Rarity == CardRarity.Mythic))
             {
                 Assert.True(string.IsNullOrEmpty(c.Negative), c.Name);
-                foreach (var m in c.Mods)
-                {
-                    // every Mythic modifier must help: costs and injury down, speed and stamina up
-                    bool harmful = (m.Op == ModOp.mul && m.Value > 1f && (m.Channel == Channel.climbStamina || m.Channel == Channel.allInjury || m.Channel == Channel.fallInjury || m.Channel == Channel.negativeStatusRate))
-                                   || (m.Op == ModOp.mul && m.Value < 1f && m.Channel == Channel.sprintSpeed)
-                                   || (m.Op == ModOp.add && m.Value < 0f && m.Channel == Channel.maxStamina);
-                    Assert.False(harmful, c.Name + " " + m.Channel);
-                }
+                foreach (var m in c.Mods) Assert.False(Hurts(m), c.Name + " " + m.Channel);
             }
         }
 
         [Fact]
-        public void EveryNormalCardHasBenefitAndDrawback()
+        public void CardsWithoutADrawbackOnlyHelp()
         {
-            foreach (var c in CardTable.Cards.Where(c => c.Rarity != CardRarity.Mythic))
+            var free = CardTable.Cards.Where(c => string.IsNullOrEmpty(c.Negative)).ToList();
+            foreach (var c in free)
+                foreach (var m in c.Mods) Assert.False(Hurts(m), c.Name + " shows no drawback but " + m.Channel + " hurts");
+            // 0.4.1 balance: at least half of the 62 normal cards come without a catch
+            Assert.True(free.Count(c => c.Rarity != CardRarity.Mythic) >= 31);
+        }
+
+        [Fact]
+        public void CardsWithADrawbackShowIt()
+        {
+            foreach (var c in CardTable.Cards)
             {
                 Assert.False(string.IsNullOrEmpty(c.Positive), c.Name);
-                Assert.False(string.IsNullOrEmpty(c.Negative), c.Name);
                 Assert.True(c.Mods.Length > 0 || !string.IsNullOrEmpty(c.Ability), c.Name + " has no effect");
+                if (c.Mods.Any(Hurts)) Assert.False(string.IsNullOrEmpty(c.Negative), c.Name + " hurts without saying so");
             }
         }
 

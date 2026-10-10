@@ -14,7 +14,7 @@ namespace CampfireCards.Abilities
             if (!d.isClimbing || d.isRopeClimbing || d.isVineClimbing) return;   // wall only
             if (me.input.movementInput.magnitude >= 0.1f) return;
             if (me.refs.climbing.playerSlide.sqrMagnitude > 0.01f) return;      // sliding is not hanging still
-            me.AddStamina(P("regenPerSecond", 0.06f) * dt);
+            me.AddStamina(P("regenPerSecond", 0.04f) * dt);
         }
     }
 
@@ -32,7 +32,7 @@ namespace CampfireCards.Abilities
 
         private void Ensure()
         {
-            if (_cd == null) _cd = new Cooldown(P("cooldown", 45f));
+            if (_cd == null) _cd = new Cooldown(P("cooldown", 35f));
             Active = this;
         }
 
@@ -69,7 +69,7 @@ namespace CampfireCards.Abilities
         public override string Status(Character me)
         {
             Ensure();
-            return _cd.Ready(Now) ? "Second Spring: ready" : $"Second Spring: {Mathf.CeilToInt(_cd.Remaining(Now))}s";
+            return _cd.Ready(Now) ? Card.Name + ": ready" : $"{Card.Name}: {Mathf.CeilToInt(_cd.Remaining(Now))}s";
         }
     }
 
@@ -104,6 +104,6 @@ namespace CampfireCards.Abilities
 
         public override bool ConditionFlag(Condition c) => c == Condition.momentumActive && _m.Active;
 
-        public override string Status(Character me) => _m.Active ? "Momentum Fiend: boosting" : null;
+        public override string Status(Character me) => _m.Active ? Card.Name + ": boosting" : null;
     }
 }

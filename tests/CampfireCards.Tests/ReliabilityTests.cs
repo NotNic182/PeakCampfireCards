@@ -416,6 +416,89 @@ namespace CampfireCards.Tests
         }
     }
 
+    public class ShuffleTests
+    {
+        private static readonly CardSettings S = new CardSettings();
+
+        private static string Opening(Random rng) =>
+            string.Join(",", CardDraw.Offer(rng, S, new HashSet<byte>(), OfferRules.Campfire(3, true, false)).OrderBy(i => i));
+
+        [Fact]
+        public void OldSeedingReplayedTheSameOpeningEveryLaunch()
+        {
+            // what 0.3.0/0.4.0 did: first session of every launch = id 10001, solo actor 1
+            Assert.Equal(Opening(new Random(10001 * 7919 + 1)), Opening(new Random(10001 * 7919 + 1)));
+        }
+
+        [Fact]
+        public void EveryLaunchDealsDifferentOpenings()
+        {
+            var openings = Enumerable.Range(0, 40).Select(_ => Opening(DealRandom.Create())).ToList();
+            Assert.True(openings.Distinct().Count() >= 30, $"only {openings.Distinct().Count()} distinct openings in 40 launches");
+        }
+
+        [Fact]
+        public void OffersWithinARunAreShuffled()
+        {
+            var rng = DealRandom.Create();
+            var seen = new HashSet<byte>();
+            for (int session = 0; session < 30; session++)
+                foreach (var id in CardDraw.Offer(rng, S, new HashSet<byte>(), OfferRules.Campfire(3, true, false))) seen.Add(id);
+            // 90 cards drawn from the 56 solo cards: a shuffled deck shows most of them
+            Assert.True(seen.Count >= 35, $"only {seen.Count} different cards in 30 offers");
+        }
+    }
+
+    public class StatusPassThroughTests
+    {
+        [Theory]
+        [InlineData(0.0005f * (1f / 60f))]          // PEAK Hunger per frame at 60 fps (CharacterAfflictions.UpdateNormalStatuses)
+        [InlineData(0.0005f * 1.5f * (1f / 144f))]  // Hunger with an ascent multiplier at 144 fps
+        [InlineData(0.005f * (1f / 60f))]           // Ascents.nightColdRate per frame
+        [InlineData(0.0001f)]                       // the old cut-off itself
+        public void TinyPerFrameStatusesReachTheGame(float perFrame)
+        {
+            // regression: amounts at or under 0.0001 used to be swallowed, so Hunger never built up during a run
+            var r = new ModResult();
+            r.Fold(new ActiveMod[0], new CardSettings());
+            Assert.False(StatComposites.CancelsStatus(perFrame * StatComposites.StatusGain(r, Channel.hungerRate)));
+        }
+
+        [Fact]
+        public void OnlyAStatusScaledToNothingIsCancelled()
+        {
+            var s = new CardSettings();
+            var heir = CardTable.Cards.First(c => c.Key == "MountainsHeir");
+            var r = new ModResult();
+            r.Fold(heir.Mods.Select((m, i) => new ActiveMod { CardId = heir.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = m.Value, Rarity = heir.Rarity }), s);
+            Assert.True(StatComposites.CancelsStatus(0.3f * StatComposites.Injury(r, fall: true)));
+            Assert.False(StatComposites.CancelsStatus(0.3f * StatComposites.Injury(r, fall: false)));
+        }
+
+        [Fact]
+        public void StaminaBarFrameFollowsTheCardMaximum()
+        {
+            Assert.Equal(0.9f, StatComposites.BarFrame(-0.1f, 0.2f), 4);   // Supply Scout: the bar is visibly shorter
+            Assert.Equal(1.2f, StatComposites.BarFrame(0.2f, 0.1f), 4);    // Deep Lungs: drawn inside the frame
+            Assert.Equal(1.1f, StatComposites.BarFrame(-0.1f, 1.1f), 4);   // statuses overflowing grow it, as in vanilla
+            Assert.Equal(0.05f, StatComposites.BarFrame(-2f, 0f), 4);
+        }
+
+        [Fact]
+        public void StatusSegmentsEndWhereTheCardAdjustedBarEnds()
+        {
+            // HUD: segments are right-aligned in a row spanning the full 600-unit bar; MaxStamina hangs from the left
+            const float w = 600f;
+            foreach (var (bonus, statusSum) in new[] { (-0.15f, 0.08f), (-0.2f, 0.5f), (0.2f, 0.1f) })
+            {
+                float maxStaminaEnd = (1f + bonus - statusSum) * w;          // GetMaxStamina() x width (mod postfix)
+                float segmentsStart = w + StatComposites.BarSegmentsShift(bonus, w) - statusSum * w;
+                Assert.Equal(maxStaminaEnd, segmentsStart, 2);                // no gap, no overlap
+                Assert.Equal(StatComposites.BarFrame(bonus, statusSum) * w, w + StatComposites.BarSegmentsShift(bonus, w), 2);
+            }
+        }
+    }
+
     public class FingerprintTests
     {
         [Fact]
@@ -436,7 +519,7 @@ namespace CampfireCards.Tests
             Assert.Equal(PinnedDefaultHash, SettingsFingerprint.Of(new CardSettings()).Hash);
         }
 
-        internal const int PinnedDefaultHash = 2036217628;
+        internal const int PinnedDefaultHash = -560646409;   // 0.4.1 balance (34 drawback-free cards); 0.4.0 was 2036217628
 
         public static IEnumerable<object[]> Changes()
         {
@@ -446,8 +529,8 @@ namespace CampfireCards.Tests
             yield return new object[] { "stamina-cost reduction cap", (Action<CardSettings>)(s => s.StaminaCostCap = 0.5f) };
             yield return new object[] { "max-stamina floor", (Action<CardSettings>)(s => s.MaxStaminaFloor = 0.4f) };
             yield return new object[] { "rarity weights", (Action<CardSettings>)(s => s.RarityWeights[4] = 1f) };
-            yield return new object[] { "cards: Gecko Grip", (Action<CardSettings>)(s => s.ModValues[0][0] = 0.8f) };
-            yield return new object[] { "cards: Second Spring", (Action<CardSettings>)(s => s.Params[4]["cooldown"] = 30f) };
+            yield return new object[] { "cards: Sticky Fingers", (Action<CardSettings>)(s => s.ModValues[0][0] = 0.8f) };
+            yield return new object[] { "cards: Bing BOING", (Action<CardSettings>)(s => s.Params[4]["cooldown"] = 30f) };
             yield return new object[] { "cards: Mountain Goat", (Action<CardSettings>)(s => s.Enabled[1] = false) };
         }
 
@@ -513,8 +596,8 @@ namespace CampfireCards.Tests
             var s = new CardSettings();
             var r = Fold(s, ("RocketAnkles", Always), ("GlassHeart", Always));
             var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
-            Assert.Equal(1.3f, lines["Sprint speed"].Now, 4);
-            Assert.Equal(1.2f, lines["Jump height"].Now, 4);
+            Assert.Equal(1.35f, lines["Sprint speed"].Now, 4);
+            Assert.Equal(1.25f, lines["Jump height"].Now, 4);
             Assert.Equal(1.8f * 1.75f, lines["Fall Injury received"].Now, 4);
             Assert.Equal(1.75f, lines["Other Injury received"].Now, 4);
             Assert.Equal(StatComposites.Injury(r, true), lines["Fall Injury received"].Now, 5);
@@ -529,7 +612,7 @@ namespace CampfireCards.Tests
             var always = Fold(s, ("MomentumFiend", Always));
             var line = BuildStats.Lines(now, always).Single(l => l.Label == "Sprint speed");
             Assert.True(line.Conditional);
-            Assert.Equal(1.25f, line.Now, 4);
+            Assert.Equal(1.3f, line.Now, 4);
             Assert.Equal(1f, line.Always, 4);
         }
 
@@ -539,9 +622,9 @@ namespace CampfireCards.Tests
             var s = new CardSettings();
             var r = Fold(s, ("OneHandedScout", Always), ("Ultralight", Always), ("EternalCampfire", Always), ("Thornbreaker", Always));
             var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
-            Assert.Equal(0.65f * 0.5f, lines["Item in hand weight"].Now, 4);
-            Assert.Equal(0.65f, lines["Carried item weight"].Now, 4);
-            Assert.Equal(0.5f * 0.4f, lines["Thorns build-up"].Now, 4);
+            Assert.Equal(0.8f * 0.65f, lines["Item in hand weight"].Now, 4);
+            Assert.Equal(0.8f, lines["Carried item weight"].Now, 4);
+            Assert.Equal(0.6f * 0.4f, lines["Thorns build-up"].Now, 4);
             Assert.Equal(StatComposites.Thorns(r), lines["Thorns build-up"].Now, 5);
             Assert.Equal("+35", BuildStats.Format(r[Channel.maxStamina], false, "stamina"));
         }

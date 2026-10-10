@@ -55,7 +55,7 @@ namespace CampfireCards.Ui
             _waitingPanel.gameObject.SetActive(false);
 
             _myCards = UiKit.Text(_root.transform, "MyCardsHud", Ui_MyCardsHud.Size, Ui_MyCardsHud.FontSize, Ui_MyCardsHud.Color, TextAlignmentOptions.BottomLeft);
-            UiKit.Place(_myCards.rectTransform, new Vector2(0f, 0f), new Vector2(20f, 160f));
+            UiKit.Place(_myCards.rectTransform, new Vector2(0f, 0f), new Vector2(20f, 200f));   // above the status icons over the bar
             _myCards.enableAutoSizing = true; _myCards.fontSizeMin = 10f; _myCards.fontSizeMax = Ui_MyCardsHud.FontSize;
             _myCards.gameObject.SetActive(false);
 

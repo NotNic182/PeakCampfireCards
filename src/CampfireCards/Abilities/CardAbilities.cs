@@ -15,7 +15,7 @@ namespace CampfireCards.Abilities
         public override void OnAcquired(Character me)
         {
             CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Curse, P("curse", 0.1f));
-            Hud.Toast("Double Down: only 1 card to choose at the next campfire");
+            Hud.Toast(Card.Name + ": only 1 card to choose at the next campfire");
         }
     }
 
@@ -28,7 +28,7 @@ namespace CampfireCards.Abilities
         public override void OnAcquired(Character me)
         {
             var targets = CardDraw.SacrificeTargets(S, Effects.CardsOf(NetSend.LocalActor)).ToArray();
-            if (targets.Length == 0) { Hud.Toast("Mountain's Bargain: nothing to sacrifice"); return; }
+            if (targets.Length == 0) { Hud.Toast(Card.Name + ": nothing to sacrifice"); return; }
             CardPicker.Ensure().ShowSacrifice(targets, id =>
             {
                 NetSend.Raise(new CardSacrificed { actor = NetSend.LocalActor, cardId = id }, Photon.Realtime.ReceiverGroup.All);

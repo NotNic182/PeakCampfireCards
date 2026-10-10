@@ -27,13 +27,13 @@ namespace CampfireCards.Abilities
             {
                 if (!kv.Value.Update(CardStatus.Get(me, kv.Key), threshold - 0.0001f)) continue;
                 if (!_charge.TryUse(LocalCards.Biome)) continue;
-                CardStatus.Remove(me, kv.Key, P("remove", 0.25f));
-                Ui.Hud.Toast("Emergency Purge: " + kv.Key + " cleansed");
+                CardStatus.Remove(me, kv.Key, P("remove", 0.2f));
+                Ui.Hud.Toast(Card.Name + ": " + kv.Key + " cleansed");
                 return;   // only the status that triggered
             }
         }
 
-        public override string Status(Character me) => _charge.Available(LocalCards.Biome) ? "Emergency Purge: ready" : "Emergency Purge: used this biome";
+        public override string Status(Character me) => _charge.Available(LocalCards.Biome) ? Card.Name + ": ready" : Card.Name + ": used this biome";
     }
 
     /// <summary>
@@ -82,11 +82,11 @@ namespace CampfireCards.Abilities
             _shieldUntil = Time.time + 4f;
             Revival.TeleportTo(me, pos, P("injury", 0.4f));
             NetSend.Raise(new SkipNextPick { actor = NetSend.LocalActor }, Photon.Realtime.ReceiverGroup.All);
-            Ui.Hud.Toast("PHOENIX CLAUSE! You skip your next card pick.");
+            Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! You skip your next card pick.");
             return true;
         }
 
-        public override string Status(Character me) => _charge.Available(0) ? "Phoenix Clause: ready" : "Phoenix Clause: used";
+        public override string Status(Character me) => _charge.Available(0) ? Card.Name + ": ready" : Card.Name + ": used";
     }
 
     /// <summary>Delayed Consequences: 75% of each fall's Injury waits 20 s, then 70% of it lands (not as a fall, never deferred again).</summary>
@@ -99,7 +99,7 @@ namespace CampfireCards.Abilities
         {
             _q.DeferShare = P("defer", 0.75f);
             _q.Delay = P("delay", 20f);
-            _q.Keep = P("keep", 0.7f);
+            _q.Keep = P("keep", 0.8f);
             return _q.Add(fallInjury, Now);
         }
 
@@ -124,19 +124,19 @@ namespace CampfireCards.Abilities
 
         public override bool Activate(Character me)
         {
-            if (_hasAnchor) { Ui.Hud.Toast("Safety Net: anchor already placed"); return false; }
-            if (!_charge.Available(LocalCards.Biome)) { Ui.Hud.Toast("Safety Net: already used this biome"); return false; }
+            if (_hasAnchor) { Ui.Hud.Toast(Card.Name + ": anchor already placed"); return false; }
+            if (!_charge.Available(LocalCards.Biome)) { Ui.Hud.Toast(Card.Name + ": already used this biome"); return false; }
             var d = me.data;
             Vector3 pos;
             if (!d.isGrounded || d.isClimbingAnything || d.passedOut || me.warping || !SafeSpot.Validate(me.Center, out pos))
             {
-                Ui.Hud.Toast("Safety Net: stand on solid, flat ground to place the anchor");
+                Ui.Hud.Toast(Card.Name + ": stand on solid, flat ground to place the anchor");
                 return false;
             }
             _charge.TryUse(LocalCards.Biome);
             _hasAnchor = true;
             _anchor = pos;
-            Ui.Hud.Toast("Safety Net anchor placed");
+            Ui.Hud.Toast(Card.Name + ": anchor placed");
             return true;
         }
 
@@ -144,7 +144,7 @@ namespace CampfireCards.Abilities
         {
             if (!_hasAnchor) return false;
             Vector3 pos;
-            if (!SafeSpot.Validate(_anchor, out pos)) { _hasAnchor = false; Ui.Hud.Toast("Safety Net: the anchor spot is no longer safe"); return false; }
+            if (!SafeSpot.Validate(_anchor, out pos)) { _hasAnchor = false; Ui.Hud.Toast(Card.Name + ": the anchor spot is no longer safe"); return false; }
             _hasAnchor = false;
             Plugin.Run(ReviveSoon(me, pos));
             return true;
@@ -154,20 +154,20 @@ namespace CampfireCards.Abilities
         {
             yield return new WaitForSeconds(1.5f);   // let the pass-out settle, as the game's own revives do
             if (me != null && (me.data.passedOut || me.data.dead)) Revival.ReviveAt(me, pos, P("injury", 0.4f), -1f);
-            Ui.Hud.Toast("SAFETY NET!");
+            Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "!");
         }
 
         public override void OnBiomeStarted(Character me, int biome)
         {
-            if (_hasAnchor) Ui.Hud.Toast("Safety Net: your unused anchor expired");
+            if (_hasAnchor) Ui.Hud.Toast(Card.Name + ": your unused anchor expired");
             _hasAnchor = false;
         }
 
         public override string Status(Character me)
         {
             string key = Plugin.SafetyNetKeyLabel;
-            if (_hasAnchor) return $"Safety Net [{key}]: anchor placed";
-            return $"Safety Net [{key}]: " + (_charge.Available(LocalCards.Biome) ? "place anchor" : "used this biome");
+            if (_hasAnchor) return $"{Card.Name} [{key}]: anchor placed";
+            return $"{Card.Name} [{key}]: " + (_charge.Available(LocalCards.Biome) ? "place anchor" : "used this biome");
         }
     }
 
@@ -239,9 +239,9 @@ namespace CampfireCards.Abilities
             var def = System.Linq.Enumerable.FirstOrDefault(Generated.CardTable.Cards, c => c.Ability == "EternalCampfire");
             Vector3 origin = me.data.dead ? me.LastLivingPosition : me.Center;
             Vector3 pos;
-            if (!SafeSpot.Near(origin, 0f, 6f, out pos) && !LocalCards.RecentFoothold(0f, out pos)) { Ui.Hud.Toast("Eternal Campfire: no safe spot nearby"); return; }
+            if (!SafeSpot.Near(origin, 0f, 6f, out pos) && !LocalCards.RecentFoothold(0f, out pos)) { Ui.Hud.Toast((def != null ? def.Name : "Eternal Campfire") + ": no safe spot nearby"); return; }
             Revival.ReviveAt(me, pos, def != null ? s.Param(def, "injury", 0.4f) : 0.4f, def != null ? s.Param(def, "stamina", 0.5f) : 0.5f);
-            Ui.Hud.Toast("THE ETERNAL CAMPFIRE brought you back");
+            Ui.Hud.Toast((def != null ? def.Name : "The Eternal Campfire").ToUpperInvariant() + " brought you back");
         }
     }
 
@@ -268,12 +268,12 @@ namespace CampfireCards.Abilities
             var me = Character.localCharacter;
             if (a == null || me == null || victimActor == NetSend.LocalActor) return;
             if (!a._charge.TryUse(LocalCards.Biome)) return;
-            float bonus = a.P("bonus", 0.25f);
+            float bonus = a.P("bonus", 0.2f);
             me.AddExtraStamina(bonus);
             NetSend.RaiseTo(new BonusStamina { amount = bonus, reason = 1 }, victimActor);
-            Ui.Hud.Toast("HERO'S ARRIVAL!");
+            Ui.Hud.Toast(a.Card.Name.ToUpperInvariant() + "!");
         }
 
-        public override string Status(Character me) => _charge.Available(LocalCards.Biome) ? "Hero's Arrival: ready" : "Hero's Arrival: used this biome";
+        public override string Status(Character me) => _charge.Available(LocalCards.Biome) ? Card.Name + ": ready" : Card.Name + ": used this biome";
     }
 }

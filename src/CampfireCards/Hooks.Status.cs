@@ -68,7 +68,9 @@ namespace CampfireCards
                 }
             }
 
-            if (amount <= 0.0001f) { __result = false; return false; }   // e.g. The Mountain's Heir: no fall Injury
+            // only a status scaled to nothing is cancelled (The Mountain's Heir: no fall Injury); tiny per-frame Hunger and
+            // night Cold must reach the game, which accumulates them in 0.025 steps itself
+            if (StatComposites.CancelsStatus(amount)) { __result = false; return false; }
             __state = fromRPC && Mathf.Abs(amount - before) > 0.00001f;
             return true;
         }
@@ -190,6 +192,64 @@ namespace CampfireCards
             float bonus = Effects.Local[Channel.maxStamina];
             if (Mathf.Abs(bonus) < 0.0001f) return;
             __result = Mathf.Max(1f + bonus - __instance.refs.afflictions.statusSum, 0f);
+        }
+
+        /// <summary>The HUD's status-segment row (Bar/LayoutGroup) and its prefab right edge, while the mod has moved it.</summary>
+        private static RectTransform _barSegments;
+        private static int _barSegmentsOwner;
+        private static float _barSegmentsRight;
+        private static bool _barSegmentsMoved;
+
+        /// <summary>
+        /// hooks.json staminaBarFrame. In PEAK's HUD prefab, MaxStamina ignores the layout and is sized from the left to
+        /// GetMaxStamina(), while the status segments sit in a HorizontalLayoutGroup aligned MiddleRight across the full
+        /// bar, so in vanilla the two always meet (max stamina + statuses = 100%). A card's max-stamina change resizes only
+        /// MaxStamina, which left a gap (penalty) or an overlap (bonus). Here the segment row's right edge and the frame
+        /// follow the card-adjusted maximum instead: a penalty visibly shortens the whole bar with Hunger and the other
+        /// statuses right after the stamina, and a bonus lengthens it. Only for the local scout; otherwise vanilla.
+        /// </summary>
+        public static void OnStaminaBarUpdate(StaminaBar __instance)
+        {
+            if (__instance.staminaBarOutline == null || __instance.fullBar == null) return;
+            var c = Character.observedCharacter;
+            float bonus = c != null && Mine(c) ? Effects.Local[Channel.maxStamina] : 0f;
+            var segments = BarSegments(__instance);
+            float width = __instance.fullBar.sizeDelta.x;
+            if (Mathf.Abs(bonus) < 0.0001f)
+            {
+                if (segments != null && _barSegmentsMoved) SetRightEdge(segments, _barSegmentsRight);
+                _barSegmentsMoved = false;
+                return;
+            }
+            if (segments == null) return;   // unknown HUD layout: leave the game's bar alone rather than half-move it
+            float frame = StatComposites.BarFrame(bonus, c.refs.afflictions.statusSum);
+            var o = __instance.staminaBarOutline;
+            o.sizeDelta = new Vector2(14f + frame * width, o.sizeDelta.y);
+            if (!_barSegmentsMoved) { _barSegmentsRight = segments.offsetMax.x; _barSegmentsMoved = true; }
+            SetRightEdge(segments, _barSegmentsRight + StatComposites.BarSegmentsShift(bonus, width));
+        }
+
+        private static void SetRightEdge(RectTransform rt, float right)
+        {
+            if (Mathf.Abs(rt.offsetMax.x - right) > 0.01f) rt.offsetMax = new Vector2(right, rt.offsetMax.y);
+        }
+
+        /// <summary>The parent of the status segments, if it is the right-aligned HorizontalLayoutGroup the prefab has.</summary>
+        private static RectTransform BarSegments(StaminaBar bar)
+        {
+            int id = bar.GetInstanceID();
+            if (_barSegmentsOwner == id) return _barSegments;   // a new HUD (scene load) has a new id
+            _barSegments = null; _barSegmentsOwner = id; _barSegmentsMoved = false;
+            // StaminaBar.Start fills afflictions from the whole bar group (Petrify lives elsewhere): take the segments'
+            // HorizontalLayoutGroup. MaxStamina is also its child, but ignores the layout and hangs from the left edge.
+            if (bar.afflictions == null || bar.afflictions.Length == 0) { _barSegmentsOwner = 0; return null; }   // Start has not run yet
+            foreach (var a in bar.afflictions)
+            {
+                var parent = a != null && a.rtf != null ? a.rtf.parent as RectTransform : null;
+                if (parent != null && parent.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>() != null) { _barSegments = parent; break; }
+            }
+            Plugin.Verbose("Stamina bar segments: " + (_barSegments != null ? _barSegments.name : "not found (frame only)"));
+            return _barSegments;
         }
 
         /// <summary>hooks.json bonusStamina: every bonus (yellow) stamina grant, including the cards' own.</summary>

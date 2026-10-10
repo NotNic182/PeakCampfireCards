@@ -127,7 +127,7 @@ namespace CampfireCards.Cards
                     var hand = Turns.HandOf(actor);
                     if (hand.Length == 0) continue;
                     Plugin.Verbose($"Pick timeout for actor {actor}: waited {waited:0.0}s of {TimeoutSeconds}s");
-                    var rng = new Random(SessionId * 31 + actor);
+                    var rng = DealRandom.Shared;
                     HostAccept(actor, hand[rng.Next(hand.Length)], auto: true);
                     picked = true;
                 }
@@ -200,7 +200,7 @@ namespace CampfireCards.Cards
                 // Phoenix Clause: skip this pick. Double Down: a one-card offer. Both flags are consumed by this session.
                 byte flags = Effects.Flags(actor);
                 int count = (flags & Effects.FlagSkipNext) != 0 ? 0 : (flags & Effects.FlagOfferOne) != 0 ? 1 : handSize;
-                var hand = count > 0 ? Deck.Deal(new Random(id * 7919 + actor), Effects.CardsOf(actor), count, solo, claimedMythics) : new byte[0];
+                var hand = count > 0 ? Deck.Deal(DealRandom.Shared, Effects.CardsOf(actor), count, solo, claimedMythics) : new byte[0];
                 var fixedHand = new byte[handSize];
                 for (int i = 0; i < fixedHand.Length; i++) fixedHand[i] = i < hand.Length ? hand[i] : (byte)0;
                 hands.AddRange(fixedHand);
@@ -250,7 +250,7 @@ namespace CampfireCards.Cards
             foreach (var actor in m.order)
             {
                 if ((Effects.Flags(actor) & Effects.FlagSkipNext) != 0)
-                    Hud.Toast((actor == NetSend.LocalActor ? "You skip" : NetSend.NameOf(actor) + " skips") + " this pick (Phoenix Clause)");
+                    Hud.Toast((actor == NetSend.LocalActor ? "You skip" : NetSend.NameOf(actor) + " skips") + " this pick (" + Deck.NameOfAbility("PhoenixClause") + ")");
                 Effects.SetFlag(actor, (byte)(Effects.FlagSkipNext | Effects.FlagOfferOne), false);
             }
             Plugin.Verbose($"Pick session {SessionId} reason {Reason} mode {mode}: order {string.Join(",", Turns.Order)}");
@@ -388,7 +388,7 @@ namespace CampfireCards.Cards
             int count = Math.Max(0, (int)Math.Round(CardSettings.Current.Param(def, "bonusCards", 1f)));
             if (count == 0) return;
             var maxRarity = def.Ability == "DoubleDown" ? CardRarity.Rare : CardRarity.Mythic;
-            var cards = Deck.DealBonus(new Random(sessionId * 104729 + actor * 31 + cardId), Effects.CardsOf(actor), count, NetSend.IsSolo, maxRarity, Turns.CardsStillOffered());
+            var cards = Deck.DealBonus(DealRandom.Shared, Effects.CardsOf(actor), count, NetSend.IsSolo, maxRarity, Turns.CardsStillOffered());
             if (cards.Length == 0) return;
             NetSend.Raise(new CardsGranted { sessionId = sessionId, actor = actor, cards = cards, reason = 1 }, Photon.Realtime.ReceiverGroup.All);
         }

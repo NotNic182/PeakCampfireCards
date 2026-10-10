@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.4.0";
+        public const string Version = "0.4.1";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -80,9 +80,21 @@ namespace CampfireCards
         }
 
         /// <summary>Every tunable number of the card system, from the config (defaults come from design/cards.json).</summary>
+        /// <summary>
+        /// The card balance this build ships. A config written for an older balance gets every card's numbers (modifier
+        /// values and parameters) reset to the new defaults once; Enabled choices and every other setting are kept.
+        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1 (34 cards without a drawback).
+        /// </summary>
+        public const int CardBalanceVersion = 2;
+
         public static CardSettings LoadSettings(ConfigFile cfg)
         {
             var s = new CardSettings();
+            var balance = cfg.Bind("Cards", "BalanceVersion", 0,
+                "The card balance the card values below were written for. When the mod's balance changes, card values are reset to the new defaults once (Enabled is kept). Leave it as it is.");
+            bool resetCards = balance.Value < CardBalanceVersion;
+            bool saveOnSet = cfg.SaveOnConfigSet;
+            if (resetCards) cfg.SaveOnConfigSet = false;
             s.OfferCount = Mathf.Clamp(cfg.Bind("Cards", "OfferCount", CardTable.OfferCount, "Cards offered at each pick (choose 1).").Value, 1, 5);
             s.AllowDuplicates = cfg.Bind("Cards", "AllowDuplicates", false, "Allow a player to own the same card more than once (Mythics never repeat).").Value;
             s.MythicsEnabled = cfg.Bind("Cards", "MythicsEnabled", true, "Mythic cards can appear (each at most once per run, for the whole team).").Value;
@@ -113,10 +125,17 @@ namespace CampfireCards
                     seen[key] = seen.TryGetValue(key, out n) ? n + 1 : 1;
                     if (seen[key] > 1) key += "_" + seen[key];
                     string desc = $"{mod.Op} {mod.Channel} when {mod.When} for {mod.Target}. Multipliers: 1 = no change; flat stamina: 0.1 = 10 stamina.";
-                    s.ModValues[i][m] = cfg.Bind(section, key, mod.Value, desc).Value;
+                    s.ModValues[i][m] = Current(cfg.Bind(section, key, mod.Value, desc), resetCards);
                 }
                 foreach (var kv in c.Params)
-                    s.Params[i][kv.Key] = cfg.Bind(section, "Param_" + kv.Key, kv.Value, "Card parameter (statuses and stamina: 0.1 = 10).").Value;
+                    s.Params[i][kv.Key] = Current(cfg.Bind(section, "Param_" + kv.Key, kv.Value, "Card parameter (statuses and stamina: 0.1 = 10)."), resetCards);
+            }
+            if (resetCards)
+            {
+                if (balance.Value > 0) Log.LogWarning($"Card balance updated to version {CardBalanceVersion}: every card value in the config was reset to the new defaults (Enabled choices kept).");
+                balance.Value = CardBalanceVersion;
+                cfg.Save();
+                cfg.SaveOnConfigSet = saveOnSet;
             }
             return s;
         }
@@ -127,6 +146,13 @@ namespace CampfireCards
             foreach (var c in CardTable.Cards)
                 if (DisabledByDefault.Contains(c.Key) && s.IsEnabled(c))
                     Log.LogWarning($"{c.Name} is enabled in the config, but its benefit cannot be built on this version of PEAK: only its drawback applies (see README, Known limitations).");
+        }
+
+        /// <summary>A card value from the config, first put back to its default when the balance changed.</summary>
+        private static float Current(ConfigEntry<float> entry, bool reset)
+        {
+            if (reset && Math.Abs(entry.Value - (float)entry.DefaultValue) > 1e-6f) entry.Value = (float)entry.DefaultValue;
+            return entry.Value;
         }
 
         private void Update()

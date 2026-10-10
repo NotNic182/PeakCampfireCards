@@ -8,15 +8,6 @@ using UnityEngine;
 
 namespace CampfireCards.Abilities
 {
-    /// <summary>Iron Stomach: food removes more Hunger (modifier); every food eaten adds Drowsy.</summary>
-    public sealed class Ability_IronStomach : Ability
-    {
-        public override void OnFoodEaten(Character me, FoodEvent food)
-        {
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Drowsy, P("drowsy", 0.05f));
-        }
-    }
-
     /// <summary>Camp Chef: cooked food removes more Hunger (modifier); food that could have been cooked but was not adds Poison.</summary>
     public sealed class Ability_CampChef : Ability
     {
@@ -35,7 +26,7 @@ namespace CampfireCards.Abilities
         public override void OnFoodEaten(Character me, FoodEvent food)
         {
             if (food.InjuryBefore < P("threshold", 0.2f) - 0.0001f) return;
-            CardStatus.Remove(me, CharacterAfflictions.STATUSTYPE.Injury, P("heal", 0.1f));
+            CardStatus.Remove(me, CharacterAfflictions.STATUSTYPE.Injury, P("heal", 0.075f));
         }
     }
 
@@ -50,16 +41,25 @@ namespace CampfireCards.Abilities
         public bool TryUse()
         {
             if (!_charge.TryUse(LocalCards.Biome)) return false;
-            Hud.Toast("Lucky Lunch: that one is still in your hand");
+            Hud.Toast(Card.Name + " - that one is still in your hand");
             return true;
         }
 
-        public override string Status(Character me) => _charge.Available(LocalCards.Biome) ? "Lucky Lunch: ready" : "Lucky Lunch: used this biome";
+        private readonly Charge _hint = new Charge(perBiome: true);
+
+        /// <summary>Uncooked food was eaten while the save was still available: say once per biome that only cooked food counts.</summary>
+        public void HintUncooked()
+        {
+            if (_charge.Available(LocalCards.Biome) && _hint.TryUse(LocalCards.Biome))
+                Hud.Toast(Card.Name + " only keeps cooked food: cook it at a campfire first");
+        }
+
+        public override string Status(Character me) => _charge.Available(LocalCards.Biome) ? Card.Name + " (cooked food): ready" : Card.Name + ": used this biome";
     }
 
     /// <summary>
-    /// Cleansing Ritual: a curative item used on you also removes 10 from your worst status it did not treat; each
-    /// curative use adds 5 Hunger. Curse, Weight and Hunger are never the "worst other status" (Hunger is the drawback).
+    /// Cleansing Ritual: a curative item used on you also removes 7.5 from your worst status it did not treat. Curse,
+    /// Weight and Hunger are never the "worst other status".
     /// </summary>
     public sealed class Ability_CleansingRitual : Ability
     {
@@ -81,10 +81,9 @@ namespace CampfireCards.Abilities
             }
             if (worst > 0f)
             {
-                CardStatus.Remove(me, pick, P("bonus", 0.1f));
-                Hud.Toast("Cleansing Ritual: " + pick + " eased");
+                CardStatus.Remove(me, pick, P("bonus", 0.075f));
+                Hud.Toast(Card.Name + ": " + pick + " eased");
             }
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Hunger, P("hunger", 0.05f));
         }
     }
 
@@ -97,10 +96,10 @@ namespace CampfireCards.Abilities
     {
         public override void OnAcquired(Character me)
         {
-            Hud.Toast("Pack Rat: the extra slot is not available in this version (only the weight change applies)");
+            Hud.Toast(Card.Name + ": the extra pocket is not available in this version (only the weight change applies)");
         }
 
-        public override string Status(Character me) => "Pack Rat: extra slot unavailable";
+        public override string Status(Character me) => Card.Name + ": extra pocket unavailable";
     }
 
     /// <summary>
@@ -137,7 +136,7 @@ namespace CampfireCards.Abilities
         {
             if (Time.unscaledTime < _nextScan) return;
             _nextScan = Time.unscaledTime + 0.25f;
-            float radius = P("radius", 15f);
+            float radius = P("radius", 12f);
             _markers.Clear();
             if (!me.data.dead)
             {
@@ -191,9 +190,9 @@ namespace CampfireCards.Abilities
     {
         public override void OnAcquired(Character me)
         {
-            Hud.Toast("Double Deal: your third pocket is locked for the rest of the run");
+            Hud.Toast(Card.Name + ": your third pocket is locked for the rest of the run");
         }
 
-        public override string Status(Character me) => "Double Deal: pocket 3 locked";
+        public override string Status(Character me) => Card.Name + ": pocket 3 locked";
     }
 }

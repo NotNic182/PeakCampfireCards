@@ -20,6 +20,25 @@ namespace CampfireCards.Core
         public static float HeldItemWeight(ModResult r) => r[Channel.itemWeight] * r[Channel.heldItemWeight];
 
         public static float Thorns(ModResult r) => StatusGain(r, Channel.thornsRate);
+
+        /// <summary>
+        /// Should the game's AddStatus be skipped after card scaling? Only when nothing is left (a Mythic set the status
+        /// to zero, or Delayed Consequences / Phoenix Clause took all of it). PEAK adds Hunger (0.0005/s) and night Cold
+        /// (0.005/s) in tiny per-frame steps that it accumulates itself, so a small positive amount must always go through.
+        /// </summary>
+        public static bool CancelsStatus(float scaledAmount) => scaledAmount <= 0f;
+
+        /// <summary>
+        /// Width of the stamina bar frame in full bars: the card-adjusted maximum (1 + maxStamina channel), or the status
+        /// total when statuses overflow it (vanilla uses max(1, statusSum)).
+        /// </summary>
+        public static float BarFrame(float maxStaminaBonus, float statusSum) => Math.Max(Math.Max(0.05f, 1f + maxStaminaBonus), statusSum);
+
+        /// <summary>
+        /// How far the HUD's right-aligned status segments move (HUD units): by the card bonus times the full bar width,
+        /// never so far left that the row would have no width, so they always end where the card-adjusted bar ends.
+        /// </summary>
+        public static float BarSegmentsShift(float maxStaminaBonus, float fullWidth) => Math.Max(-0.95f, maxStaminaBonus) * fullWidth;
     }
 
     /// <summary>One line of the combined stats: the value now (conditions and auras as they are) and the always-on value.</summary>

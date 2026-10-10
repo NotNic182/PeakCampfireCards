@@ -124,6 +124,12 @@ namespace CampfireCards.Generated
         [HarmonyPostfix] static void Postfix(Character __instance, ref float __result) { CampfireCards.Hooks.OnGetMaxStamina(__instance, ref __result); }
     }
 
+    [HarmonyPatch(typeof(StaminaBar), "Update")]
+    internal static class Patch_staminaBarFrame
+    {
+        [HarmonyPostfix] static void Postfix(StaminaBar __instance) { CampfireCards.Hooks.OnStaminaBarUpdate(__instance); }
+    }
+
     [HarmonyPatch(typeof(Character), "AddExtraStamina", new Type[] { typeof(float) })]
     internal static class Patch_bonusStamina
     {
