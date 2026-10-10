@@ -24,19 +24,23 @@ namespace CampfireCards.Net
         public const byte BonusStamina = 103;
         public const byte SpawnItem = 104;
         public const byte RevivedBy = 105;
-        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105 };
+        public const byte PickRequest = 106;
+        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106 };
     }
 
-    /// <summary>announce the mod, its card count and a hash of the deck so players on different versions get a warning. Sender: anyone entering a room. Receivers: Others.</summary>
+    /// <summary>announce the mod version and the settings fingerprint (Core.SettingsFingerprint: global rules, rarity weights x10000, one hash per card) so players with different versions or card settings are told exactly what differs. Sender: anyone entering a room. Receivers: Others (the host answers the sender with its own Hello, targeted).</summary>
     public struct Hello : INetEvent
     {
         public const byte Code = 90;
         public byte EventCode => Code;
         public const bool Reliable = true;
-        public const string Receivers = "Others";
+        public const string Receivers = "Others (the host answers the sender with its own Hello, targeted)";
         public string modVersion;
         public int cardCount;
         public int deckHash;
+        public int[] rules;
+        public int[] weights;
+        public int[] cards;
         public byte[] Write()
         {
             using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
@@ -44,6 +48,9 @@ namespace CampfireCards.Net
                 w.Write(modVersion ?? "");
                 w.Write(cardCount);
                 w.Write(deckHash);
+                w.Write(rules == null ? 0 : rules.Length); if (rules != null) foreach (var x in rules) w.Write(x);
+                w.Write(weights == null ? 0 : weights.Length); if (weights != null) foreach (var x in weights) w.Write(x);
+                w.Write(cards == null ? 0 : cards.Length); if (cards != null) foreach (var x in cards) w.Write(x);
                 w.Flush(); return ms.ToArray();
             }
         }
@@ -55,12 +62,15 @@ namespace CampfireCards.Net
                 v.modVersion = r.ReadString();
                 v.cardCount = r.ReadInt32();
                 v.deckHash = r.ReadInt32();
+                {{ int n = r.ReadInt32(); if (n < 0 || n > (ms.Length - ms.Position) / 4) throw new InvalidDataException("v.rules: bad length " + n); v.rules = new int[n]; for (int i = 0; i < n; i++) v.rules[i] = r.ReadInt32(); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > (ms.Length - ms.Position) / 4) throw new InvalidDataException("v.weights: bad length " + n); v.weights = new int[n]; for (int i = 0; i < n; i++) v.weights[i] = r.ReadInt32(); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > (ms.Length - ms.Position) / 4) throw new InvalidDataException("v.cards: bad length " + n); v.cards = new int[n]; for (int i = 0; i < n; i++) v.cards[i] = r.ReadInt32(); }}
             }
             return v;
         }
     }
 
-    /// <summary>a pick session begins: turn order (actor numbers, last to the fire first) and each player's dealt hand (handSize card ids per player, in order). reason: 0 opening, 1 campfire. Sender: host. Receivers: All.</summary>
+    /// <summary>a pick session begins: pick order (actor numbers, last to the fire first; also the dealing order), each player's dealt hand (handSize card ids per player, in order), the host's timer and mode (Core.PickMode: 0 everyone chooses at once, 1 one at a time). reason: 0 opening, 1 campfire; segment: the campfire segment (255 = opening), so every client knows which session started and a new host can continue the queue. Sender: host. Receivers: All.</summary>
     public struct PickSessionStart : INetEvent
     {
         public const byte Code = 91;
@@ -73,6 +83,8 @@ namespace CampfireCards.Net
         public byte[] hands;
         public byte handSize;
         public float timeoutSeconds;
+        public byte mode;
+        public byte segment;
         public byte[] Write()
         {
             using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
@@ -83,6 +95,8 @@ namespace CampfireCards.Net
                 w.Write(hands == null ? 0 : hands.Length); if (hands != null) w.Write(hands);
                 w.Write(handSize);
                 w.Write(timeoutSeconds);
+                w.Write(mode);
+                w.Write(segment);
                 w.Flush(); return ms.ToArray();
             }
         }
@@ -93,16 +107,18 @@ namespace CampfireCards.Net
             {
                 v.sessionId = r.ReadInt32();
                 v.reason = r.ReadByte();
-                {{ int n = r.ReadInt32(); v.order = new int[n]; for (int i = 0; i < n; i++) v.order[i] = r.ReadInt32(); }}
-                {{ int n = r.ReadInt32(); v.hands = r.ReadBytes(n); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > (ms.Length - ms.Position) / 4) throw new InvalidDataException("v.order: bad length " + n); v.order = new int[n]; for (int i = 0; i < n; i++) v.order[i] = r.ReadInt32(); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.hands: bad length " + n); v.hands = r.ReadBytes(n); }}
                 v.handSize = r.ReadByte();
                 v.timeoutSeconds = r.ReadSingle();
+                v.mode = r.ReadByte();
+                v.segment = r.ReadByte();
             }
             return v;
         }
     }
 
-    /// <summary>a player took a card: everyone adds it to that player's cards, applies effects, advances the turn. Sender: the picking player. Receivers: All.</summary>
+    /// <summary>the host accepted a pick (a player's PickRequest, or its own timeout pick): everyone checks it against the session (id, player, hand, not picked yet) and adds the card. Sender: host. Receivers: All.</summary>
     public struct PickMade : INetEvent
     {
         public const byte Code = 92;
@@ -167,10 +183,10 @@ namespace CampfireCards.Net
             var v = new StateSync();
             using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
             {
-                {{ int n = r.ReadInt32(); v.actors = new int[n]; for (int i = 0; i < n; i++) v.actors[i] = r.ReadInt32(); }}
-                {{ int n = r.ReadInt32(); v.counts = r.ReadBytes(n); }}
-                {{ int n = r.ReadInt32(); v.cards = r.ReadBytes(n); }}
-                {{ int n = r.ReadInt32(); v.pickFlags = r.ReadBytes(n); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > (ms.Length - ms.Position) / 4) throw new InvalidDataException("v.actors: bad length " + n); v.actors = new int[n]; for (int i = 0; i < n; i++) v.actors[i] = r.ReadInt32(); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.counts: bad length " + n); v.counts = r.ReadBytes(n); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.cards: bad length " + n); v.cards = r.ReadBytes(n); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.pickFlags: bad length " + n); v.pickFlags = r.ReadBytes(n); }}
                 v.sessionId = r.ReadInt32();
             }
             return v;
@@ -263,7 +279,7 @@ namespace CampfireCards.Net
             {
                 v.sessionId = r.ReadInt32();
                 v.actor = r.ReadInt32();
-                {{ int n = r.ReadInt32(); v.cards = r.ReadBytes(n); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.cards: bad length " + n); v.cards = r.ReadBytes(n); }}
                 v.reason = r.ReadByte();
             }
             return v;
@@ -474,7 +490,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>ask the host to spawn a real world pickup (Rope Baron, Supply Scout) at a safe spot. Sender: the card owner. Receivers: MasterClient.</summary>
+    /// <summary>ask the host for a card's campfire item (Rope Baron, Supply Scout) for the fire lit for this segment; the host checks the card, the item and that the fire was lit, places it next to that fire itself, and spawns it once per card per fire. Sender: the card owner. Receivers: MasterClient.</summary>
     public struct SpawnItem : INetEvent
     {
         public const byte Code = 104;
@@ -482,17 +498,13 @@ namespace CampfireCards.Net
         public const bool Reliable = true;
         public const string Receivers = "MasterClient";
         public byte item;
-        public float x;
-        public float y;
-        public float z;
+        public byte segment;
         public byte[] Write()
         {
             using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
             {
                 w.Write(item);
-                w.Write(x);
-                w.Write(y);
-                w.Write(z);
+                w.Write(segment);
                 w.Flush(); return ms.ToArray();
             }
         }
@@ -502,9 +514,7 @@ namespace CampfireCards.Net
             using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
             {
                 v.item = r.ReadByte();
-                v.x = r.ReadSingle();
-                v.y = r.ReadSingle();
-                v.z = r.ReadSingle();
+                v.segment = r.ReadByte();
             }
             return v;
         }
@@ -537,6 +547,36 @@ namespace CampfireCards.Net
         }
     }
 
+    /// <summary>a player asks to take a card from their offer; the host validates it (session, turn, hand, not picked or claimed yet) and answers everyone with PickMade. Sender: the picking player. Receivers: MasterClient.</summary>
+    public struct PickRequest : INetEvent
+    {
+        public const byte Code = 106;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "MasterClient";
+        public int sessionId;
+        public byte cardId;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(sessionId);
+                w.Write(cardId);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static PickRequest Read(byte[] data)
+        {
+            var v = new PickRequest();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.sessionId = r.ReadInt32();
+                v.cardId = r.ReadByte();
+            }
+            return v;
+        }
+    }
+
     public static partial class NetDispatcher
     {
         /// <summary>Routes a received mod event to its handler. Returns false for codes the mod does not own.</summary>
@@ -560,6 +600,7 @@ namespace CampfireCards.Net
                 case 103: NetHandlers.OnBonusStamina(BonusStamina.Read(data), sender); return true;
                 case 104: NetHandlers.OnSpawnItem(SpawnItem.Read(data), sender); return true;
                 case 105: NetHandlers.OnRevivedBy(RevivedBy.Read(data), sender); return true;
+                case 106: NetHandlers.OnPickRequest(PickRequest.Read(data), sender); return true;
                 default: return false;
             }
         }

@@ -14,27 +14,17 @@ namespace CampfireCards.Cards
     public static class Deck
     {
         public static bool Ready { get; private set; }
-        /// <summary>Hash of the deck and its settings; players on different card lists see a warning.</summary>
-        public static int Hash { get; private set; }
+        /// <summary>Hash of every shared gameplay setting (Core.SettingsFingerprint); players with different settings see a warning.</summary>
+        public static int Hash => Fingerprint != null ? Fingerprint.Hash : 0;
+        /// <summary>The settings fingerprint exchanged in Hello, so a mismatch can name what differs.</summary>
+        public static SettingsFingerprint Fingerprint { get; private set; }
         public static int Count => CardTable.Cards.Length;
 
         public static void Build()
         {
-            unchecked
-            {
-                int h = (int)2166136261;
-                foreach (var def in CardTable.Cards)
-                {
-                    h = (h ^ def.Id) * 16777619;
-                    foreach (var ch in def.Key) h = (h ^ ch) * 16777619;
-                    var s = CardSettings.Current;
-                    for (int m = 0; m < def.Mods.Length; m++) h = (h ^ (int)(s.ModValue(def, m) * 1000f)) * 16777619;
-                    h = (h ^ (s.IsEnabled(def) ? 1 : 0)) * 16777619;
-                }
-                Hash = h;
-            }
+            Fingerprint = SettingsFingerprint.Of(CardSettings.Current);
             Ready = Count > 0;
-            Plugin.Log.LogInfo($"Deck: {Count} cards, offer {CardSettings.Current.OfferCount}, hash {Hash:X8}");
+            Plugin.Log.LogInfo($"Deck: {Count} cards, offer {CardSettings.Current.OfferCount}, settings hash {Hash:X8}");
         }
 
         public static bool TryGet(byte id, out CardDef def)
@@ -73,14 +63,19 @@ namespace CampfireCards.Cards
             return hand;
         }
 
-        /// <summary>Bonus cards (Double Deal, Double Down): never card-draw cards, optionally capped at Rare.</summary>
-        public static byte[] DealBonus(System.Random rng, ICollection<byte> owned, int count, bool solo, CardRarity maxRarity)
+        /// <summary>
+        /// Bonus cards (Double Deal, Double Down): never card-draw cards, optionally capped at Rare, and never a Mythic that
+        /// is still on offer to another player this session (stillOffered), so that player's pick cannot be refused later.
+        /// </summary>
+        public static byte[] DealBonus(System.Random rng, ICollection<byte> owned, int count, bool solo, CardRarity maxRarity, ICollection<byte> stillOffered = null)
         {
             bool sacrifice = CardDraw.SacrificeTargets(CardSettings.Current, owned).Count > 0;
             var rules = OfferRules.Campfire(count, solo, sacrifice);
             rules.ExcludeDrawCards = true;
             rules.MaxRarity = maxRarity;
-            rules.ClaimedMythics = Effects.ClaimedMythics();
+            var claimed = Effects.ClaimedMythics();
+            if (stillOffered != null) claimed.UnionWith(stillOffered.Where(id => { var d = CardSettings.Current.Card(id); return d != null && d.Rarity == CardRarity.Mythic; }));
+            rules.ClaimedMythics = claimed;
             return CardDraw.Offer(rng, CardSettings.Current, owned, rules).ToArray();
         }
 

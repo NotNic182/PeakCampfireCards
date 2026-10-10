@@ -155,13 +155,29 @@ namespace CampfireCards
         }
 
         // ------------------------------------------------------------------ Lucky Lunch: keep the food
+        /// <summary>
+        /// One keep-or-use-up decision per use of an item (Core.ItemTransaction). Every action of one use runs inside the
+        /// same FinishCast call, so the reduceUses, consumeAndSpawn and consumeDelayed hooks of that use all get the first
+        /// answer: the once-per-biome charge is spent exactly once and no path consumes a food another path kept.
+        /// </summary>
+        private static readonly Core.ItemTransaction _lunch = new Core.ItemTransaction();
+
         private static bool LuckyLunchSaves(Item item)
         {
             if (item == null) return false;
-            var eater = item.holderCharacter;
-            if (!Mine(eater) || !IsFood(item) || !IsCooked(item)) return false;
-            var ll = LocalCards.Get<Ability_LuckyLunch>();
-            return ll != null && ll.TryUse();
+            return _lunch.Decide(item.GetInstanceID(), Time.frameCount, () =>
+            {
+                var eater = item.holderCharacter;
+                if (!Mine(eater) || !IsFood(item) || !IsCooked(item)) return false;
+                var ll = LocalCards.Get<Ability_LuckyLunch>();
+                return ll != null && ll.TryUse();
+            });
+        }
+
+        /// <summary>A kept item's on-consume effects (stamina, afflictions) run once per use, however many paths kept it.</summary>
+        private static void FireConsumedOnce(Item item)
+        {
+            if (item != null && item.OnConsumed != null && _lunch.TryFireEffects(item.GetInstanceID(), Time.frameCount)) item.OnConsumed();
         }
 
         /// <summary>
@@ -177,7 +193,7 @@ namespace CampfireCards
 
         private static IEnumerator KeepItem(Item item, bool ignoreActions)
         {
-            if (!ignoreActions && item.OnConsumed != null) item.OnConsumed();
+            if (!ignoreActions) FireConsumedOnce(item);
             yield return null;
             // a fed item points at the eater while it is "being consumed"; give it back to the feeder
             if (item != null && item.overrideHolderCharacter != null && item.trueHolderCharacter != item.overrideHolderCharacter)
@@ -192,7 +208,7 @@ namespace CampfireCards
         {
             var item = ActionItem(__instance);
             if (!LuckyLunchSaves(item)) return true;
-            if (item.OnConsumed != null) item.OnConsumed();
+            FireConsumedOnce(item);
             return false;
         }
 
@@ -262,25 +278,69 @@ namespace CampfireCards
         }
 
         // ------------------------------------------------------------------ campfire item spawns (host)
-        /// <summary>Host: spawn a card's campfire item (Rope Baron, Supply Scout) at the spot the owner chose.</summary>
+        /// <summary>Host: every campfire lit this run (by segment), so rewards are placed next to the real fire.</summary>
+        private static readonly Dictionary<byte, Campfire> _litFires = new Dictionary<byte, Campfire>();
+        private static readonly Core.SpawnLedger _spawns = new Core.SpawnLedger();
+        /// <summary>A reward may land at most this far from its fire (horizontal metres), whatever the spot search returns.</summary>
+        private const float MaxSpawnDistance = 7f;
+
+        private static void ResetCampfireSpawns()
+        {
+            _litFires.Clear();
+            _spawns.Reset();
+        }
+
+        /// <summary>Host: a campfire was really lit this run; its card rewards may now be claimed, once each.</summary>
+        private static void HostCampfireLit(Campfire fire)
+        {
+            byte seg = (byte)fire.advanceToSegment;
+            _litFires[seg] = fire;
+            _spawns.FireLit(seg);
+        }
+
+        /// <summary>
+        /// Host: a card's campfire item (Rope Baron, Supply Scout). The host checks that the sender owns a card whose
+        /// reward is this item, that the fire was lit this run and that this reward was not spawned yet, then places it
+        /// next to that fire itself. The client only names the item and the fire.
+        /// </summary>
         public static void HostSpawnItem(SpawnItem m, int sender)
         {
             if (!PhotonNetwork.IsMasterClient && !PhotonNetwork.OfflineMode) return;
-            bool allowed = false;
+            bool owns = false;
             foreach (var id in Effects.CardsOf(sender))
             {
                 var def = Core.CardSettings.Current.Card(id);
-                if (def != null && def.Ability == "CampfireSpawn" && Mathf.RoundToInt(Core.CardSettings.Current.Param(def, "item", -1f)) == m.item) allowed = true;
+                if (def != null && def.Ability == "CampfireSpawn" && Mathf.RoundToInt(Core.CardSettings.Current.Param(def, "item", -1f)) == m.item) owns = true;
             }
-            if (!allowed || m.item >= CardTable.SpawnItems.Length) { Plugin.Log.LogWarning($"Rejected item spawn {m.item} from {sender}"); return; }
+            if (m.item >= CardTable.SpawnItems.Length) owns = false;
+            var verdict = _spawns.TryClaim(sender, m.item, m.segment, owns);
+            if (verdict != Core.SpawnVerdict.Ok) { Plugin.Log.LogWarning($"Refused item {m.item} for actor {sender} at fire {m.segment}: {verdict}"); return; }
+
+            Campfire fire;
+            if (!_litFires.TryGetValue(m.segment, out fire) || fire == null) { Plugin.Log.LogWarning($"Item {m.item}: fire {m.segment} is gone"); return; }
             string name = CardTable.SpawnItems[m.item];
             Item prefab;
             if (!ItemDatabase.TryGetItem(name, out prefab)) { Plugin.Log.LogWarning("Unknown item prefab " + name); return; }
-            var pos = new Vector3(m.x, m.y, m.z);
+            Vector3 pos;
+            if (!SpawnSpot(fire, sender * 3 + m.item, out pos)) { Plugin.Log.LogWarning($"Item {name} for actor {sender}: no room next to the fire"); return; }
             var go = PhotonNetwork.InstantiateItemRoom(name, pos + Vector3.up * 0.25f, Quaternion.identity);
             var spawned = go != null ? go.GetComponent<Item>() : null;
             if (spawned != null) spawned.SetKinematicNetworked(true, pos + Vector3.up * 0.25f, Quaternion.identity);
-            Plugin.Verbose($"Spawned {name} for {sender} at {pos}");
+            Plugin.Verbose($"Spawned {name} for {sender} at {pos} (fire {m.segment})");
+        }
+
+        /// <summary>Host: a ground spot by the fire (the search the owner used to run), never further than MaxSpawnDistance.</summary>
+        private static bool SpawnSpot(Campfire fire, int salt, out Vector3 pos)
+        {
+            Vector3 normal;
+            Vector3 c = fire.transform.position;
+            if (!SafeSpot.NearCampfire(fire, salt, out pos, out normal))
+            {
+                if (!SafeSpot.Near(c, 2.5f, 6f, out pos)) return false;
+                pos -= Vector3.up * 1f;   // Near returns a torso height; items sit on the ground
+            }
+            var flat = new Vector2(pos.x - c.x, pos.z - c.z);
+            return flat.magnitude <= MaxSpawnDistance && Mathf.Abs(pos.y - c.y) <= 4f;
         }
     }
 }

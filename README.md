@@ -4,7 +4,10 @@ A roguelike card mod for PEAK. On the beach, and every time your group lights a 
 three cards and keeps one. Cards last for the whole run and change how you climb, eat, fall, heal and recover.
 Almost every card has a catch. The deck has 64 cards in five rarities.
 
-The **last climber to reach the fire picks first**, and friends see "X is picking a card..." while you choose.
+By default everyone chooses at the same time, so nobody waits for three other players. The **last climber to reach
+the fire still comes first**: they are dealt first (first claim on a Mythic) and head the pick order shown at the top
+of the screen. With `PickMode = Turns` the last climber picks first and the others see "X is picking a card..." while
+they choose.
 
 ## You need
 - **PEAK** with **BepInEx 5** ([BepInExPack PEAK](https://thunderstore.io/c/peak/p/BepInEx/BepInExPack_PEAK/)).
@@ -37,8 +40,11 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
 |---|---|
 | B | Blood Battery: spend it for bonus stamina (once per biome) |
 | N | Safety Net: place your anchor on flat ground (once per biome) |
+| J | Current Build: every card you own, its benefit and drawback, which conditional effects are active right now, charges and cooldowns, and the combined result (sprint speed, jump height, stamina costs, regeneration, maximum stamina, Injury, item weight and more) |
 
-Both keys can be changed in the config. Cards with charges or cooldowns show their state at the bottom right.
+All keys can be changed in the config. Cards with charges or cooldowns show their state at the bottom right. On
+the Current Build screen, a value that depends on a condition or a teammate's aura shows what applies right now and,
+next to it, the value that always applies.
 
 ## The cards
 
@@ -152,15 +158,27 @@ Both keys can be changed in the config. Cards with charges or cooldowns show the
 | Mountain's Bargain | Legendary | Sacrifice one of your cards for +35 maximum stamina. | +5 Curse at every later campfire. |
 
 ## Playing together
-Co-op for up to 4, exactly like PEAK: host a game and invite friends through Steam. Every player needs the mod,
-with the same card settings (you get a warning when they differ). The host deals the offers, approves Eternal
-Campfire revives and spawns campfire items. Late joiners receive everyone's cards.
+Co-op for up to 4, exactly like PEAK: host a game and invite friends through Steam. Every player needs the same
+version of the mod with the same card settings. When they differ, both sides get a warning that names what differs
+(for example "rarity weights" or "cards: Gecko Grip"). Sound, key and debug settings are your own and never count.
+
+The host is in charge:
+- It deals the offers and checks every pick: a card must come from your own offer, in the current session, once.
+- It approves Eternal Campfire revives.
+- It places campfire items (once per card per campfire, next to that fire).
+
+A campfire lit while a pick is still running gets its own pick right after it. Late joiners receive everyone's cards.
 
 ## Config
 `BepInEx/config/notnic.campfirecards.cfg`:
 
-- `General`: `Sounds`, `PickTimeoutSeconds` (a random card is taken after this many seconds, default 60).
-- `Keys`: `BloodBattery`, `SafetyNet`.
+- `General`:
+  - `Sounds`.
+  - `PickTimeoutSeconds`: a random card of your offer is taken after this many seconds. The default is 30, and the
+    host's value applies to everyone. A config file written by version 0.3.0 keeps its old value of 60 until you
+    change it.
+  - `PickMode`: `Simultaneous` (default) or `Turns`. The host's choice applies to everyone.
+- `Keys`: `BloodBattery`, `SafetyNet`, `BuildScreen`.
 - `Cards`: `OfferCount`, `AllowDuplicates`, `MythicsEnabled`, `StaminaCostReductionCapPercent` (60), `MaxStaminaFloor` (50).
 - `Rarity Weights`: one weight per rarity.
 - `Card - <Name>`: `Enabled`, every modifier value, and every parameter (thresholds, amounts, cooldowns, radii).
@@ -183,6 +201,11 @@ Campfire revives and spawns campfire items. Late joiners receive everyone's card
 - Other players see your card speed boosts with a small delay (their copy of your scout is corrected by the game).
 - Continuing a quicksaved run starts with no cards.
 - Revives from the Book of Bones and the Scout Effigy do not count for Hero's Arrival.
+- Thornbreaker halves thorns as they stick to you; thorns already in you when you get the card, or when you leave
+  the Eternal Campfire's aura, keep their value. PEAK counts Thorns in steps of one thorn, so an odd thorn is
+  rounded up: one thorn alone is never removed.
+- If the host leaves during a run, the new host does not know which Eternal Campfire revives were already used
+  this biome (waiting campfire picks carry over to the new host).
 
 ## Building from source
 Requirements: .NET SDK 8 or newer, Python 3, and PEAK with BepInEx installed (the project references PEAK's own

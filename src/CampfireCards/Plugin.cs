@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.3.0";
+        public const string Version = "0.4.0";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -31,17 +31,20 @@ namespace CampfireCards
 
         public static ConfigEntry<bool> SoundsEnabled;
         public static ConfigEntry<float> PickTimeoutSeconds;
+        public static ConfigEntry<PickMode> PickModeSetting;
         public static ConfigEntry<bool> VerboseLog;
         public static ConfigEntry<bool> DevKeys;
         public static ConfigEntry<string> DevGrantCard;
         public static ConfigEntry<Key> BloodBatteryKey;
         public static ConfigEntry<Key> SafetyNetKey;
+        public static ConfigEntry<Key> BuildScreenKey;
 
         /// <summary>Cards that ship disabled because part of their effect cannot be built on PEAK's current code (see README).</summary>
         private static readonly HashSet<string> DisabledByDefault = new HashSet<string> { "PackRat" };
 
         public static string BloodBatteryKeyLabel => BloodBatteryKey != null ? BloodBatteryKey.Value.ToString() : "?";
         public static string SafetyNetKeyLabel => SafetyNetKey != null ? SafetyNetKey.Value.ToString() : "?";
+        public static string BuildScreenKeyLabel => BuildScreenKey != null ? BuildScreenKey.Value.ToString() : "?";
 
         private Harmony _harmony;
 
@@ -53,15 +56,20 @@ namespace CampfireCards
 
             SoundsEnabled = Config.Bind("General", "Sounds", true, "Play the card sounds.");
             PickTimeoutSeconds = Config.Bind("General", "PickTimeoutSeconds", UiTiming.PickTimeoutSeconds,
-                "Safety timer: if a player has not chosen after this many seconds, a random card of their offer is taken.");
+                "Safety timer: if a player has not chosen after this many seconds, a random card of their offer is taken (minimum 5). The host's value is used for everyone.");
+            PickModeSetting = Config.Bind("General", "PickMode", PickMode.Simultaneous,
+                "Simultaneous: everyone chooses at the same time (the last to reach the fire is still dealt first and listed first). " +
+                "Turns: one player at a time, last to the fire first. The host's choice is used for everyone.");
             BloodBatteryKey = Config.Bind("Keys", "BloodBattery", Key.B, "Activates Blood Battery (when you own it).");
             SafetyNetKey = Config.Bind("Keys", "SafetyNet", Key.N, "Places the Safety Net anchor (when you own it).");
+            BuildScreenKey = Config.Bind("Keys", "BuildScreen", Key.J, "Opens and closes the Current Build screen (your cards and their combined effects).");
             VerboseLog = Config.Bind("Debug", "VerboseLog", false, "Log every card event.");
             DevKeys = Config.Bind("Debug", "DevKeys", false,
                 "Testing keys: F9 lights the current campfire, F10 warps you next to it, F11 shows a sample offer, F8 (host) grants the cards listed in GrantCard, F7 logs the active card effects.");
             DevGrantCard = Config.Bind("Debug", "GrantCard", "", "Card keys granted by F8 with DevKeys on, comma separated (for example GeckoGrip, BloodBattery). Re-read on every press.");
 
             CardSettings.Current = LoadSettings(Config);
+            WarnAboutUnbuiltCards(CardSettings.Current);
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
@@ -111,6 +119,14 @@ namespace CampfireCards
                     s.Params[i][kv.Key] = cfg.Bind(section, "Param_" + kv.Key, kv.Value, "Card parameter (statuses and stamina: 0.1 = 10).").Value;
             }
             return s;
+        }
+
+        /// <summary>A card from DisabledByDefault was switched on: only its drawback works, say so once in the log.</summary>
+        private static void WarnAboutUnbuiltCards(CardSettings s)
+        {
+            foreach (var c in CardTable.Cards)
+                if (DisabledByDefault.Contains(c.Key) && s.IsEnabled(c))
+                    Log.LogWarning($"{c.Name} is enabled in the config, but its benefit cannot be built on this version of PEAK: only its drawback applies (see README, Known limitations).");
         }
 
         private void Update()

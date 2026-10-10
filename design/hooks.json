@@ -348,13 +348,13 @@
       "targetType": "CharacterAfflictions",
       "targetMember": "UpdateWeight",
       "signature": "",
-      "prefixArgs": "",
+      "prefixArgs": "CharacterAfflictions __instance, out float __state",
       "prefixBool": false,
-      "postfixArgs": "CharacterAfflictions __instance",
+      "postfixArgs": "CharacterAfflictions __instance, float __state",
       "handler": "OnUpdateWeight",
       "runsOn": "owner",
-      "purpose": "itemWeight, heldItemWeight, carryScoutWeight and thornsRate: recompute the Weight and Thorns statuses with card multipliers",
-      "verified": "CharacterAfflictions.cs:411 internal void UpdateWeight(); notes_movement 8, notes_items 7"
+      "purpose": "itemWeight, heldItemWeight, carryScoutWeight and thornsRate: the prefix puts back the unscaled Thorns so the game only plays its thorn effects for new thorns; the postfix recomputes Weight with the card multipliers and scales only newly stuck thorns (Core.ThornsLedger); the game clamps stamina to the unscaled values on the way, so the stamina from before the update is carried in __state and given back up to the final maximum",
+      "verified": "CharacterAfflictions.cs:411 internal void UpdateWeight(): Thorns = 0.025 x stuck thorns via SetStatus, never AddStatus; it compares the new value with currentStatuses[Thorns] for its sound and particles; notes_status 1, notes_movement 8, notes_items 7"
     },
     {
       "id": "jumped",

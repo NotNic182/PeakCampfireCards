@@ -19,7 +19,7 @@
     "sortingOrder": 500
   },
   "timing": {
-    "pickTimeoutSeconds": 60,
+    "pickTimeoutSeconds": 30,
     "fanSlideInSeconds": 0.35,
     "cardStaggerSeconds": 0.08,
     "hoverScale": 1.08,
@@ -254,12 +254,12 @@
       "id": "WaitingBanner",
       "parent": "root",
       "size": [
-        700,
-        60
+        1100,
+        84
       ],
       "anchor": "top center, y=-120",
-      "visual": "dark panel, white text",
-      "text": "{playerName} is picking a card...",
+      "visual": "dark panel, white status line, and below it the pick order (last to the fire first) with each name coloured by state",
+      "text": "{status} {timeLeft}s\n{order}",
       "consts": {
         "FontSize": 28,
         "Panel": [
@@ -274,9 +274,30 @@
           1,
           1
         ],
-        "Template": "{0} is picking a card..."
+        "Template": "{0} is picking a card...",
+        "SimultaneousTemplate": "Waiting for {0}...",
+        "OrderLabel": "Pick order: ",
+        "OrderFontSize": 20,
+        "DoneColor": [
+          0.62,
+          0.92,
+          0.45,
+          1
+        ],
+        "PickingColor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "QueuedColor": [
+          0.65,
+          0.65,
+          0.65,
+          1
+        ]
       },
-      "behaviour": "shown to everyone who is not picking while a session runs; not a MenuWindow (no input block)",
+      "behaviour": "shown while a session runs to everyone not choosing right now (in turns mode the others, in simultaneous mode everyone who already chose); not a MenuWindow (no input block)",
       "soundOn": "none"
     },
     {
@@ -287,7 +308,7 @@
         300
       ],
       "anchor": "bottom left, x=20, y=160",
-      "visual": "one line per card: a square in the card's rarity colour plus its name",
+      "visual": "one line per card: a square in the card's rarity colour plus its name; a last line names the Current Build key",
       "text": "{myCards}",
       "consts": {
         "FontSize": 18,
@@ -297,7 +318,8 @@
           1,
           0.9
         ],
-        "Header": "YOUR CARDS"
+        "Header": "YOUR CARDS",
+        "HintTemplate": "[{0}] current build"
       },
       "behaviour": "visible on the island when the player holds any card; hidden in menus",
       "soundOn": "none"
@@ -391,6 +413,52 @@
         ]
       },
       "behaviour": "stays until the choice is made",
+      "soundOn": "none"
+    },
+    {
+      "id": "BuildScreen",
+      "parent": "root",
+      "size": [
+        1560,
+        860
+      ],
+      "anchor": "center",
+      "visual": "dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you",
+      "text": "{cards} | {stats}",
+      "consts": {
+        "Panel": [
+          0.03,
+          0.03,
+          0.04,
+          0.88
+        ],
+        "Title": "CURRENT BUILD",
+        "TitleFontSize": 34,
+        "FontSize": 18,
+        "MinFontSize": 11,
+        "HeaderColor": [
+          1,
+          0.86,
+          0.55,
+          1
+        ],
+        "ActiveColor": [
+          0.62,
+          0.92,
+          0.45,
+          1
+        ],
+        "InactiveColor": [
+          0.6,
+          0.6,
+          0.6,
+          1
+        ],
+        "StatsHeader": "COMBINED EFFECTS",
+        "AurasHeader": "FROM TEAMMATES",
+        "Hint": "Values with a condition show what applies right now; \"always\" is the value with no condition met. Press {0} to close."
+      },
+      "behaviour": "toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI",
       "soundOn": "none"
     }
   ]

@@ -118,7 +118,7 @@ namespace CampfireCards
         {
             if (petrify <= 0 || CardStatus.Raw) return;
             if (!Mine(__instance.character)) return;
-            petrify = Mathf.RoundToInt(petrify * Effects.Local[Channel.petrifyRate] * Effects.Local[Channel.negativeStatusRate]);
+            petrify = Mathf.RoundToInt(petrify * StatComposites.StatusGain(Effects.Local, Channel.petrifyRate));
         }
 
         // ------------------------------------------------------------------ body heat (Heat Huddle, Frostwalker)
@@ -200,18 +200,37 @@ namespace CampfireCards
         }
 
         // ------------------------------------------------------------------ weight and thorns
+        /// <summary>Thorns the local scout carries: the game's count and the card-scaled value (only new thorns are scaled).</summary>
+        private static readonly ThornsLedger _thorns = new ThornsLedger();
+
+        /// <summary>
+        /// hooks.json updateWeight prefix: the game compares its freshly counted Thorns with the stored value to decide
+        /// whether to play the thorn sound, particles and screen effect. Put the unscaled count back first, so a scaled
+        /// value never makes every inventory change sting again; the postfix stores the scaled value afterwards.
+        /// </summary>
+        public static void OnUpdateWeightPrefix(CharacterAfflictions __instance, out float __state)
+        {
+            __state = -1f;
+            if (!Mine(__instance.character) || __instance.currentStatuses == null) return;
+            __state = __instance.character.data.currentStamina;
+            int i = (int)CharacterAfflictions.STATUSTYPE.Thorns;
+            if (i < __instance.currentStatuses.Length) __instance.currentStatuses[i] = _thorns.Raw * CharacterAfflictions.STATUS_INCREMENT;
+        }
+
         /// <summary>
         /// hooks.json updateWeight postfix: rebuild Weight from the same parts the game counts, with the card multipliers
-        /// (carried items, the item in hand, a carried scout), and scale Thorns. Recomputed from scratch every time.
+        /// (carried items, the item in hand, a carried scout), recomputed from scratch every time; and scale Thorns. PEAK
+        /// sets Thorns here (0.025 per stuck thorn), never through AddStatus, so Core.ThornsLedger scales only thorns that
+        /// arrived since the last update: weight-only updates change nothing, thorns already stuck keep their value, and
+        /// without the card new thorns count fully again.
         /// </summary>
-        public static void OnUpdateWeight(CharacterAfflictions __instance)
+        public static void OnUpdateWeight(CharacterAfflictions __instance, float __state)
         {
             var ch = __instance.character;
             if (!Mine(ch) || ch.player == null) return;
             float kItem = Effects.Local[Channel.itemWeight];
             float kHeld = Effects.Local[Channel.heldItemWeight];
             float kScout = Effects.Local[Channel.carryScoutWeight];
-            float kThorns = Effects.Local[Channel.thornsRate] * Effects.Local[Channel.negativeStatusRate];
             bool weightChanged = Mathf.Abs(kItem - 1f) > 0.0001f || Mathf.Abs(kHeld - 1f) > 0.0001f || Mathf.Abs(kScout - 1f) > 0.0001f;
 
             if (weightChanged)
@@ -244,14 +263,23 @@ namespace CampfireCards
                 foreach (var s in StickyItemComponent.ALL_STUCK_ITEMS)
                     if (s != null && s.stuckToCharacter == ch) sticky += s.addWeightToStuckPlayer;
 
-                float units = carried * kItem + held * kItem * kHeld + scout * kScout + sticky;
+                float units = carried * kItem + held * StatComposites.HeldItemWeight(Effects.Local) + scout * kScout + sticky;
                 __instance.SetStatus(CharacterAfflictions.STATUSTYPE.Weight, 0.025f * units);
             }
 
-            if (Mathf.Abs(kThorns - 1f) > 0.0001f)
+            // the game just stored the unscaled count (0.025 per thorn)
+            float raw = __instance.GetCurrentStatus(CharacterAfflictions.STATUSTYPE.Thorns);
+            int count = Mathf.RoundToInt(raw / CharacterAfflictions.STATUS_INCREMENT);
+            _thorns.Update(count, StatComposites.Thorns(Effects.Local));
+            int steps = _thorns.ScaledSteps;
+            if (steps != count) __instance.SetStatus(CharacterAfflictions.STATUSTYPE.Thorns, steps * CharacterAfflictions.STATUS_INCREMENT);
+
+            // the game set the unscaled Weight and Thorns first and clamped stamina to them; give back what that took,
+            // up to the final maximum (vanilla clamps the same way, only against the values that are now in place)
+            if (__state >= 0f && ch.data.currentStamina < __state - 0.00001f)
             {
-                float thorns = __instance.GetCurrentStatus(CharacterAfflictions.STATUSTYPE.Thorns);
-                if (thorns > 0f) __instance.SetStatus(CharacterAfflictions.STATUSTYPE.Thorns, thorns * kThorns);
+                ch.data.currentStamina = Mathf.Clamp(__state, 0f, ch.GetMaxStamina());
+                GUIManager.instance.bar.ChangeBar();
             }
         }
     }

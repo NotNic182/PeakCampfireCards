@@ -160,7 +160,8 @@ namespace CampfireCards.Core
 
     /// <summary>
     /// Host-side bookkeeping for team revivals: each owner's per-biome revive charge is spent once, and each
-    /// incapacitation event is revived at most once even if several auras overlap.
+    /// incapacitation event is revived at most once even if several auras overlap. The host passes its own biome, never
+    /// the one a client claims. Reset at every run start and end (actor numbers and incapacitation counters restart).
     /// </summary>
     public sealed class ReviveArbiter
     {
@@ -176,6 +177,21 @@ namespace CampfireCards.Core
             _ownerBiome[ownerActor] = biome;
             _events.Add(key);
             return true;
+        }
+
+        public bool UsedInBiome(int ownerActor, int biome)
+        {
+            int used;
+            return _ownerBiome.TryGetValue(ownerActor, out used) && used == biome;
+        }
+
+        /// <summary>
+        /// A player left: their incapacitation counter restarts if they come back (possibly with the same actor number),
+        /// so their old events must not block new ones. An owner's spent charge stays spent (no leave-and-rejoin refill).
+        /// </summary>
+        public void ForgetVictim(int victimActor)
+        {
+            _events.RemoveWhere(k => (int)(k >> 32) == victimActor);
         }
 
         public void Reset() { _ownerBiome.Clear(); _events.Clear(); }

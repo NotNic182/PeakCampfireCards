@@ -43,6 +43,36 @@ namespace CampfireCards.Cards
 
         public static bool HasAnyState => CardsByActor.Count > 0;
 
+        /// <summary>The modifiers applied to the local scout in the last fold (conditions held, auras in range).</summary>
+        public static IReadOnlyList<ActiveMod> ActiveMods => _mods;
+
+        /// <summary>
+        /// The local scout's always-on fold: its own modifiers that need no condition (self, or its own team-and-self
+        /// auras), without any teammate's aura. The Current Build screen shows it next to Local, so a temporary effect
+        /// is never presented as permanent.
+        /// </summary>
+        public static void FoldAlways(ModResult into)
+        {
+            var mods = new List<ActiveMod>();
+            var s = CardSettings.Current;
+            List<byte> list;
+            if (CardsByActor.TryGetValue(NetSend.LocalActor, out list))
+            {
+                foreach (var id in list)
+                {
+                    var def = s.Card(id);
+                    if (def == null) continue;
+                    for (int i = 0; i < def.Mods.Length; i++)
+                    {
+                        var m = def.Mods[i];
+                        if (m.Target == ModTarget.team || m.When != Generated.Condition.always) continue;
+                        mods.Add(new ActiveMod { CardId = def.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = s.ModValue(def, i), Rarity = def.Rarity });
+                    }
+                }
+            }
+            into.Fold(mods, s);
+        }
+
         public static List<byte> CardsOf(int actor)
         {
             List<byte> l;
@@ -311,9 +341,10 @@ namespace CampfireCards.Cards
                 bl.AppliedClimbDelta = climbDelta;
             }
 
-            // weight only recomputes on inventory events, so nudge it when the weight multipliers change
+            // weight only recomputes on inventory events, so nudge it when the weight multipliers change (a Thorns
+            // multiplier change needs no nudge: it only applies to thorns that arrive later, Core.ThornsLedger)
             int key = (int)(Local[Channel.itemWeight] * 1000) * 31 + (int)(Local[Channel.heldItemWeight] * 1000) * 17
-                      + (int)(Local[Channel.carryScoutWeight] * 1000) * 7 + (int)(Local[Channel.thornsRate] * Local[Channel.negativeStatusRate] * 1000);
+                      + (int)(Local[Channel.carryScoutWeight] * 1000) * 7;
             if (key != bl.LastWeightKey && me.refs.afflictions != null)
             {
                 bl.LastWeightKey = key;
@@ -326,15 +357,14 @@ namespace CampfireCards.Cards
         {
             switch (type)
             {
-                case CharacterAfflictions.STATUSTYPE.Injury:
-                    return (isFall ? Local[Channel.fallInjury] : Local[Channel.nonFallInjury]) * Local[Channel.allInjury];
-                case CharacterAfflictions.STATUSTYPE.Hunger: return Local[Channel.hungerRate] * Local[Channel.negativeStatusRate];
-                case CharacterAfflictions.STATUSTYPE.Cold: return Local[Channel.coldRate] * Local[Channel.negativeStatusRate];
-                case CharacterAfflictions.STATUSTYPE.Hot: return Local[Channel.heatRate] * Local[Channel.negativeStatusRate];
-                case CharacterAfflictions.STATUSTYPE.Poison: return Local[Channel.poisonRate] * Local[Channel.negativeStatusRate];
-                case CharacterAfflictions.STATUSTYPE.Spores: return Local[Channel.sporesRate] * Local[Channel.negativeStatusRate];
-                case CharacterAfflictions.STATUSTYPE.Drowsy: return Local[Channel.drowsyRate] * Local[Channel.negativeStatusRate];
-                case CharacterAfflictions.STATUSTYPE.Curse: return Local[Channel.curseRate] * Local[Channel.negativeStatusRate];
+                case CharacterAfflictions.STATUSTYPE.Injury: return StatComposites.Injury(Local, isFall);
+                case CharacterAfflictions.STATUSTYPE.Hunger: return StatComposites.StatusGain(Local, Channel.hungerRate);
+                case CharacterAfflictions.STATUSTYPE.Cold: return StatComposites.StatusGain(Local, Channel.coldRate);
+                case CharacterAfflictions.STATUSTYPE.Hot: return StatComposites.StatusGain(Local, Channel.heatRate);
+                case CharacterAfflictions.STATUSTYPE.Poison: return StatComposites.StatusGain(Local, Channel.poisonRate);
+                case CharacterAfflictions.STATUSTYPE.Spores: return StatComposites.StatusGain(Local, Channel.sporesRate);
+                case CharacterAfflictions.STATUSTYPE.Drowsy: return StatComposites.StatusGain(Local, Channel.drowsyRate);
+                case CharacterAfflictions.STATUSTYPE.Curse: return StatComposites.StatusGain(Local, Channel.curseRate);
                 case CharacterAfflictions.STATUSTYPE.Crab:
                 case CharacterAfflictions.STATUSTYPE.Web:
                 case CharacterAfflictions.STATUSTYPE.FlyTrap:

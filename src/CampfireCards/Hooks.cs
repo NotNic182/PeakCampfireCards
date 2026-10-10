@@ -31,8 +31,11 @@ namespace CampfireCards
             ArrivedSegments.Clear();
             Effects.Reset();
             PickSession.Reset();
+            Ability_EternalCampfire.Arbiter.Reset();
+            NetHandlers.Reset();
             Hooks.ResetRunTracking();
             Hud.ClearMarkers();
+            BuildScreen.Hide();
         }
 
         public static bool IsGameplayScene(string name) => name != null && (name.Contains("Island") || name.Contains("Level_"));
@@ -71,13 +74,16 @@ namespace CampfireCards
             SubscribePhoton();
         }
 
-        /// <summary>Per-run bookkeeping inside the hooks (feeders, contexts, item-use batches).</summary>
+        /// <summary>Per-run bookkeeping inside the hooks (feeders, contexts, item-use batches, thorns, campfire rewards).</summary>
         public static void ResetRunTracking()
         {
             _lastFeederActor = int.MinValue;
             _fallDepth = 0;
             _climbDepth = 0; _climbCtx = null;
             _batches.Clear();
+            _thorns.Reset();
+            _lunch.Reset();
+            ResetCampfireSpawns();
         }
 
         // ------------------------------------------------------------------ run lifecycle
@@ -90,7 +96,7 @@ namespace CampfireCards
             LocalCards.OnRunStarted(Environment.TickCount ^ (NetSend.LocalActor * 7919));
             PickSession.OnRunStarted();
             Hud.Ensure();
-            if (!NetSend.IsHost) NetSend.Raise(new Hello { modVersion = Plugin.Version, cardCount = Deck.Count, deckHash = Deck.Hash }, Photon.Realtime.ReceiverGroup.Others);
+            if (!NetSend.IsHost) NetSend.Raise(NetHandlers.MakeHello(), Photon.Realtime.ReceiverGroup.Others);
             Plugin.Log.LogInfo($"Run started. Host={NetSend.IsHost} actor={NetSend.LocalActor} solo={NetSend.IsSolo} deck={Deck.Count} cards");
         }
 
@@ -113,10 +119,11 @@ namespace CampfireCards
             if (__state == Campfire.FireState.Lit || !updateSegment) return;   // late-join sync, quicksave or debug
             if (!RunState.RunStarted) return;
             Plugin.Verbose($"Campfire lit -> {__instance.advanceToSegment}");
+            if (NetSend.IsHost) HostCampfireLit(__instance);
             var local = Character.localCharacter;
             // card effects first, so cards picked at this fire do not fire for it
             if (local != null) LocalCards.OnCampfireLit(local, __instance);
-            PickSession.HostStart(1, (byte)__instance.advanceToSegment);
+            PickSession.RequestSession(1, (byte)__instance.advanceToSegment);   // every client queues it; the host deals
         }
 
         /// <summary>hooks.json lobbyCreated: log where this host is (net.log), for launchers that list open games.</summary>
@@ -143,7 +150,11 @@ namespace CampfireCards
                 if (c.IsLocal)
                 {
                     if (!NetSend.IsHost && !Effects.HasAnyState)
+                    {
+                        // a late joiner may never see the run start: introduce ourselves here too (the host answers in kind)
+                        NetSend.RaiseToMaster(NetHandlers.MakeHello());
                         NetSend.RaiseToMaster(new StateRequest { modVersion = Plugin.Version });
+                    }
                 }
                 else if (NetSend.IsHost && Effects.HasAnyState)
                 {
@@ -177,18 +188,33 @@ namespace CampfireCards
                 if (e.Code == Photon.Realtime.EventCode.Leave)
                 {
                     PickSession.OnPlayerLeft(e.Sender);
+                    if (NetSend.IsHost) Ability_EternalCampfire.Arbiter.ForgetVictim(e.Sender);
+                    _unreadableFrom.Remove(e.Sender);
                     return;
                 }
                 if (e.Code < 90 || e.Code > 119) return;
                 var data = e.CustomData as byte[];
                 if (data == null) return;
-                NetDispatcher.Dispatch(e.Code, data, e.Sender);
+                try
+                {
+                    NetDispatcher.Dispatch(e.Code, data, e.Sender);
+                }
+                catch (Exception ex) when (ex is System.IO.IOException || ex is System.IO.InvalidDataException || ex is FormatException)
+                {
+                    // EndOfStream / InvalidData: a malformed message, or another version of the mod
+                    Plugin.Log.LogWarning($"Net event {e.Code} from actor {e.Sender} could not be read: {ex.Message}");
+                    if (_unreadableFrom.Add(e.Sender))
+                        Hud.Toast($"{NetSend.NameOf(e.Sender)} sent a Campfire Cards message this version cannot read (different mod version?)");
+                }
             }
             catch (Exception ex)
             {
                 Plugin.Log.LogError($"Net event {e.Code}: {ex}");
             }
         }
+
+        /// <summary>Players already reported for sending unreadable mod messages (once per player per session).</summary>
+        private static readonly HashSet<int> _unreadableFrom = new HashSet<int>();
 
         // ------------------------------------------------------------------ per frame
         public static void Tick()
@@ -211,11 +237,13 @@ namespace CampfireCards
             FlushItemUses(local);
             AbilityKeys(local);
             PickSession.HostTick();
+            BuildScreen.Tick(local);
 
             if (Time.unscaledTime >= _nextAbilityBar)
             {
                 _nextAbilityBar = Time.unscaledTime + 0.2f;
                 Hud.RefreshAbilityBar(local);
+                PickSession.UpdateBanner();
             }
 
             if (Time.unscaledTime < _nextArrivalCheck) return;
@@ -241,14 +269,19 @@ namespace CampfireCards
             if (blocked) return;
             TryKey(kb, Plugin.BloodBatteryKey, "BloodBattery", local);
             TryKey(kb, Plugin.SafetyNetKey, "SafetyNet", local);
+            if (WasPressed(kb, Plugin.BuildScreenKey)) BuildScreen.Toggle(local);
+        }
+
+        private static bool WasPressed(UnityEngine.InputSystem.Keyboard kb, BepInEx.Configuration.ConfigEntry<UnityEngine.InputSystem.Key> key)
+        {
+            if (key == null || key.Value == UnityEngine.InputSystem.Key.None) return false;
+            try { var control = kb[key.Value]; return control != null && control.wasPressedThisFrame; }
+            catch { return false; }
         }
 
         private static void TryKey(UnityEngine.InputSystem.Keyboard kb, BepInEx.Configuration.ConfigEntry<UnityEngine.InputSystem.Key> key, string ability, Character local)
         {
-            if (key == null || key.Value == UnityEngine.InputSystem.Key.None) return;
-            UnityEngine.InputSystem.Controls.KeyControl control;
-            try { control = kb[key.Value]; } catch { return; }
-            if (control == null || !control.wasPressedThisFrame) return;
+            if (!WasPressed(kb, key)) return;
             foreach (var a in LocalCards.Manual)
             {
                 if (a.Card.Ability != ability) continue;
@@ -271,6 +304,7 @@ namespace CampfireCards
                     {
                         RunState.SentOpeningArrival = true;
                         NetSend.RaiseToMaster(new Arrival { segment = 255, time = PhotonNetwork.Time });
+                        PickSession.RecordArrival(NetSend.LocalActor, 255, PhotonNetwork.Time);   // known here too if we become host
                     }
                 }
                 else RunState.GroundedSince = -1f;
@@ -289,6 +323,7 @@ namespace CampfireCards
                     {
                         RunState.ArrivedSegments.Add(seg);
                         NetSend.RaiseToMaster(new Arrival { segment = seg, time = PhotonNetwork.Time });
+                        PickSession.RecordArrival(NetSend.LocalActor, seg, PhotonNetwork.Time);
                     }
                 }
             }

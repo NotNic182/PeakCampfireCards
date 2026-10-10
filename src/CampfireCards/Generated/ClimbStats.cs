@@ -52,4 +52,9 @@ namespace CampfireCards.Generated
             new ChannelDef { Id = Channel.huddleStrength, Label = "Huddle radius and cold removal", IsMul = true, Cap = CapGroup.none },
         };
     }
+    public static class ConditionTable
+    {
+        /// <summary>conditions.json meaning, indexed by Condition.</summary>
+        public static readonly string[] Meaning = new string[] { "always", "gripping a climbable wall (not a rope or vine) without moving", "crouched and not moving", "standing on the ground", "Injury is at least 20", "Poison or Spores is at least 20", "climbing while holding an item", "not wearing a backpack", "wearing a backpack", "a living teammate is within the card's radius", "no living teammate is within the card's radius", "far from every living teammate (outside the huddle radius)", "Momentum Fiend's sprint bonus is active", "Pulse Climber's 1-second boost is active" };
+    }
 }

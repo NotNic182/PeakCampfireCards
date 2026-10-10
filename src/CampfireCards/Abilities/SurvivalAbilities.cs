@@ -206,7 +206,10 @@ namespace CampfireCards.Abilities
             return true;
         }
 
-        /// <summary>Host side: approve at most one revive per owner per biome and per incapacitation.</summary>
+        /// <summary>
+        /// Host side: approve at most one revive per owner per biome and per incapacitation. Reset with the run
+        /// (RunState.Reset) and told when a player leaves (Hooks.OnPhotonEvent), so nothing carries into the next run.
+        /// </summary>
         public static readonly ReviveArbiter Arbiter = new ReviveArbiter();
 
         public static void HostHandle(ReviveRequest m, int sender)
@@ -219,7 +222,12 @@ namespace CampfireCards.Abilities
             float radius = 15f;
             foreach (var id in Effects.CardsOf(m.ownerActor)) { var d = s.Card(id); if (d != null && d.Ability == "EternalCampfire") radius = s.Param(d, "radius", 15f); }
             if (sender != m.ownerActor && Vector3.Distance(owner.Center, victim.Center) > radius + 2f) return;
-            if (!Arbiter.TryGrant(m.ownerActor, m.biome, sender, m.incapEvent)) return;
+            // the host's own biome counts, never the one in the request (a client cannot refill the charge by naming another)
+            if (!Arbiter.TryGrant(m.ownerActor, LocalCards.Biome, sender, m.incapEvent))
+            {
+                Plugin.Verbose($"Eternal Campfire: refused revive of {sender} (owner {m.ownerActor}, event {m.incapEvent}, biome {LocalCards.Biome})");
+                return;
+            }
             NetSend.RaiseTo(new ReviveGranted { ownerActor = m.ownerActor, incapEvent = m.incapEvent }, sender);
         }
 

@@ -45,6 +45,11 @@ def gen_stats(stats, conditions):
             r['id'], cs_str(r['label']), 'true' if r['op'] == 'mul' else 'false', r['capGroup']))
     lines.append('        };')
     lines.append('    }')
+    lines.append('    public static class ConditionTable')
+    lines.append('    {')
+    lines.append('        /// <summary>conditions.json meaning, indexed by Condition.</summary>')
+    lines.append('        public static readonly string[] Meaning = new string[] { %s };' % ', '.join(cs_str(r['meaning']) for r in conditions['rows']))
+    lines.append('    }')
     lines.append('}')
     return '\n'.join(lines) + '\n'
 
@@ -198,8 +203,11 @@ WRITERS = {
     'float': ('w.Write({n});', '{n} = r.ReadSingle();'),
     'double': ('w.Write({n});', '{n} = r.ReadDouble();'),
     'string': ('w.Write({n} ?? "");', '{n} = r.ReadString();'),
-    'byte[]': ('w.Write({n} == null ? 0 : {n}.Length); if ({n} != null) w.Write({n});', '{{ int n = r.ReadInt32(); {n} = r.ReadBytes(n); }}'),
-    'int[]': ('w.Write({n} == null ? 0 : {n}.Length); if ({n} != null) foreach (var x in {n}) w.Write(x);', '{{ int n = r.ReadInt32(); {n} = new int[n]; for (int i = 0; i < n; i++) {n}[i] = r.ReadInt32(); }}'),
+    # array lengths come from the network: refuse a length the payload cannot hold before allocating anything
+    'byte[]': ('w.Write({n} == null ? 0 : {n}.Length); if ({n} != null) w.Write({n});',
+               '{{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("{n}: bad length " + n); {n} = r.ReadBytes(n); }}'),
+    'int[]': ('w.Write({n} == null ? 0 : {n}.Length); if ({n} != null) foreach (var x in {n}) w.Write(x);',
+              '{{ int n = r.ReadInt32(); if (n < 0 || n > (ms.Length - ms.Position) / 4) throw new InvalidDataException("{n}: bad length " + n); {n} = new int[n]; for (int i = 0; i < n; i++) {n}[i] = r.ReadInt32(); }}'),
 }
 
 
