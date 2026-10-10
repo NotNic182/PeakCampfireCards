@@ -2,23 +2,23 @@
 
 Target: **PEAK 2.6.b**, as reported by NotNic. Investigation date: 2026-10-10.
 
-The deck has not been renamed, rebalanced or expanded. The workbook extracts all 64 source cards, including
-the disabled extra-pocket card. This report separates working mod hooks, metadata evidence, and effects
-that still need implementation and an actual game test.
+The original catalog investigation is now extended by the [0.6.0 card edit review](card-edit-review.md).
+All 64 stable card IDs remain. The editable files contain the current shipped effects; the review preserves
+your requested changes and explains the pending zombie spawn and native Low Gravity behavior.
 
 ## What was checked
 
 - The existing card logic suite passed before any change: 107 tests.
-- Final automated checks passed: **133 C# tests** and **5 catalog tests**, plus the normal design preflight.
+- Final automated checks passed: **148 C# tests** and **5 catalog tests**, plus the normal design preflight.
   Preflight retains the known warning for the unimplemented `invSlots` channel.
 - Session regression tests execute the real `PickSession` and `PickTurns` against small substitutes for the
   game, UI and transport. They cover ghost offers, revival after lighting, queued fires, death before picking,
   host rejection, timeout picks, an hour-long untimed wait, both pick modes, and delayed event loopback.
 - Sandbox modifier tests confirm that +100 clean maximum stamina and an eightfold non-fall Injury penalty
   can coexist, and that half climbing costs still respect the normal-card stacking cap. They add no deck entry.
-- A read-only metadata probe found all **43 Harmony hook signatures** in the available PEAK **2.5.a**
+- A read-only metadata probe found all **53 Harmony hook signatures** in the available PEAK **2.5.a**
   reference assembly. The additional size/physics, impact-source, death and stamina members listed below
-  were present. The [JSON report](research/peak-api-2.5.json) records the assembly hash and each check.
+  were present. The [JSON report](research/peak-api-redesign.json) records the assembly hash and each check.
 - The full mod compiled with zero warnings/errors against those reference assemblies and BepInEx 5.4.23.5.
   Those game references are publicized; their `MenuWindow.Update` accessibility was restored to protected
   in a local reference copy to match the mod's existing override. No game methods were executed.
@@ -42,14 +42,14 @@ of a proposed card.
 |---|---|---|
 | Stamina | Maximum bar size; climbing and sprint costs; regeneration rate and delay; yellow stamina gain | Maximum stamina is a flat addition; normal cost reductions stack to a 60% cap, and the normal clean-bar floor is 50 |
 | Movement | Sprint/climb speed, jump height, slipping, wall-grab and helping-hand reach | Owner computes movement; remote visuals may lag |
-| Damage | Fall Injury, all non-fall Injury, all Injury | No existing distinction between rocks, projectiles, explosions and other non-fall sources |
+| Damage | Fall Injury, all non-fall Injury, all Injury | Dynamite AOEs now have provenance-specific Injury scaling; rocks, projectiles and other sources still need dedicated hooks |
 | Afflictions | Hunger, cold, heat, poison, spores, drowsy, thorns, curse, petrification, all negative status gains | Status units are generally 0–1; thorns are discrete and petrification is handled separately |
 | Recovery | Natural heat/cold/poison/spore decay; food hunger relief; cooked-food relief; healing received/given/self-use | Item healing is covered; healing amulet/dart are exceptions |
-| Carrying | Carried item weight, held-item weight, carried-scout weight | A genuine extra inventory pocket is not implemented; `invSlots` currently does nothing |
+| Carrying | Carried/held item weight, backpack contents, carried-scout weight, total weight | A genuine extra inventory pocket is not implemented; `invSlots` currently does nothing |
 | Team effects | Nearby auras, shared damage, stamina support, huddle warmth and range | Auras use living teammates; network authority and stacking need to remain consistent |
 | Event abilities | Food/cure events, campfire/biome rewards, chance rolls, cooldowns, charges, double jump, rescue anchors, bonus cards, sacrifices | Existing callbacks can support new logic, but a novel trigger requires a handler |
 
-Existing conditions include hanging still, crouching still, grounded, Injury ≥20, Poison/Spores ≥20,
+Existing conditions now also include Poison strictly above 20 and cold-emitting climbing surfaces. Other conditions include hanging still, crouching still, grounded, Injury ≥20, Poison/Spores ≥20,
 holding an item while climbing, backpack/no backpack, teammates near/far, and active sprint/climb boosts.
 Extra conditions such as health thresholds, airborne time, night, biome or altitude require new evaluation code.
 
@@ -112,7 +112,7 @@ if available; then proposed effects can be implemented against the installed API
 
 ## Playtest the fixes on 2.6.b
 
-1. With everyone on 0.5.1, test opening and campfire offers in both pick modes. Default timer: 60 seconds;
+1. With everyone on 0.6.0, test opening and campfire offers in both pick modes. Default timer: 60 seconds;
    after 59 seconds no automatic card should have been taken. Custom durations should be preserved.
 2. Set the host's `General/PickTimeoutSeconds = 0`. Wait longer than 70 seconds: no random card, countdown
    or forced session closure. Choose manually and confirm all living scouts can finish.

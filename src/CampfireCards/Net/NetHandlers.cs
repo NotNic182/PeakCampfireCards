@@ -134,6 +134,17 @@ namespace CampfireCards.Net
             PickSession.OnSkipped(m);
         }
 
+        public static void OnCardPenalty(CardPenalty m, int sender)
+        {
+            if (m.actor != sender || !Effects.HasAbility(sender, "DoubleDeal")) return;
+            Effects.Penalties.TrySet(sender, m.variant);
+        }
+
+        public static void OnCardRewardUsed(CardRewardUsed m, int sender)
+        {
+            if (FromHost(sender)) Effects.SetFlag(m.actor, Effects.FlagBalloonUsed, true);
+        }
+
         /// <summary>
         /// Mountain's Bargain: the owner gave up a card (never a Mythic, never the Bargain itself). A player can only
         /// remove their own cards, so a repeated message can only cost the sender.
@@ -198,7 +209,7 @@ namespace CampfireCards.Net
             if (me == null || sender == NetSend.LocalActor || m.amount <= 0f || !Effects.HasAbility(sender, "HerosArrival")) return;
             if (!_bonusFrom.TryUse(sender, LocalCards.Biome)) { Plugin.Verbose($"Ignored repeated bonus stamina from {sender}"); return; }
             var def = System.Array.Find(CardTable.Cards, c => c.Ability == "HerosArrival");
-            float max = def != null ? CardSettings.Current.Param(def, "bonus", 0.25f) : 0.25f;
+            float max = def != null ? CardSettings.Current.Param(def, "bonus", 1f) : 1f;
             me.AddExtraStamina(Mathf.Min(m.amount, max));
             Hud.Toast($"{Deck.NameOfAbility("HerosArrival").ToUpperInvariant()}! {NetSend.NameOf(sender)} brought you back strong");
         }

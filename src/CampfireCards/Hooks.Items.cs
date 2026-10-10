@@ -94,7 +94,7 @@ namespace CampfireCards
             var eater = item != null ? item.holderCharacter : null;
             if (!Mine(eater)) return;
             bool cooked = IsCooked(item);
-            float k = Effects.Local[Channel.foodHunger] * (cooked ? Effects.Local[Channel.cookedFoodHunger] : 1f);
+            float k = Core.StatComposites.FoodNutrition(Effects.Local, cooked);
             if (__state > 0f && Mathf.Abs(k - 1f) > 0.0001f) __instance.restorationAmount = Round025(__state * k);
             var b = Batch(item, eater);
             b.Food = true;
@@ -218,8 +218,8 @@ namespace CampfireCards
             return false;
         }
 
-        // ------------------------------------------------------------------ Double Deal: locked pocket
-        /// <summary>The pocket Double Deal locks (the third one). Items already in it stay; it just never receives new ones.</summary>
+        // ------------------------------------------------------------------ Pocket Tradeoff: locked pocket
+        /// <summary>The third pocket is blocked for new items. Items already in it remain retrievable.</summary>
         public const int LockedPocket = 2;
 
         private static bool PocketLocked(Player p)
@@ -228,7 +228,7 @@ namespace CampfireCards
             {
                 var view = p.photonView;
                 if (view == null || view.Owner == null) return false;
-                return Effects.HasAbility(view.Owner.ActorNumber, "DoubleDeal");
+                return RunState.RunStarted && Effects.HasAbility(view.Owner.ActorNumber, "PocketTradeoff");
             }
             catch { return false; }
         }
@@ -313,10 +313,16 @@ namespace CampfireCards
         {
             if (!PhotonNetwork.IsMasterClient && !PhotonNetwork.OfflineMode) return;
             bool owns = false;
+            bool once = false;
             foreach (var id in Effects.CardsOf(sender))
             {
                 var def = Core.CardSettings.Current.Card(id);
                 if (def != null && def.Ability == "CampfireSpawn" && Mathf.RoundToInt(Core.CardSettings.Current.Param(def, "item", -1f)) == m.item) owns = true;
+                if (def != null && def.Ability == "NextCampfireSpawn" && Mathf.RoundToInt(Core.CardSettings.Current.Param(def, "item", -1f)) == m.item)
+                {
+                    once = true;
+                    owns = (Effects.Flags(sender) & Effects.FlagBalloonUsed) == 0;
+                }
             }
             if (m.item >= CardTable.SpawnItems.Length) owns = false;
             var verdict = _spawns.TryClaim(sender, m.item, m.segment, owns);
@@ -332,6 +338,11 @@ namespace CampfireCards
             var go = PhotonNetwork.InstantiateItemRoom(name, pos + Vector3.up * 0.25f, Quaternion.identity);
             var spawned = go != null ? go.GetComponent<Item>() : null;
             if (spawned != null) spawned.SetKinematicNetworked(true, pos + Vector3.up * 0.25f, Quaternion.identity);
+            if (spawned != null && once)
+            {
+                Effects.SetFlag(sender, Effects.FlagBalloonUsed, true);
+                NetSend.Raise(new CardRewardUsed { actor = sender }, Photon.Realtime.ReceiverGroup.All);
+            }
             Plugin.Verbose($"Spawned {name} for {sender} at {pos} (fire {m.segment})");
         }
 

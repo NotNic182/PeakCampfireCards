@@ -11,14 +11,24 @@ public class Character
     public static Character localCharacter;
     public CharacterData data = new CharacterData();
     public bool isBot;
+    public float MaxStamina = 1f;
+    public readonly Dictionary<CharacterAfflictions.STATUSTYPE, float> Statuses = new Dictionary<CharacterAfflictions.STATUSTYPE, float>();
+    public float GetMaxStamina() => MaxStamina;
+    public void AddStamina(float amount) => data.currentStamina = Math.Min(MaxStamina, data.currentStamina + amount);
 }
-public class CharacterData { public bool dead; public bool passedOut; }
+public class CharacterData { public bool dead; public bool passedOut; public bool fullyPassedOut; public float currentStamina; }
+public class Item { }
+public class CharacterAfflictions { public enum STATUSTYPE { Poison, Spores, Drowsy } }
 public static class PlayerHandler
 {
     public static readonly Dictionary<int, Character> Characters = new Dictionary<int, Character>();
     public static bool TryGetCharacter(int actor, out Character c) => Characters.TryGetValue(actor, out c);
 }
-namespace UnityEngine { public static class Time { public static float unscaledTime; } }
+namespace UnityEngine
+{
+    public static class Time { public static float unscaledTime, time; }
+    public static class Mathf { public static float Max(float a, float b) => Math.Max(a, b); public static int CeilToInt(float f) => (int)Math.Ceiling(f); }
+}
 namespace Photon.Realtime
 {
     public enum ReceiverGroup { All }
@@ -36,12 +46,14 @@ namespace Photon.Pun
 namespace CampfireCards
 {
     public class Setting<T> { public T Value; public Setting(T value) { Value = value; } }
-    public class TestLog { public void LogWarning(string s) { } public void LogInfo(string s) { } }
+    public class TestLog { public void LogWarning(string s) { } public void LogInfo(string s) { } public void LogError(string s) { } }
     public static class Plugin
     {
         public static Setting<float> PickTimeoutSeconds;
         public static Setting<PickMode> PickModeSetting;
         public static readonly TestLog Log = new TestLog();
+        public static string SecondWindKeyLabel => "V";
+        public static string EmergencyPurgeKeyLabel => "K";
         public static void Verbose(string s) { }
     }
 }
@@ -57,6 +69,7 @@ namespace CampfireCards.Generated
 }
 namespace CampfireCards.Cards
 {
+    public static class LocalCards { public static int Biome; }
     public static class Deck
     {
         public static bool Ready = true;
@@ -80,6 +93,15 @@ namespace CampfireCards.Cards
         public static byte Flags(int actor) => PickFlags.TryGetValue(actor, out var f) ? f : (byte)0;
         public static void SetFlag(int actor, byte flags, bool on) => PickFlags[actor] = on ? (byte)(Flags(actor) | flags) : (byte)(Flags(actor) & ~flags);
         public static bool AddCard(int actor, byte id, bool live) => CardsOf(actor).Add(id);
+    }
+}
+namespace CampfireCards.Abilities
+{
+    // Native status storage is a game boundary; the recovery abilities themselves run unchanged.
+    public static class CardStatus
+    {
+        public static float Get(Character c, CharacterAfflictions.STATUSTYPE t) => c.Statuses.TryGetValue(t, out var v) ? v : 0f;
+        public static void Remove(Character c, CharacterAfflictions.STATUSTYPE t, float amount) => c.Statuses[t] = Math.Max(0f, Get(c, t) - amount);
     }
 }
 namespace CampfireCards.Net

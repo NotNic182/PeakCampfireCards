@@ -9,8 +9,12 @@ write what you want in plain English in requested_effects, including its numbers
 empty to display the game's standard no-drawback message.
 
 **Current code** contains the actual modifiers, ability names and parameters. **notes** flags existing
-limitations. In particular, Bing Bong's Baggage is present in the source but ships disabled: its extra pocket
-does not work. **New ideas** starts empty for you to add concepts; no experimental card has been added.
+limitations. Bing Bong's Baggage now halves total weight and locks pocket three; previous disabled config
+choices remain. **New ideas** starts empty for you to add concepts.
+
+**card-edit-review.xlsx** adds a **Review** tab with all 50 submitted edits, the shipped effects and implementation
+notes. [The review report](../../docs/card-edit-review.md) explains the pending ROOTS Survivor replacement and
+the native Low Gravity interpretation of “Flying.” The original uploaded workbook is preserved separately.
 
 **card-editing.csv** holds the same catalog in a plain spreadsheet format. For renamed/reworded cards, the
 import tool validates the stable identities and produces a separate JSON review copy. Gameplay changes and

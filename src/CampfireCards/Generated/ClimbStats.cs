@@ -2,13 +2,13 @@
 
 namespace CampfireCards.Generated
 {
-    public enum Channel : byte { maxStamina, climbStamina, sprintStamina, climbSpeed, sprintSpeed, jumpHeight, slipForce, grabReach, helpReach, regenRate, regenDelay, fallInjury, nonFallInjury, allInjury, hungerRate, coldRate, heatRate, poisonRate, sporesRate, drowsyRate, thornsRate, curseRate, petrifyRate, negativeStatusRate, heatDecay, coldDecay, poisonDecay, sporesDecay, itemWeight, heldItemWeight, carryScoutWeight, foodHunger, cookedFoodHunger, healReceived, healGiven, healSelfUse, bonusStaminaGain, invSlots, huddleStrength }
-    public enum Condition : byte { always, hangingStill, crouchStill, grounded, injury20, poisonOrSpores20, climbingWithItem, noBackpack, wearingBackpack, teammateNear, noTeammateNear, separatedFromTeam, momentumActive, pulseActive }
+    public enum Channel : byte { maxStamina, climbStamina, sprintStamina, climbSpeed, sprintSpeed, jumpHeight, slipForce, grabReach, helpReach, regenRate, regenDelay, fallInjury, nonFallInjury, allInjury, hungerRate, coldRate, heatRate, poisonRate, sporesRate, drowsyRate, thornsRate, curseRate, petrifyRate, negativeStatusRate, heatDecay, coldDecay, poisonDecay, sporesDecay, itemWeight, heldItemWeight, carryScoutWeight, foodHunger, cookedFoodHunger, healReceived, healGiven, healSelfUse, bonusStaminaGain, invSlots, huddleStrength, staminaUsage, dynamiteInjury, thornRemovalTime, reviveCurse, totalWeight, backpackItemWeight, uncookedFoodHunger, carriedDeathRate }
+    public enum Condition : byte { always, hangingStill, crouchStill, grounded, injury20, poisonOrSpores20, climbingWithItem, noBackpack, wearingBackpack, teammateNear, noTeammateNear, separatedFromTeam, momentumActive, pulseActive, poisonAbove20, climbingColdSurface }
     public enum CapGroup : byte { none, staminaCost, maxStamina }
     public struct ChannelDef { public Channel Id; public string Label; public bool IsMul; public CapGroup Cap; public bool HigherIsBetter; public string More; public string Less; public string Never; }
     public static class ChannelTable
     {
-        public const int Count = 39;
+        public const int Count = 47;
         public static readonly ChannelDef[] Defs = new ChannelDef[]
         {
             new ChannelDef { Id = Channel.maxStamina, Label = "Max stamina", IsMul = false, Cap = CapGroup.maxStamina, HigherIsBetter = true, More = "Your stamina bar is {0} longer", Less = "Your stamina bar is {0} shorter", Never = "" },
@@ -50,13 +50,21 @@ namespace CampfireCards.Generated
             new ChannelDef { Id = Channel.bonusStaminaGain, Label = "Bonus stamina received", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "You get {0} more extra (yellow) stamina", Less = "You get {0} less extra (yellow) stamina", Never = "" },
             new ChannelDef { Id = Channel.invSlots, Label = "Inventory slots", IsMul = false, Cap = CapGroup.none, HigherIsBetter = true, More = "{0} extra pockets", Less = "{0} fewer pockets", Never = "" },
             new ChannelDef { Id = Channel.huddleStrength, Label = "Huddle radius and cold removal", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Huddling warms you {0} more, from farther away", Less = "Huddling warms you {0} less, from closer", Never = "" },
+            new ChannelDef { Id = Channel.staminaUsage, Label = "All stamina costs", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Every stamina use costs {0} more", Less = "Every stamina use costs {0} less", Never = "Using stamina costs nothing" },
+            new ChannelDef { Id = Channel.dynamiteInjury, Label = "Dynamite Injury", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Dynamite explosions hurt {0} more", Less = "Dynamite explosions hurt {0} less", Never = "Dynamite explosions never hurt" },
+            new ChannelDef { Id = Channel.thornRemovalTime, Label = "Thorn removal time", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Thorns take {0} longer to remove", Less = "Thorns take {0} less time to remove", Never = "" },
+            new ChannelDef { Id = Channel.reviveCurse, Label = "Curse added by revival", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Revival adds {0} more Curse", Less = "Revival adds {0} less Curse", Never = "Reviving adds no Curse" },
+            new ChannelDef { Id = Channel.totalWeight, Label = "All carried weight", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "All carried weight is {0} heavier", Less = "All carried weight is {0} lighter", Never = "All carried weight is zero" },
+            new ChannelDef { Id = Channel.backpackItemWeight, Label = "Backpack content weight", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "Backpack contents weigh {0} more", Less = "Backpack contents weigh {0} less", Never = "Backpack contents weigh nothing" },
+            new ChannelDef { Id = Channel.uncookedFoodHunger, Label = "Uncooked food nutrition", IsMul = true, Cap = CapGroup.none, HigherIsBetter = true, More = "Uncooked food fills you up {0} more", Less = "Uncooked food fills you up {0} less", Never = "" },
+            new ChannelDef { Id = Channel.carriedDeathRate, Label = "Carried scout death timer", IsMul = true, Cap = CapGroup.none, HigherIsBetter = false, More = "A carried scout's death timer advances {0} faster", Less = "A carried scout's death timer advances {0} slower", Never = "" },
         };
     }
     public static class ConditionTable
     {
         /// <summary>conditions.json meaning, indexed by Condition.</summary>
-        public static readonly string[] Meaning = new string[] { "always", "gripping a climbable wall (not a rope or vine) without moving", "crouched and not moving", "standing on the ground", "Injury is at least 20", "Poison or Spores is at least 20", "climbing while holding an item", "not wearing a backpack", "wearing a backpack", "a living teammate is within the card's radius", "no living teammate is within the card's radius", "far from every living teammate (outside the huddle radius)", "Momentum Fiend's sprint bonus is active", "Pulse Climber's 1-second boost is active" };
+        public static readonly string[] Meaning = new string[] { "always", "gripping a climbable wall (not a rope or vine) without moving", "crouched and not moving", "standing on the ground", "Injury is at least 20", "Poison or Spores is at least 20", "climbing while holding an item", "not wearing a backpack", "wearing a backpack", "a living teammate is within the card's radius", "no living teammate is within the card's radius", "far from every living teammate (outside the huddle radius)", "Momentum Fiend's sprint bonus is active", "Pulse Climber's 1-second boost is active", "Poison is strictly above 20", "wall-climbing on a surface that applies Cold (blue ice)" };
         /// <summary>conditions.json shown: the in-game wording after "while", indexed by Condition.</summary>
-        public static readonly string[] Shown = new string[] { "always", "you hang still on a wall", "you crouch and stay still", "you're on the ground", "you have 20+ Injury", "you have 20+ Poison or Spores", "you climb with an item in your hands", "you don't wear a backpack", "you wear a backpack", "a teammate is near you", "no teammate is near you", "you're far from every teammate", "your sprint speed-up is on", "your climbing boost is on" };
+        public static readonly string[] Shown = new string[] { "always", "you hang still on a wall", "you crouch and stay still", "you're on the ground", "you have 20+ Injury", "you have 20+ Poison or Spores", "you climb with an item in your hands", "you don't wear a backpack", "you wear a backpack", "a teammate is near you", "no teammate is near you", "you're far from every teammate", "your sprint speed-up is on", "your climbing boost is on", "you have more than 20 Poison", "you climb on blue ice" };
     }
 }

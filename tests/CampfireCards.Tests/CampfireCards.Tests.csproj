@@ -16,6 +16,8 @@
     <Compile Include="..\..\src\CampfireCards\Generated\NetEvents.cs" Link="Generated\NetEvents.cs" />
     <!-- Real session orchestration against the small game/network boundary in SessionEnvironment.cs. -->
     <Compile Include="..\..\src\CampfireCards\Cards\PickSession.cs" Link="Cards\PickSession.cs" />
+    <Compile Include="..\..\src\CampfireCards\Abilities\Ability.cs" Link="Abilities\Ability.cs" />
+    <Compile Include="..\..\src\CampfireCards\Abilities\ManualRecoveryAbilities.cs" Link="Abilities\ManualRecoveryAbilities.cs" />
   </ItemGroup>
 
   <ItemGroup>

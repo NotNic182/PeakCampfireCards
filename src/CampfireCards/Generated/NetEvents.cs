@@ -26,7 +26,9 @@ namespace CampfireCards.Net
         public const byte RevivedBy = 105;
         public const byte PickRequest = 106;
         public const byte PickSkipped = 107;
-        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107 };
+        public const byte CardPenalty = 108;
+        public const byte CardRewardUsed = 109;
+        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109 };
     }
 
     /// <summary>announce the mod version and the settings fingerprint (Core.SettingsFingerprint: global rules, rarity weights x10000, one hash per card) so players with different versions or card settings are told exactly what differs. Sender: anyone entering a room. Receivers: Others (the host answers the sender with its own Hello, targeted).</summary>
@@ -167,6 +169,7 @@ namespace CampfireCards.Net
         public byte[] cards;
         public byte[] pickFlags;
         public int sessionId;
+        public byte[] penaltyVariants;
         public byte[] Write()
         {
             using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
@@ -176,6 +179,7 @@ namespace CampfireCards.Net
                 w.Write(cards == null ? 0 : cards.Length); if (cards != null) w.Write(cards);
                 w.Write(pickFlags == null ? 0 : pickFlags.Length); if (pickFlags != null) w.Write(pickFlags);
                 w.Write(sessionId);
+                w.Write(penaltyVariants == null ? 0 : penaltyVariants.Length); if (penaltyVariants != null) w.Write(penaltyVariants);
                 w.Flush(); return ms.ToArray();
             }
         }
@@ -189,6 +193,7 @@ namespace CampfireCards.Net
                 {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.cards: bad length " + n); v.cards = r.ReadBytes(n); }}
                 {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.pickFlags: bad length " + n); v.pickFlags = r.ReadBytes(n); }}
                 v.sessionId = r.ReadInt32();
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.penaltyVariants: bad length " + n); v.penaltyVariants = r.ReadBytes(n); }}
             }
             return v;
         }
@@ -608,6 +613,63 @@ namespace CampfireCards.Net
         }
     }
 
+    /// <summary>Clown Luggage Special chooses one permanent penalty; its first valid choice is retained and included in state sync.. Sender: the card owner. Receivers: All.</summary>
+    public struct CardPenalty : INetEvent
+    {
+        public const byte Code = 108;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "All";
+        public int actor;
+        public byte variant;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(actor);
+                w.Write(variant);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static CardPenalty Read(byte[] data)
+        {
+            var v = new CardPenalty();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.actor = r.ReadInt32();
+                v.variant = r.ReadByte();
+            }
+            return v;
+        }
+    }
+
+    /// <summary>The host spawned the one-time Balloon Bunch; retain the used bit in pickFlags for state sync and host migration.. Sender: host. Receivers: All.</summary>
+    public struct CardRewardUsed : INetEvent
+    {
+        public const byte Code = 109;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "All";
+        public int actor;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(actor);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static CardRewardUsed Read(byte[] data)
+        {
+            var v = new CardRewardUsed();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.actor = r.ReadInt32();
+            }
+            return v;
+        }
+    }
+
     public static partial class NetDispatcher
     {
         /// <summary>Routes a received mod event to its handler. Returns false for codes the mod does not own.</summary>
@@ -633,6 +695,8 @@ namespace CampfireCards.Net
                 case 105: NetHandlers.OnRevivedBy(RevivedBy.Read(data), sender); return true;
                 case 106: NetHandlers.OnPickRequest(PickRequest.Read(data), sender); return true;
                 case 107: NetHandlers.OnPickSkipped(PickSkipped.Read(data), sender); return true;
+                case 108: NetHandlers.OnCardPenalty(CardPenalty.Read(data), sender); return true;
+                case 109: NetHandlers.OnCardRewardUsed(CardRewardUsed.Read(data), sender); return true;
                 default: return false;
             }
         }

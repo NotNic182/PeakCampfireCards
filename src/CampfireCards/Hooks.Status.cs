@@ -51,6 +51,8 @@ namespace CampfireCards
             float before = amount;
             bool fall = statusType == CharacterAfflictions.STATUSTYPE.Injury && _fallDepth > 0;
             amount *= Effects.StatusGainMultiplier(statusType, fall);
+            if (statusType == CharacterAfflictions.STATUSTYPE.Injury && _dynamiteBlast)
+                amount *= Effects.Local[Channel.dynamiteInjury];
 
             if (statusType == CharacterAfflictions.STATUSTYPE.Injury && amount > 0f)
             {
@@ -291,13 +293,16 @@ namespace CampfireCards
             float kItem = Effects.Local[Channel.itemWeight];
             float kHeld = Effects.Local[Channel.heldItemWeight];
             float kScout = Effects.Local[Channel.carryScoutWeight];
-            bool weightChanged = Mathf.Abs(kItem - 1f) > 0.0001f || Mathf.Abs(kHeld - 1f) > 0.0001f || Mathf.Abs(kScout - 1f) > 0.0001f;
+            float kPack = Effects.Local[Channel.backpackItemWeight];
+            float kAll = Effects.Local[Channel.totalWeight];
+            bool weightChanged = Mathf.Abs(kItem - 1f) > 0.0001f || Mathf.Abs(kHeld - 1f) > 0.0001f || Mathf.Abs(kScout - 1f) > 0.0001f
+                || Mathf.Abs(kPack - 1f) > 0.0001f || Mathf.Abs(kAll - 1f) > 0.0001f;
 
             if (weightChanged)
             {
                 var p = ch.player;
                 var sel = ch.refs.items.currentSelectedSlot;
-                int carried = 0, held = 0, sticky = 0;
+                int carried = 0, held = 0, contents = 0, sticky = 0;
                 for (int i = 0; i < p.itemSlots.Length; i++)
                 {
                     var slot = p.itemSlots[i];
@@ -310,8 +315,8 @@ namespace CampfireCards
                     BackpackData bd;
                     if (bp.data.TryGetDataEntry<BackpackData>(DataEntryKey.BackpackData, out bd))
                     {
+                        foreach (var s in bd.itemSlots) if (s != null && !s.IsEmpty()) contents += s.prefab.CarryWeight;
                         int pack = 0;
-                        foreach (var s in bd.itemSlots) if (s != null && !s.IsEmpty()) pack += s.prefab.CarryWeight;
                         Item packItem;
                         if (ItemDatabase.TryGetItem(bp.GetPrefabName(), out packItem)) pack += packItem.CarryWeight;
                         if (sel.IsSome && sel.Value == Player.BACKPACKSLOTINDEX) held += pack; else carried += pack;
@@ -323,7 +328,7 @@ namespace CampfireCards
                 foreach (var s in StickyItemComponent.ALL_STUCK_ITEMS)
                     if (s != null && s.stuckToCharacter == ch) sticky += s.addWeightToStuckPlayer;
 
-                float units = carried * kItem + held * StatComposites.HeldItemWeight(Effects.Local) + scout * kScout + sticky;
+                float units = StatComposites.CarriedWeight(Effects.Local, carried, held, contents, scout, sticky);
                 __instance.SetStatus(CharacterAfflictions.STATUSTYPE.Weight, 0.025f * units);
             }
 

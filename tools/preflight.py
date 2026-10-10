@@ -262,6 +262,8 @@ def main():
                 problem('hooks %s: handler %sPrefix not found in src' % (r['id'], r['handler']))
             if r['postfixArgs'] and not has_call(r['handler'], src):
                 problem('hooks %s: handler %s not found in src' % (r['id'], r['handler']))
+            if r.get('finalizerArgs') and not has_call(r['handler'] + 'Finalizer', src):
+                problem('hooks %s: handler %sFinalizer not found in src' % (r['id'], r['handler']))
         else:
             if r['targetMember'].split('.')[-1] not in src:
                 problem('hooks %s: event %s is never subscribed in src' % (r['id'], r['targetMember']))

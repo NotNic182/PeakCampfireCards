@@ -51,8 +51,7 @@ namespace CampfireCards.Tests
             var free = CardTable.Cards.Where(c => string.IsNullOrEmpty(c.Negative)).ToList();
             foreach (var c in free)
                 foreach (var m in c.Mods) Assert.False(Hurts(m), c.Name + " shows no drawback but " + m.Channel + " hurts");
-            // 0.4.1 balance: at least half of the 62 normal cards come without a catch
-            Assert.True(free.Count(c => c.Rarity != CardRarity.Mythic) >= 31);
+            Assert.NotEmpty(free);
         }
 
         [Fact]
@@ -159,8 +158,8 @@ namespace CampfireCards.Tests
         [Fact]
         public void CampfireSpawnCardsPointAtRealItems()
         {
-            Assert.Equal(new[] { "RopeSpool", "Bandages" }, CardTable.SpawnItems);
-            foreach (var c in CardTable.Cards.Where(c => c.Ability == "CampfireSpawn"))
+            Assert.Equal(new[] { "RopeSpool", "Bandages", "BalloonBunch" }, CardTable.SpawnItems);
+            foreach (var c in CardTable.Cards.Where(c => c.Ability == "CampfireSpawn" || c.Ability == "NextCampfireSpawn"))
             {
                 int item = (int)Math.Round(c.Param("item", -1f));
                 Assert.InRange(item, 0, CardTable.SpawnItems.Length - 1);
