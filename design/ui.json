@@ -1,326 +1,397 @@
 {
- "_sheet": "Card picker UI (uGUI, built at runtime, no asset bundle). One row = one UI element. Generated/UiLayout.cs gets a static class per row with its Size, Text template and every entry of consts (numbers become float consts, 4-number arrays become Colors, strings become string consts). Fonts: the game's own TMP font found at runtime; card colours come from cards.json themes and the art from art.json.",
- "_columns": {
-  "id": "element name",
-  "parent": "parent element id or root",
-  "size": "[w,h] in reference pixels (CanvasScaler 1920x1080)",
-  "anchor": "where it sits",
-  "visual": "what it looks like, in words",
-  "text": "static text, or {var} placeholders",
-  "consts": "named numbers / colours / strings the code needs for this element",
-  "behaviour": "interaction and animation",
-  "soundOn": "sounds.json id played, or none"
- },
- "canvas": {
-  "referenceResolution": [
-   1920,
-   1080
-  ],
-  "sortingOrder": 500
- },
- "timing": {
-  "pickTimeoutSeconds": 60,
-  "fanSlideInSeconds": 0.35,
-  "cardStaggerSeconds": 0.08,
-  "hoverScale": 1.08,
-  "selectedFlashSeconds": 0.5,
-  "toastSeconds": 3.0,
-  "openingPickDelaySeconds": 2.0
- },
- "rows": [
-  {
-   "id": "PickerWindow",
-   "parent": "root",
-   "size": [
-    1920,
-    1080
-   ],
-   "anchor": "stretch",
-   "visual": "MenuWindow subclass (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop",
-   "text": "",
-   "consts": {
-    "Backdrop": [
-     0,
-     0,
-     0,
-     0.72
-    ]
-   },
-   "behaviour": "Open() when it is the local player's turn; Close() after a pick or timeout; the game blocks movement and shows the cursor through MenuWindow",
-   "soundOn": "cardsAppear"
+  "_sheet": "Card picker UI (uGUI, built at runtime, no asset bundle). One row = one UI element. Generated/UiLayout.cs gets a static class per row with its Size, Text template and every entry of consts (numbers become float consts, 4-number arrays become Colors, strings become string consts). Fonts: the game's own TMP font found at runtime; card colours come from cards.json themes and the art from art.json.",
+  "_columns": {
+    "id": "element name",
+    "parent": "parent element id or root",
+    "size": "[w,h] in reference pixels (CanvasScaler 1920x1080)",
+    "anchor": "where it sits",
+    "visual": "what it looks like, in words",
+    "text": "static text, or {var} placeholders",
+    "consts": "named numbers / colours / strings the code needs for this element",
+    "behaviour": "interaction and animation",
+    "soundOn": "sounds.json id played, or none"
   },
-  {
-   "id": "Title",
-   "parent": "PickerWindow",
-   "size": [
-    1400,
-    90
-   ],
-   "anchor": "top center, y=-70",
-   "visual": "TMP bold uppercase white on a soft dark band",
-   "text": "{reasonTitle}",
-   "consts": {
-    "FontSize": 56,
-    "Color": [
-     1,
-     1,
-     1,
-     1
+  "canvas": {
+    "referenceResolution": [
+      1920,
+      1080
     ],
-    "OpeningTitle": "PICK A CARD",
-    "CampfireTitle": "CAMPFIRE LIT - PICK A CARD"
-   },
-   "behaviour": "reasonTitle depends on the session reason",
-   "soundOn": "none"
+    "sortingOrder": 500
   },
-  {
-   "id": "Subtitle",
-   "parent": "PickerWindow",
-   "size": [
-    1400,
-    40
-   ],
-   "anchor": "below Title, y=-130",
-   "visual": "TMP light grey",
-   "text": "Choose one. {timeLeft}s",
-   "consts": {
-    "FontSize": 26,
-    "Color": [
-     0.85,
-     0.85,
-     0.85,
-     1
-    ]
-   },
-   "behaviour": "counts down pickTimeoutSeconds; at 0 a random card of the hand is taken",
-   "soundOn": "none"
+  "timing": {
+    "pickTimeoutSeconds": 60,
+    "fanSlideInSeconds": 0.35,
+    "cardStaggerSeconds": 0.08,
+    "hoverScale": 1.08,
+    "selectedFlashSeconds": 0.5,
+    "toastSeconds": 3.0,
+    "openingPickDelaySeconds": 2.0
   },
-  {
-   "id": "Fan",
-   "parent": "PickerWindow",
-   "size": [
-    1700,
-    600
-   ],
-   "anchor": "center, y=-20",
-   "visual": "HorizontalLayoutGroup, middle center",
-   "text": "",
-   "consts": {
-    "Spacing": 24,
-    "SlideFromY": -400
-   },
-   "behaviour": "holds handSize Card elements; slides up over fanSlideInSeconds with cardStaggerSeconds between cards",
-   "soundOn": "none"
-  },
-  {
-   "id": "Card",
-   "parent": "Fan",
-   "size": [
-    300,
-    420
-   ],
-   "anchor": "layout",
-   "visual": "rounded frame in the theme frame colour around a rounded background in the theme bg colour; rarity strip along the top",
-   "text": "",
-   "consts": {
-    "FrameWidth": 6,
-    "RarityStripHeight": 10,
-    "UncommonColor": [
-     0.33,
-     0.69,
-     0.33,
-     1
-    ],
-    "RareColor": [
-     0.98,
-     0.8,
-     0.3,
-     1
-    ],
-    "HoverFrameBoost": 0.25,
-    "CornerRadius": 18
-   },
-   "behaviour": "Button; hover: scale hoverScale and brighten the frame; click: PickMade",
-   "soundOn": "cardSwitch"
-  },
-  {
-   "id": "CardArt",
-   "parent": "Card",
-   "size": [
-    264,
-    150
-   ],
-   "anchor": "top, y=-30",
-   "visual": "rounded window in a darker shade of the theme bg with a soft round glow behind the motif; the card's art.json motif animates inside it, clipped to the window",
-   "text": "",
-   "consts": {
-    "Y": -30,
-    "WindowDarken": 0.45,
-    "GlowAlpha": 0.12,
-    "GlowSize": 150
-   },
-   "behaviour": "layers animate on unscaled time so they keep moving while the game pauses",
-   "soundOn": "none"
-  },
-  {
-   "id": "CardName",
-   "parent": "Card",
-   "size": [
-    280,
-    40
-   ],
-   "anchor": "top, y=-190",
-   "visual": "TMP bold uppercase white, auto-size",
-   "text": "{card.name}",
-   "consts": {
-    "FontSize": 28,
-    "MinFontSize": 16,
-    "Color": [
-     1,
-     1,
-     1,
-     1
-    ],
-    "Y": -190
-   },
-   "behaviour": "none",
-   "soundOn": "none"
-  },
-  {
-   "id": "CardEffects",
-   "parent": "Card",
-   "size": [
-    272,
-    150
-   ],
-   "anchor": "top, y=-236",
-   "visual": "one line per effect from stats.json display strings; good effects green, drawbacks red",
-   "text": "{effectLines}",
-   "consts": {
-    "FontSize": 17,
-    "MinFontSize": 11,
-    "GoodColor": [
-     0.62,
-     0.92,
-     0.45,
-     1
-    ],
-    "BadColor": [
-     0.95,
-     0.45,
-     0.42,
-     1
-    ],
-    "Y": -236
-   },
-   "behaviour": "none",
-   "soundOn": "none"
-  },
-  {
-   "id": "CardFlavor",
-   "parent": "Card",
-   "size": [
-    272,
-    46
-   ],
-   "anchor": "bottom, y=14",
-   "visual": "TMP italic, muted",
-   "text": "{card.flavor}",
-   "consts": {
-    "FontSize": 14,
-    "MinFontSize": 10,
-    "Color": [
-     0.82,
-     0.82,
-     0.82,
-     0.9
-    ],
-    "Y": 14
-   },
-   "behaviour": "none",
-   "soundOn": "none"
-  },
-  {
-   "id": "WaitingBanner",
-   "parent": "root",
-   "size": [
-    700,
-    60
-   ],
-   "anchor": "top center, y=-120",
-   "visual": "dark panel, white text",
-   "text": "{playerName} is picking a card...",
-   "consts": {
-    "FontSize": 28,
-    "Panel": [
-     0,
-     0,
-     0,
-     0.6
-    ],
-    "Color": [
-     1,
-     1,
-     1,
-     1
-    ],
-    "Template": "{0} is picking a card..."
-   },
-   "behaviour": "shown to everyone who is not picking while a session runs; not a MenuWindow (no input block)",
-   "soundOn": "none"
-  },
-  {
-   "id": "MyCardsHud",
-   "parent": "root",
-   "size": [
-    360,
-    300
-   ],
-   "anchor": "bottom left, x=20, y=160",
-   "visual": "one line per card: coloured dot in the card's theme colour plus its name",
-   "text": "{myCards}",
-   "consts": {
-    "FontSize": 18,
-    "Color": [
-     1,
-     1,
-     1,
-     0.9
-    ],
-    "Header": "YOUR CARDS"
-   },
-   "behaviour": "visible on the island when the player holds any card; hidden in menus",
-   "soundOn": "none"
-  },
-  {
-   "id": "Toast",
-   "parent": "root",
-   "size": [
-    900,
-    60
-   ],
-   "anchor": "top center, y=-200",
-   "visual": "dark panel, white text",
-   "text": "{message}",
-   "consts": {
-    "FontSize": 26,
-    "Panel": [
-     0,
-     0,
-     0,
-     0.6
-    ],
-    "Color": [
-     1,
-     1,
-     1,
-     1
-    ],
-    "TookTemplate": "{0} took {1}",
-    "SecondWindTemplate": "SECOND WIND! {0} got back up"
-   },
-   "behaviour": "toastSeconds notices",
-   "soundOn": "none"
-  }
- ]
+  "rows": [
+    {
+      "id": "PickerWindow",
+      "parent": "root",
+      "size": [
+        1920,
+        1080
+      ],
+      "anchor": "stretch",
+      "visual": "MenuWindow subclass (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop",
+      "text": "",
+      "consts": {
+        "Backdrop": [
+          0,
+          0,
+          0,
+          0.72
+        ]
+      },
+      "behaviour": "Open() when it is the local player's turn; Close() after a pick or timeout; the game blocks movement and shows the cursor through MenuWindow",
+      "soundOn": "cardsAppear"
+    },
+    {
+      "id": "Title",
+      "parent": "PickerWindow",
+      "size": [
+        1400,
+        90
+      ],
+      "anchor": "top center, y=-70",
+      "visual": "TMP bold uppercase white on a soft dark band",
+      "text": "{reasonTitle}",
+      "consts": {
+        "FontSize": 56,
+        "Color": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "OpeningTitle": "PICK A CARD",
+        "CampfireTitle": "CAMPFIRE LIT - PICK A CARD",
+        "SacrificeTitle": "MOUNTAIN'S BARGAIN - SACRIFICE A CARD",
+        "BonusTitle": "BONUS CARDS"
+      },
+      "behaviour": "reasonTitle depends on the session reason",
+      "soundOn": "none"
+    },
+    {
+      "id": "Subtitle",
+      "parent": "PickerWindow",
+      "size": [
+        1400,
+        40
+      ],
+      "anchor": "below Title, y=-130",
+      "visual": "TMP light grey",
+      "text": "Choose one. {timeLeft}s",
+      "consts": {
+        "FontSize": 26,
+        "Color": [
+          0.85,
+          0.85,
+          0.85,
+          1
+        ]
+      },
+      "behaviour": "counts down pickTimeoutSeconds; at 0 a random card of the hand is taken",
+      "soundOn": "none"
+    },
+    {
+      "id": "Fan",
+      "parent": "PickerWindow",
+      "size": [
+        1700,
+        600
+      ],
+      "anchor": "center, y=-20",
+      "visual": "HorizontalLayoutGroup, middle center",
+      "text": "",
+      "consts": {
+        "Spacing": 24,
+        "SlideFromY": -400
+      },
+      "behaviour": "holds handSize Card elements; slides up over fanSlideInSeconds with cardStaggerSeconds between cards",
+      "soundOn": "none"
+    },
+    {
+      "id": "Card",
+      "parent": "Fan",
+      "size": [
+        300,
+        420
+      ],
+      "anchor": "layout",
+      "visual": "rounded frame in the card's rarity colour (cards.json rarityColors) around a rounded background in the theme bg colour; rarity strip along the top",
+      "text": "",
+      "consts": {
+        "FrameWidth": 6,
+        "RarityStripHeight": 10,
+        "HoverFrameBoost": 0.25,
+        "CornerRadius": 18
+      },
+      "behaviour": "Button; hover: scale hoverScale and brighten the frame; click: PickMade",
+      "soundOn": "cardSwitch"
+    },
+    {
+      "id": "CardArt",
+      "parent": "Card",
+      "size": [
+        264,
+        150
+      ],
+      "anchor": "top, y=-30",
+      "visual": "rounded window in a darker shade of the theme bg with a soft round glow behind the motif; the card's art.json motif animates inside it, clipped to the window",
+      "text": "",
+      "consts": {
+        "Y": -30,
+        "WindowDarken": 0.45,
+        "GlowAlpha": 0.12,
+        "GlowSize": 150
+      },
+      "behaviour": "layers animate on unscaled time so they keep moving while the game pauses",
+      "soundOn": "none"
+    },
+    {
+      "id": "CardRarity",
+      "parent": "Card",
+      "size": [
+        280,
+        22
+      ],
+      "anchor": "top, y=-180",
+      "visual": "small caps rarity name in the rarity colour",
+      "text": "{rarity}",
+      "consts": {
+        "FontSize": 15,
+        "Y": -180
+      },
+      "behaviour": "none",
+      "soundOn": "none"
+    },
+    {
+      "id": "CardName",
+      "parent": "Card",
+      "size": [
+        280,
+        40
+      ],
+      "anchor": "top, y=-196",
+      "visual": "TMP bold uppercase white, auto-size",
+      "text": "{card.name}",
+      "consts": {
+        "FontSize": 28,
+        "MinFontSize": 16,
+        "Color": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "Y": -202
+      },
+      "behaviour": "none",
+      "soundOn": "none"
+    },
+    {
+      "id": "CardEffects",
+      "parent": "Card",
+      "size": [
+        272,
+        150
+      ],
+      "anchor": "top, y=-246",
+      "visual": "the card's benefit line in green and its drawback line in red (Mythics show 'No drawback')",
+      "text": "{positive}\n{negative}",
+      "consts": {
+        "FontSize": 17,
+        "MinFontSize": 11,
+        "GoodColor": [
+          0.62,
+          0.92,
+          0.45,
+          1
+        ],
+        "BadColor": [
+          0.95,
+          0.45,
+          0.42,
+          1
+        ],
+        "Y": -246,
+        "NoDrawback": "No drawback",
+        "GoodPrefix": "+ ",
+        "BadPrefix": "- "
+      },
+      "behaviour": "none",
+      "soundOn": "none"
+    },
+    {
+      "id": "CardFlavor",
+      "parent": "Card",
+      "size": [
+        272,
+        46
+      ],
+      "anchor": "bottom, y=14",
+      "visual": "TMP italic, muted",
+      "text": "{card.flavor}",
+      "consts": {
+        "FontSize": 14,
+        "MinFontSize": 10,
+        "Color": [
+          0.82,
+          0.82,
+          0.82,
+          0.9
+        ],
+        "Y": 14
+      },
+      "behaviour": "none",
+      "soundOn": "none"
+    },
+    {
+      "id": "WaitingBanner",
+      "parent": "root",
+      "size": [
+        700,
+        60
+      ],
+      "anchor": "top center, y=-120",
+      "visual": "dark panel, white text",
+      "text": "{playerName} is picking a card...",
+      "consts": {
+        "FontSize": 28,
+        "Panel": [
+          0,
+          0,
+          0,
+          0.6
+        ],
+        "Color": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "Template": "{0} is picking a card..."
+      },
+      "behaviour": "shown to everyone who is not picking while a session runs; not a MenuWindow (no input block)",
+      "soundOn": "none"
+    },
+    {
+      "id": "MyCardsHud",
+      "parent": "root",
+      "size": [
+        360,
+        300
+      ],
+      "anchor": "bottom left, x=20, y=160",
+      "visual": "one line per card: a square in the card's rarity colour plus its name",
+      "text": "{myCards}",
+      "consts": {
+        "FontSize": 18,
+        "Color": [
+          1,
+          1,
+          1,
+          0.9
+        ],
+        "Header": "YOUR CARDS"
+      },
+      "behaviour": "visible on the island when the player holds any card; hidden in menus",
+      "soundOn": "none"
+    },
+    {
+      "id": "Toast",
+      "parent": "root",
+      "size": [
+        900,
+        60
+      ],
+      "anchor": "top center, y=-200",
+      "visual": "dark panel, white text",
+      "text": "{message}",
+      "consts": {
+        "FontSize": 26,
+        "Panel": [
+          0,
+          0,
+          0,
+          0.6
+        ],
+        "Color": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "TookTemplate": "{0} took {1}"
+      },
+      "behaviour": "toastSeconds notices",
+      "soundOn": "none"
+    },
+    {
+      "id": "AbilityBar",
+      "parent": "root",
+      "size": [
+        460,
+        120
+      ],
+      "anchor": "bottom right, x=-24, y=150",
+      "visual": "one line per owned ability card: name, key and state (ready, cooldown seconds, used this biome, anchor placed)",
+      "text": "{abilityLines}",
+      "consts": {
+        "FontSize": 18,
+        "Color": [
+          1,
+          1,
+          1,
+          0.92
+        ],
+        "ReadyColor": [
+          0.62,
+          0.92,
+          0.45,
+          1
+        ],
+        "WaitColor": [
+          0.85,
+          0.85,
+          0.85,
+          0.8
+        ]
+      },
+      "behaviour": "visible on the island when the player owns an activated or limited ability",
+      "soundOn": "none"
+    },
+    {
+      "id": "Prompt",
+      "parent": "root",
+      "size": [
+        900,
+        60
+      ],
+      "anchor": "top center, y=-260",
+      "visual": "dark panel, white text, for choices outside the card fan (pick a card to sacrifice, empty a slot to lock)",
+      "text": "{message}",
+      "consts": {
+        "FontSize": 24,
+        "Panel": [
+          0,
+          0,
+          0,
+          0.65
+        ],
+        "Color": [
+          1,
+          0.92,
+          0.6,
+          1
+        ]
+      },
+      "behaviour": "stays until the choice is made",
+      "soundOn": "none"
+    }
+  ]
 }

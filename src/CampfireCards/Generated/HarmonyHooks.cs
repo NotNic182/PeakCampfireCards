@@ -21,32 +21,245 @@ namespace CampfireCards.Generated
     [HarmonyPatch(typeof(CharacterAfflictions), "AddStatus", new Type[] { typeof(CharacterAfflictions.STATUSTYPE), typeof(float), typeof(bool), typeof(bool), typeof(bool), typeof(bool), typeof(bool) })]
     internal static class Patch_addStatus
     {
-        [HarmonyPrefix] static void Prefix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE statusType, ref float amount) { CampfireCards.Hooks.ScaleIncomingStatusPrefix(__instance, statusType, ref amount); }
+        [HarmonyPrefix] static bool Prefix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE statusType, ref float amount, bool fromRPC, ref bool __result, out bool __state) { return CampfireCards.Hooks.OnAddStatusPrefix(__instance, statusType, ref amount, fromRPC, ref __result, out __state); }
+        [HarmonyPostfix] static void Postfix(CharacterAfflictions __instance, bool __state) { CampfireCards.Hooks.OnAddStatus(__instance, __state); }
+    }
+
+    [HarmonyPatch(typeof(CharacterAfflictions), "SubtractStatus", new Type[] { typeof(CharacterAfflictions.STATUSTYPE), typeof(float), typeof(bool), typeof(bool) })]
+    internal static class Patch_subtractStatus
+    {
+        [HarmonyPrefix] static void Prefix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE statusType, ref float amount, bool decreasedNaturally) { CampfireCards.Hooks.OnSubtractStatusPrefix(__instance, statusType, ref amount, decreasedNaturally); }
+    }
+
+    [HarmonyPatch(typeof(CharacterAfflictions), "AddPetrify", new Type[] { typeof(int) })]
+    internal static class Patch_addPetrify
+    {
+        [HarmonyPrefix] static void Prefix(CharacterAfflictions __instance, ref int petrify) { CampfireCards.Hooks.OnAddPetrifyPrefix(__instance, ref petrify); }
     }
 
     [HarmonyPatch(typeof(CharacterMovement), "CheckFallDamage")]
     internal static class Patch_fallDamage
     {
-        [HarmonyPrefix] static bool Prefix(CharacterMovement __instance) { return CampfireCards.Hooks.OnCheckFallDamagePrefix(__instance); }
-        [HarmonyPostfix] static void Postfix(CharacterMovement __instance) { CampfireCards.Hooks.OnCheckFallDamage(__instance); }
+        [HarmonyPrefix] static void Prefix(CharacterMovement __instance) { CampfireCards.Hooks.OnFallDamagePrefix(__instance); }
+        [HarmonyPostfix] static void Postfix(CharacterMovement __instance) { CampfireCards.Hooks.OnFallDamage(__instance); }
+    }
+
+    [HarmonyPatch(typeof(CharacterClimbing), "CheckFallDamage", new Type[] { typeof(UnityEngine.RaycastHit) })]
+    internal static class Patch_climbFallDamage
+    {
+        [HarmonyPrefix] static void Prefix(CharacterClimbing __instance) { CampfireCards.Hooks.OnClimbFallDamagePrefix(__instance); }
+        [HarmonyPostfix] static void Postfix(CharacterClimbing __instance) { CampfireCards.Hooks.OnClimbFallDamage(__instance); }
+    }
+
+    [HarmonyPatch(typeof(CharacterClimbing), "Update")]
+    internal static class Patch_wallClimbCost
+    {
+        [HarmonyPrefix] static void Prefix(CharacterClimbing __instance) { CampfireCards.Hooks.OnWallClimbContextPrefix(__instance); }
+        [HarmonyPostfix] static void Postfix(CharacterClimbing __instance) { CampfireCards.Hooks.OnWallClimbContext(__instance); }
+    }
+
+    [HarmonyPatch(typeof(CharacterClimbing), "RPCA_ClimbJump")]
+    internal static class Patch_climbJumpCost
+    {
+        [HarmonyPrefix] static void Prefix(CharacterClimbing __instance) { CampfireCards.Hooks.OnWallClimbContextPrefix(__instance); }
+        [HarmonyPostfix] static void Postfix(CharacterClimbing __instance) { CampfireCards.Hooks.OnWallClimbContext(__instance); }
+    }
+
+    [HarmonyPatch(typeof(CharacterClimbing), "StartClimbRpc", new Type[] { typeof(UnityEngine.Vector3), typeof(UnityEngine.Vector3) })]
+    internal static class Patch_startClimb
+    {
+        [HarmonyPrefix] static void Prefix(CharacterClimbing __instance) { CampfireCards.Hooks.OnStartClimbPrefix(__instance); }
+        [HarmonyPostfix] static void Postfix(CharacterClimbing __instance) { CampfireCards.Hooks.OnStartClimb(__instance); }
+    }
+
+    [HarmonyPatch(typeof(CharacterRopeHandling), "Update")]
+    internal static class Patch_ropeClimbCost
+    {
+        [HarmonyPrefix] static void Prefix(CharacterRopeHandling __instance) { CampfireCards.Hooks.OnRopeClimbContextPrefix(__instance); }
+        [HarmonyPostfix] static void Postfix(CharacterRopeHandling __instance) { CampfireCards.Hooks.OnRopeClimbContext(__instance); }
+    }
+
+    [HarmonyPatch(typeof(CharacterVineClimbing), "Update")]
+    internal static class Patch_vineClimbCost
+    {
+        [HarmonyPrefix] static void Prefix(CharacterVineClimbing __instance) { CampfireCards.Hooks.OnVineClimbContextPrefix(__instance); }
+        [HarmonyPostfix] static void Postfix(CharacterVineClimbing __instance) { CampfireCards.Hooks.OnVineClimbContext(__instance); }
+    }
+
+    [HarmonyPatch(typeof(CharacterVineClimbing), "GrabVineRpc", new Type[] { typeof(Photon.Pun.PhotonView), typeof(int) })]
+    internal static class Patch_vineGrabCost
+    {
+        [HarmonyPrefix] static void Prefix(CharacterVineClimbing __instance) { CampfireCards.Hooks.OnVineClimbContextPrefix(__instance); }
+        [HarmonyPostfix] static void Postfix(CharacterVineClimbing __instance) { CampfireCards.Hooks.OnVineClimbContext(__instance); }
+    }
+
+    [HarmonyPatch(typeof(Character), "UseStamina", new Type[] { typeof(float), typeof(bool), typeof(bool) })]
+    internal static class Patch_useStamina
+    {
+        [HarmonyPrefix] static bool Prefix(Character __instance, ref float usage, ref bool __result) { return CampfireCards.Hooks.OnUseStaminaPrefix(__instance, ref usage, ref __result); }
     }
 
     [HarmonyPatch(typeof(Character), "UpdateVariablesFixed")]
-    internal static class Patch_staminaTick
+    internal static class Patch_regenContext
     {
-        [HarmonyPostfix] static void Postfix(Character __instance) { CampfireCards.Hooks.OnStaminaTick(__instance); }
+        [HarmonyPrefix] static void Prefix(Character __instance) { CampfireCards.Hooks.OnRegenContextPrefix(__instance); }
+        [HarmonyPostfix] static void Postfix(Character __instance) { CampfireCards.Hooks.OnRegenContext(__instance); }
     }
 
-    [HarmonyPatch(typeof(CharacterAfflictions), "UpdateExtraJumps")]
-    internal static class Patch_extraJumps
+    [HarmonyPatch(typeof(Character), "AddStamina", new Type[] { typeof(float) })]
+    internal static class Patch_addStamina
     {
-        [HarmonyPostfix] static void Postfix(CharacterAfflictions __instance) { CampfireCards.Hooks.OnUpdateExtraJumps(__instance); }
+        [HarmonyPrefix] static void Prefix(Character __instance, ref float add) { CampfireCards.Hooks.OnAddStaminaPrefix(__instance, ref add); }
     }
 
-    [HarmonyPatch(typeof(Character), "ReviveCharacter", new Type[] { typeof(bool) })]
-    internal static class Patch_revive
+    [HarmonyPatch(typeof(Character), "CanRegenStamina")]
+    internal static class Patch_canRegen
     {
-        [HarmonyPostfix] static void Postfix(Character __instance) { CampfireCards.Hooks.OnRevived(__instance); }
+        [HarmonyPostfix] static void Postfix(Character __instance, ref bool __result) { CampfireCards.Hooks.OnCanRegenStamina(__instance, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(Character), "GetMaxStamina")]
+    internal static class Patch_maxStamina
+    {
+        [HarmonyPostfix] static void Postfix(Character __instance, ref float __result) { CampfireCards.Hooks.OnGetMaxStamina(__instance, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(Character), "AddExtraStamina", new Type[] { typeof(float) })]
+    internal static class Patch_bonusStamina
+    {
+        [HarmonyPrefix] static void Prefix(Character __instance, ref float add) { CampfireCards.Hooks.OnAddExtraStaminaPrefix(__instance, ref add); }
+    }
+
+    [HarmonyPatch(typeof(CharacterClimbing), "TryToStartWallClimb", new Type[] { typeof(bool), typeof(UnityEngine.Vector3), typeof(bool), typeof(float) })]
+    internal static class Patch_wallReach
+    {
+        [HarmonyPrefix] static void Prefix(CharacterClimbing __instance, ref float raycastDistance) { CampfireCards.Hooks.OnTryWallClimbPrefix(__instance, ref raycastDistance); }
+    }
+
+    [HarmonyPatch(typeof(CharacterGrabbing), "Reach")]
+    internal static class Patch_helpReach
+    {
+        [HarmonyPostfix] static void Postfix(CharacterGrabbing __instance) { CampfireCards.Hooks.OnReach(__instance); }
+    }
+
+    [HarmonyPatch(typeof(CharacterClimbing), "Climbing")]
+    internal static class Patch_wallSlide
+    {
+        [HarmonyPrefix] static void Prefix(CharacterClimbing __instance, out float __state) { CampfireCards.Hooks.OnClimbingSlidePrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(CharacterClimbing __instance, float __state) { CampfireCards.Hooks.OnClimbingSlide(__instance, __state); }
+    }
+
+    [HarmonyPatch(typeof(CharacterClimbing), "GetRequestedPostition")]
+    internal static class Patch_windSlip
+    {
+        [HarmonyPrefix] static void Prefix(CharacterClimbing __instance, out float __state) { CampfireCards.Hooks.OnRequestedPositionPrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(CharacterClimbing __instance, float __state) { CampfireCards.Hooks.OnRequestedPosition(__instance, __state); }
+    }
+
+    [HarmonyPatch(typeof(CharacterAfflictions), "UpdateWeight")]
+    internal static class Patch_updateWeight
+    {
+        [HarmonyPostfix] static void Postfix(CharacterAfflictions __instance) { CampfireCards.Hooks.OnUpdateWeight(__instance); }
+    }
+
+    [HarmonyPatch(typeof(GlobalEvents), "TriggerCharacterJumped", new Type[] { typeof(Character), typeof(bool) })]
+    internal static class Patch_jumped
+    {
+        [HarmonyPostfix] static void Postfix(Character character, bool doubleJump) { CampfireCards.Hooks.OnCharacterJumped(character, doubleJump); }
+    }
+
+    [HarmonyPatch(typeof(Character), "RPCA_PassOut")]
+    internal static class Patch_passOut
+    {
+        [HarmonyPostfix] static void Postfix(Character __instance) { CampfireCards.Hooks.OnPassedOut(__instance); }
+    }
+
+    [HarmonyPatch(typeof(Character), "RPCA_Die")]
+    internal static class Patch_died
+    {
+        [HarmonyPrefix] static void Prefix(Character __instance, out bool __state) { CampfireCards.Hooks.OnDiedPrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(Character __instance, bool __state) { CampfireCards.Hooks.OnDied(__instance, __state); }
+    }
+
+    [HarmonyPatch(typeof(Character), "RPCA_UnPassOut")]
+    internal static class Patch_unPassOut
+    {
+        [HarmonyPostfix] static void Postfix(Character __instance) { CampfireCards.Hooks.OnUnPassedOut(__instance); }
+    }
+
+    [HarmonyPatch(typeof(Character), "GetFedItemRPC", new Type[] { typeof(int) })]
+    internal static class Patch_fedItem
+    {
+        [HarmonyPrefix] static void Prefix(Character __instance, int itemPhotonID) { CampfireCards.Hooks.OnFedItemPrefix(__instance, itemPhotonID); }
+    }
+
+    [HarmonyPatch(typeof(RespawnChest), "Interact_CastFinished", new Type[] { typeof(Character) })]
+    internal static class Patch_statueRevive
+    {
+        [HarmonyPrefix] static void Prefix(Character interactor) { CampfireCards.Hooks.OnRespawnChestUsedPrefix(interactor); }
+    }
+
+    [HarmonyPatch(typeof(Peak.KillPlane), "OnCollisionStay", new Type[] { typeof(UnityEngine.Collision) })]
+    internal static class Patch_killPlane
+    {
+        [HarmonyPrefix] static bool Prefix(UnityEngine.Collision other) { return CampfireCards.Hooks.OnKillPlanePrefix(other); }
+    }
+
+    [HarmonyPatch(typeof(Action_RestoreHunger), "RunAction")]
+    internal static class Patch_restoreHunger
+    {
+        [HarmonyPrefix] static void Prefix(Action_RestoreHunger __instance, out float __state) { CampfireCards.Hooks.OnRestoreHungerPrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(Action_RestoreHunger __instance, float __state) { CampfireCards.Hooks.OnRestoreHunger(__instance, __state); }
+    }
+
+    [HarmonyPatch(typeof(Action_ModifyStatus), "RunAction")]
+    internal static class Patch_modifyStatus
+    {
+        [HarmonyPrefix] static void Prefix(Action_ModifyStatus __instance, out float __state) { CampfireCards.Hooks.OnModifyStatusActionPrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(Action_ModifyStatus __instance, float __state) { CampfireCards.Hooks.OnModifyStatusAction(__instance, __state); }
+    }
+
+    [HarmonyPatch(typeof(Action_ClearAllStatus), "RunAction")]
+    internal static class Patch_clearAllStatus
+    {
+        [HarmonyPrefix] static void Prefix(Action_ClearAllStatus __instance) { CampfireCards.Hooks.OnClearAllStatusActionPrefix(__instance); }
+    }
+
+    [HarmonyPatch(typeof(Item), "ConsumeDelayed", new Type[] { typeof(bool) })]
+    internal static class Patch_consumeDelayed
+    {
+        [HarmonyPrefix] static bool Prefix(Item __instance, bool ignoreActions, ref System.Collections.IEnumerator __result) { return CampfireCards.Hooks.OnConsumeDelayedPrefix(__instance, ignoreActions, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(Action_ReduceUses), "RunAction")]
+    internal static class Patch_reduceUses
+    {
+        [HarmonyPrefix] static bool Prefix(Action_ReduceUses __instance) { return CampfireCards.Hooks.OnReduceUsesPrefix(__instance); }
+    }
+
+    [HarmonyPatch(typeof(Action_ConsumeAndSpawn), "RunAction")]
+    internal static class Patch_consumeAndSpawn
+    {
+        [HarmonyPrefix] static bool Prefix(Action_ConsumeAndSpawn __instance) { return CampfireCards.Hooks.OnConsumeAndSpawnPrefix(__instance); }
+    }
+
+    [HarmonyPatch(typeof(Player), "AddItem")]
+    internal static class Patch_addItem
+    {
+        [HarmonyPrefix] static bool Prefix(Player __instance, ushort itemID, ref ItemInstanceData instanceData, ref ItemSlot slot, ref bool __result) { return CampfireCards.Hooks.OnAddItemPrefix(__instance, itemID, ref instanceData, ref slot, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(Player), "HasEmptySlot", new Type[] { typeof(ushort) })]
+    internal static class Patch_hasEmptySlot
+    {
+        [HarmonyPrefix] static bool Prefix(Player __instance, ushort itemID, ref bool __result) { return CampfireCards.Hooks.OnHasEmptySlotPrefix(__instance, itemID, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(CharacterHeatEmission), "Update")]
+    internal static class Patch_heatEmission
+    {
+        [HarmonyPrefix] static void Prefix(CharacterHeatEmission __instance, out bool __state) { CampfireCards.Hooks.OnHeatEmissionPrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(CharacterHeatEmission __instance, bool __state) { CampfireCards.Hooks.OnHeatEmission(__instance, __state); }
     }
 
     [HarmonyPatch(typeof(SteamLobbyHandler), "OnLobbyCreated", new Type[] { typeof(Steamworks.LobbyCreated_t) })]

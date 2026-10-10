@@ -1,93 +1,149 @@
 {
- "_sheet": "Systems of the mod. One row = one C# class with one job. Preflight checks that each class exists in src and that every sheet it owns is referenced from it.",
- "_columns": {
-  "id": "system name",
-  "class": "C# type in namespace CampfireCards",
-  "owns": "sheets or generated tables this class is built from",
-  "responsibility": "one line",
-  "dependsOn": "other system ids, comma separated; - = none",
-  "testedBy": "how it was verified (filled in during testing)"
- },
- "rows": [
-  {
-   "id": "Plugin",
-   "class": "CampfireCards.Plugin",
-   "owns": "hooks.json (Generated/HarmonyHooks.cs), config",
-   "responsibility": "BepInEx entry: config, Harmony PatchAll, event subscriptions, per-frame tick, scene changes",
-   "dependsOn": "Hooks,Net,Ui",
-   "testedBy": "Loads in PEAK 2.6.b with BepInEx 5.4.23.3 (v0.2.0 log: deck built, no errors)"
+  "_sheet": "Systems of the mod. One row = one C# class with one job. Preflight checks that each class exists in src and that every sheet it owns is referenced from it.",
+  "_columns": {
+    "id": "system name",
+    "class": "C# type in namespace CampfireCards",
+    "owns": "sheets or generated tables this class is built from",
+    "responsibility": "one line",
+    "dependsOn": "other system ids, comma separated; - = none",
+    "testedBy": "how it was verified (filled in during testing)"
   },
-  {
-   "id": "Hooks",
-   "class": "CampfireCards.Hooks",
-   "owns": "hooks.json handlers",
-   "responsibility": "the handler bodies the generated patches call; turns game moments into Session/Effects calls",
-   "dependsOn": "Session,Effects,HostLog",
-   "testedBy": "Run start opened the opening pick on a hosted run and on Continue Run; lobby id logged on Host Game"
-  },
-  {
-   "id": "Deck",
-   "class": "CampfireCards.Cards.Deck",
-   "owns": "cards.json (Generated/CardTable.cs), stats.json (Generated/ClimbStats.cs)",
-   "responsibility": "the playable deck = every cards.json row; deals a hand with rarity weights and the unique rule from a seed; builds each card's effect lines",
-   "dependsOn": "-",
-   "testedBy": "8 placeholder cards built, hash logged; hands dealt with rarity weights"
-  },
-  {
-   "id": "Effects",
-   "class": "CampfireCards.Cards.Effects",
-   "owns": "stats.json formulas",
-   "responsibility": "per-character card lists -> summed ClimbStats -> applied to the character's public fields (all clients) and consulted by the Harmony hooks (owner)",
-   "dependsOn": "Deck",
-   "testedBy": "Picked the jump card: jump impulse 400 -> 480 (+20%) in the effects log"
-  },
-  {
-   "id": "Session",
-   "class": "CampfireCards.Cards.PickSession",
-   "owns": "net.json 91/92/94/97 flow, ui.json timing",
-   "responsibility": "host: collects arrivals, orders players last-arrival-first, deals hands, advances turns, times out; everyone: tracks whose turn it is and opens the picker on their own turn",
-   "dependsOn": "Deck,Net,Ui",
-   "testedBy": "Opening pick by click recorded once (session 10001); host timeout and campfire flow carried over from 0.1.0 tests"
-  },
-  {
-   "id": "Net",
-   "class": "CampfireCards.Net.NetSend + CampfireCards.Net.NetHandlers + CampfireCards.Net.NetDispatcher (generated)",
-   "owns": "net.json (Generated/NetEvents.cs)",
-   "responsibility": "RaiseEvent send helpers, EventReceived dispatch, late-joiner StateSync",
-   "dependsOn": "-",
-   "testedBy": "PickSessionStart / PickMade round trip through Photon on a hosted lobby; multiplayer joins not yet tested"
-  },
-  {
-   "id": "Ui",
-   "class": "CampfireCards.Ui.CardPicker (MenuWindow) + CampfireCards.Ui.Hud",
-   "owns": "ui.json (Generated/UiLayout.cs)",
-   "responsibility": "runtime-built uGUI: picker fan of cards, waiting banner, my-cards HUD, toasts",
-   "dependsOn": "Deck,Art,Sfx",
-   "testedBy": "Five-card fan rendered with frames, rarity strips, art windows, names, coloured effect lines and flavour (checked from an in-game screenshot)"
-  },
-  {
-   "id": "Art",
-   "class": "CampfireCards.Art.CardArt + CampfireCards.Art.Shapes",
-   "owns": "art.json (Generated/ArtTable.cs), cards.json themes",
-   "responsibility": "draws each shape as a generated anti-aliased sprite (cached) and stacks a motif's layers in the card's art window, animating them",
-   "dependsOn": "-",
-   "testedBy": "All motifs used by the deck drawn and animated in game (star, snowflake, spring, rope, rock seen)"
-  },
-  {
-   "id": "Sfx",
-   "class": "CampfireCards.Art.Sfx",
-   "owns": "sounds.json (Generated/SoundTable.cs)",
-   "responsibility": "synthesises the UI sounds into AudioClips at load and plays them",
-   "dependsOn": "-",
-   "testedBy": "Sounds synthesise without errors; not checked by ear"
-  },
-  {
-   "id": "HostLog",
-   "class": "CampfireCards.Net.HostLog",
-   "owns": "net.log line format",
-   "responsibility": "writes 'Hosting at <lobby id>' to %LOCALAPPDATA%/CampfireCards/net.log when this player creates a Steam lobby, for launchers that list open games",
-   "dependsOn": "-",
-   "testedBy": "net.log line written on Host Game"
-  }
- ]
+  "rows": [
+    {
+      "id": "Plugin",
+      "class": "CampfireCards.Plugin",
+      "owns": "config (weights, offer count, caps, per-card values, keys)",
+      "responsibility": "BepInEx entry: loads every card setting into CardSettings.Current, Harmony PatchAll, subscriptions, per-frame tick",
+      "dependsOn": "Hooks,Settings,Deck",
+      "testedBy": "v0.3.0 in PEAK 2.6.b: loads, all 42 Harmony patches apply, 64-card deck built, no exceptions over three test runs"
+    },
+    {
+      "id": "Settings",
+      "class": "CampfireCards.Core.CardSettings",
+      "owns": "cards.json defaults",
+      "responsibility": "every tunable number: rarity weights, offer count, duplicates, Mythics on/off, stamina-cost cap, max-stamina floor, per-card enable, modifier values and parameters",
+      "dependsOn": "-",
+      "testedBy": "Unit tests (DefaultRarityWeightsMatchSpec, MythicsCanBeDisabled, DisabledCardsAreNeverOffered)"
+    },
+    {
+      "id": "Draw",
+      "class": "CampfireCards.Core.CardDraw",
+      "owns": "cards.json rarityWeights",
+      "responsibility": "offers: roll a rarity by weight, pick inside it; no duplicates, solo filter, no chained draws, Double Down cap, Mythics once per run, Bargain needs a target",
+      "dependsOn": "Settings",
+      "testedBy": "Unit tests (offer, solo, owned, bonus, Double Down, Bargain, claimed Mythics, weights)"
+    },
+    {
+      "id": "Mods",
+      "class": "CampfireCards.Core.ModResult",
+      "owns": "stats.json channels and cap groups",
+      "responsibility": "folds active modifiers from scratch each frame: multiplicative percentages, additive flat stamina, 60% cost cap and 50 max-stamina floor for normal cards, Mythics past the caps, set overrides",
+      "dependsOn": "Settings",
+      "testedBy": "Unit tests (stacking, caps, Mythic overrides, no drift)"
+    },
+    {
+      "id": "Timers",
+      "class": "CampfireCards.Core.Cooldown + CampfireCards.Core.Charge + CampfireCards.Core.DelayedInjuryQueue + CampfireCards.Core.ReviveArbiter",
+      "owns": "cards.json params",
+      "responsibility": "Unity-free timers: cooldowns, per-biome and per-run charges, latches, Momentum and Pulse machines, delayed Injury, host revive arbitration, Loaded Dice rolls",
+      "dependsOn": "-",
+      "testedBy": "Unit tests (Second Wind, charges, cooldown, Momentum, Pulse, Delayed Consequences, arbiter, Loaded Dice)"
+    },
+    {
+      "id": "Deck",
+      "class": "CampfireCards.Cards.Deck",
+      "owns": "cards.json (Generated/CardTable.cs)",
+      "responsibility": "the 64-card registry with live settings: hash for version checks, rarity colours and names, campfire and bonus deals",
+      "dependsOn": "Draw,Settings",
+      "testedBy": "v0.3.0 in game: offers of 3 dealt with rarity colours; Mythic granted and shown in gold"
+    },
+    {
+      "id": "Effects",
+      "class": "CampfireCards.Cards.Effects",
+      "owns": "stats.json + conditions.json",
+      "responsibility": "every player's synced collection and pick flags; for the local scout, gathers self modifiers (with conditions) and nearby teammates' auras each frame and applies the field-based channels from captured base values",
+      "dependsOn": "Mods,Deck",
+      "testedBy": "v0.3.0 in game (F7 dump): sprint x1.3 -> sprintMultiplier 2.0 to 2.6, jump x1.2 -> 400 to 480, sprint cost x0.75, max stamina +35 -10 -20 = +5, hunger x1.3 x1.2 = x1.56"
+    },
+    {
+      "id": "LocalCards",
+      "class": "CampfireCards.Cards.LocalCards",
+      "owns": "-",
+      "responsibility": "the local player's ability instances, biome and campfire events, food and curative events, one revival chance per incapacitation, safe footholds",
+      "dependsOn": "Abilities,Effects",
+      "testedBy": "v0.3.0 in game: campfire lit -> biome 3 to 4, per-biome Blood Battery charge refilled, Cursed Crown and Bargain Curse added at the fire"
+    },
+    {
+      "id": "Abilities",
+      "class": "CampfireCards.Abilities.Ability + CampfireCards.Abilities.AbilityRegistry",
+      "owns": "cards.json ability column",
+      "responsibility": "one reusable handler class per ability name (Ability_<name>), found by reflection, created per owned card on the owner only",
+      "dependsOn": "Timers,World",
+      "testedBy": "v0.3.0 in game: Blood Battery key (B), Cursed Crown, Mountain's Bargain, Scavenger markers, Rope Baron and Supply Scout spawns; others compile and await play testing"
+    },
+    {
+      "id": "World",
+      "class": "CampfireCards.Abilities.SafeSpot + CampfireCards.Abilities.CardStatus + CampfireCards.Abilities.Revival",
+      "owns": "-",
+      "responsibility": "validated ground spots for teleports, revives and item spawns; raw card-applied statuses; revive and teleport through the game's own RPCs",
+      "dependsOn": "-",
+      "testedBy": "v0.3.0 in game: campfire item spots found for two spawns; revive and teleport paths not yet exercised"
+    },
+    {
+      "id": "Hooks",
+      "class": "CampfireCards.Hooks",
+      "owns": "hooks.json handlers",
+      "responsibility": "the handler bodies the generated patches call: status, stamina, weight, climbing, reach, slipping, food, healing, inventory lock, revivals, run lifecycle",
+      "dependsOn": "Effects,LocalCards,Session",
+      "testedBy": "v0.3.0 in game: maxStamina, bonusStamina, campfireLit, runStart patches verified via F7; climbing, fall, item and revive hooks await play testing"
+    },
+    {
+      "id": "Session",
+      "class": "CampfireCards.Cards.PickSession",
+      "owns": "net.json 91/92/94/96/97 flow, ui.json timing",
+      "responsibility": "host: arrivals, last-arrival-first order, offers (skip and one-card flags, solo filter, Mythics once), bonus cards for card-draw cards; everyone: turns and the picker",
+      "dependsOn": "Deck,Net,Ui",
+      "testedBy": "v0.3.0 in game: opening pick (click and timeout), campfire pick after F9, bonus grant reveal, sacrifice grid with 13 cards"
+    },
+    {
+      "id": "Net",
+      "class": "CampfireCards.Net.NetSend + CampfireCards.Net.NetHandlers + CampfireCards.Net.NetDispatcher",
+      "owns": "net.json (Generated/NetEvents.cs)",
+      "responsibility": "RaiseEvent helpers, dispatch, host-only checks, late-joiner StateSync, host-authoritative spawns and revive approvals",
+      "dependsOn": "-",
+      "testedBy": "v0.3.0 solo host: PickSessionStart, PickMade, CardsGranted, CardSacrificed, SpawnItem round trips; multiplayer not yet tested"
+    },
+    {
+      "id": "Ui",
+      "class": "CampfireCards.Ui.CardPicker + CampfireCards.Ui.Hud",
+      "owns": "ui.json (Generated/UiLayout.cs)",
+      "responsibility": "card fan with rarity frame and label, green benefit and red drawback; sacrifice and bonus-reveal modes; waiting banner, card list, ability bar, prompt, toasts, Scavenger markers",
+      "dependsOn": "Deck,Art,Sfx",
+      "testedBy": "v0.3.0 in game screenshots: rarity frames and labels, green/red lines, No drawback, reveal and sacrifice modes, ability bar, card list, Scavenger marker"
+    },
+    {
+      "id": "Art",
+      "class": "CampfireCards.Art.CardArt + CampfireCards.Art.Shapes",
+      "owns": "art.json (Generated/ArtTable.cs), cards.json themes",
+      "responsibility": "draws each shape as a generated anti-aliased sprite (cached) and stacks a motif's animated layers in the card's art window",
+      "dependsOn": "-",
+      "testedBy": "v0.2.0: motifs drawn and animated in game"
+    },
+    {
+      "id": "Sfx",
+      "class": "CampfireCards.Art.Sfx",
+      "owns": "sounds.json (Generated/SoundTable.cs)",
+      "responsibility": "synthesises the UI sounds into AudioClips at load and plays them",
+      "dependsOn": "-",
+      "testedBy": "v0.2.0: sounds synthesise without errors; not checked by ear"
+    },
+    {
+      "id": "HostLog",
+      "class": "CampfireCards.Net.HostLog",
+      "owns": "net.log line format",
+      "responsibility": "writes 'Hosting at <lobby id>' to %LOCALAPPDATA%/CampfireCards/net.log when this player creates a Steam lobby",
+      "dependsOn": "-",
+      "testedBy": "v0.2.0: net.log line written on Host Game"
+    }
+  ]
 }

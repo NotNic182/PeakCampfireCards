@@ -9,6 +9,8 @@ SRC = os.path.join(ROOT, 'src', 'CampfireCards')
 RELEASE = '--release' in sys.argv
 problems = []
 warnings = []
+# channels a card uses but that cannot be applied on the current game (documented blockers, README "Known limitations")
+KNOWN_UNAPPLIED = {'invSlots'}
 
 
 def load(name):
@@ -76,10 +78,12 @@ def has_call(name, src):
 
 def main():
     stats = load('stats.json'); cards = load('cards.json'); hooks = load('hooks.json'); net = load('net.json')
+    conditions = load('conditions.json')
     ui = load('ui.json'); systems = load('systems.json'); art = load('art.json'); sounds = load('sounds.json')
 
     # 1. every cell filled
-    check_cells('stats', stats, allow_empty=('displayNegative',))
+    check_cells('stats', stats)
+    check_cells('conditions', conditions)
     check_cells('cards', cards)
     check_cells('hooks', hooks)
     check_cells('net', net)
@@ -89,65 +93,108 @@ def main():
     check_cells('systems', systems, allow_empty=() if RELEASE else ('testedBy',))
 
     stat_ids = {r['id']: r for r in stats['rows']}
-    hook_ids = {r['id'] for r in hooks['rows']}
+    cond_ids = {r['id'] for r in conditions['rows']}
     art_ids = {r['id'] for r in art['rows']}
     sound_ids = {r['id'] for r in sounds['rows']}
+    src = src_text()
 
-    # 2. stats -> hooks
+    # 2. stats (channels): every channel is applied somewhere in src
     for r in stats['rows']:
-        if r['kind'] == 'flag' and r['displayNegative'] != '':
-            problem('stats %s: a flag has a displayNegative' % r['id'])
-        if r['kind'] == 'float' and r['displayNegative'] == '' and r['min'] < 0:
-            problem('stats %s: can go negative but has no displayNegative' % r['id'])
-        av = r['appliesVia']
-        if av.startswith('hook:') and av[5:] not in hook_ids:
-            problem('stats %s: appliesVia %s does not resolve to a hooks.json id' % (r['id'], av))
-        if av not in ('effects', 'tick') and not av.startswith('hook:'):
-            problem('stats %s: unknown appliesVia %s' % (r['id'], av))
+        if r['op'] not in ('mul', 'add'):
+            problem('stats %s: op must be mul or add' % r['id'])
+        if r['capGroup'] not in ('none', 'staminaCost', 'maxStamina'):
+            problem('stats %s: unknown capGroup %s' % (r['id'], r['capGroup']))
+        if ('Channel.' + r['id']) not in src:
+            msg = 'stats %s: channel is never read in src (cards using it would do nothing)' % r['id']
+            (warnings if r['id'] in KNOWN_UNAPPLIED else problems).append(msg)
 
-    # 3. cards -> stats, themes, art
-    for k in ('common', 'uncommon', 'rare'):
+    # 2b. conditions: every condition is evaluated in src
+    for r in conditions['rows']:
+        if ('Condition.' + r['id']) not in src:
+            problem('conditions %s: never evaluated in src' % r['id'])
+
+    # 3. cards
+    rarities = ['common', 'uncommon', 'rare', 'legendary', 'mythic']
+    for k in rarities:
         if k not in cards['rarityWeights']:
             problem('cards: rarityWeights has no %s' % k)
+        if k not in cards['rarityColors'] or len(cards['rarityColors'][k]) != 4:
+            problem('cards: rarityColors %s must be [r,g,b,a]' % k)
+    if not (1 <= cards['offerCount'] <= 5):
+        problem('cards: offerCount %s unreasonable' % cards['offerCount'])
     for tid, th in cards['themes'].items():
         for c in ('frame', 'bg', 'accent'):
             if c not in th or len(th[c]) != 4:
                 problem('cards theme %s: %s must be [r,g,b,a]' % (tid, c))
-    seen_ids, seen_names, placeholders = set(), set(), 0
+    seen_ids, seen_names, seen_keys, placeholders = set(), set(), set(), 0
+    counts = {k: 0 for k in rarities}
     for r in cards['rows']:
-        label = r.get('name', r.get('id'))
+        label = r.get('key', r.get('id'))
         if r['id'] in seen_ids or not (1 <= r['id'] <= 255):
             problem('cards %s: id %s duplicate or out of byte range' % (label, r['id']))
         seen_ids.add(r['id'])
-        if r['name'] in seen_names:
-            problem('cards %s: duplicate name' % label)
-        seen_names.add(r['name'])
+        for col, seen in (('name', seen_names), ('key', seen_keys)):
+            if r[col] in seen:
+                problem('cards %s: duplicate %s' % (label, col))
+            seen.add(r[col])
+        if not re.match(r'^[A-Z][A-Za-z0-9]*$', r['key']):
+            problem('cards %s: key must be PascalCase letters and digits' % label)
         if r['name'].startswith('PLACEHOLDER'):
             placeholders += 1
-        if r['rarity'] not in cards['rarityWeights']:
+        if r['rarity'] not in rarities:
             problem('cards %s: rarity %s unknown' % (label, r['rarity']))
+        else:
+            counts[r['rarity']] += 1
+        if r['rarity'] == 'mythic' and r.get('negative'):
+            problem('cards %s: a Mythic has no drawback' % label)
+        if r['rarity'] != 'mythic' and not r.get('negative'):
+            problem('cards %s: a normal card needs a drawback' % label)
+        if r['category'] == 'team' and not r['multiplayerOnly']:
+            problem('cards %s: team cards are multiplayer-only' % label)
         if r['theme'] not in cards['themes']:
             problem('cards %s: theme %s is not in themes' % (label, r['theme']))
         if r['art'] not in art_ids:
             problem('cards %s: art %s is not an art.json motif' % (label, r['art']))
-        if not isinstance(r['unique'], bool):
-            problem('cards %s: unique must be true or false' % label)
-        for k, v in r['effects'].items():
-            if k not in stat_ids:
-                problem('cards %s: effect %s is not a stats.json id' % (label, k))
+        for i, m in enumerate(r.get('mods') or []):
+            where = 'cards %s mod %d' % (label, i)
+            if not (isinstance(m, list) and len(m) == 5):
+                problem('%s: must be [channel, op, value, when, target]' % where)
                 continue
-            sd = stat_ids[k]
-            if sd['kind'] == 'flag':
-                if v is not True:
-                    problem('cards %s: flag %s must be true' % (label, k))
-            elif isinstance(v, bool) or not isinstance(v, (int, float)):
-                problem('cards %s: effect %s must be a number' % (label, k))
-            elif not (sd['min'] <= v <= sd['max']):
-                problem('cards %s: effect %s=%s outside [%s, %s]' % (label, k, v, sd['min'], sd['max']))
-    if len(cards['rows']) < cards['handSize']:
-        problem('cards: only %d cards for a hand of %d' % (len(cards['rows']), cards['handSize']))
-    if not (2 <= cards['handSize'] <= 7):
-        problem('cards: handSize %s unreasonable' % cards['handSize'])
+            ch, op, val, when, target = m
+            if ch not in stat_ids:
+                problem('%s: channel %s is not a stats.json id' % (where, ch))
+            elif op not in ('set', stat_ids[ch]['op']):
+                problem('%s: op %s does not match channel %s (%s)' % (where, op, ch, stat_ids[ch]['op']))
+            if isinstance(val, bool) or not isinstance(val, (int, float)):
+                problem('%s: value must be a number' % where)
+            elif op == 'mul' and val < 0:
+                problem('%s: a multiplier cannot be negative' % where)
+            if when not in cond_ids:
+                problem('%s: condition %s is not a conditions.json id' % (where, when))
+            if target not in ('self', 'team', 'teamAndSelf'):
+                problem('%s: target %s unknown' % (where, target))
+            if op == 'set' and r['rarity'] != 'mythic':
+                problem('%s: only Mythics may set a channel outright' % where)
+        if r.get('ability'):
+            if not re.search(r'\bclass\s+Ability_%s\b' % re.escape(r['ability']), src):
+                problem('cards %s: ability class Ability_%s not found in src' % (label, r['ability']))
+        elif not r.get('mods'):
+            problem('cards %s: has neither modifiers nor an ability (it would do nothing)' % label)
+        if r['drawsCards'] and 'bonusCards' not in (r.get('params') or {}):
+            problem('cards %s: card-draw card needs params.bonusCards' % label)
+        for k, v in (r.get('params') or {}).items():
+            if isinstance(v, bool) or not isinstance(v, (int, float)):
+                problem('cards %s: param %s must be a number' % (label, k))
+        if r.get('ability') == 'CampfireSpawn':
+            item = (r.get('params') or {}).get('item', -1)
+            if not (0 <= item < len(cards['spawnItems'])):
+                problem('cards %s: params.item does not index spawnItems' % label)
+    expected = {'common': 15, 'uncommon': 24, 'rare': 16, 'legendary': 7, 'mythic': 2}
+    if len(cards['rows']) != 64:
+        problem('cards: %d cards, expected 64' % len(cards['rows']))
+    for k, n in expected.items():
+        if counts.get(k) != n:
+            problem('cards: %d %s cards, expected %d' % (counts.get(k, 0), k, n))
     if placeholders:
         (problems if RELEASE else warnings).append('cards: %d PLACEHOLDER card(s) still in the deck' % placeholders)
 
@@ -179,7 +226,6 @@ def main():
             problem('sounds %s: duration or volume out of range' % r['id'])
 
     # 6. hooks: harmony rows have a prefix or postfix; handlers exist in src
-    src = src_text()
     for r in hooks['rows']:
         if r['kind'] == 'harmony':
             if not r['prefixArgs'] and not r['postfixArgs']:
@@ -197,8 +243,8 @@ def main():
     # 7. net
     codes = set(); allowed_types = {'byte', 'bool', 'int', 'float', 'double', 'string', 'byte[]', 'int[]'}
     for r in net['rows']:
-        if r['code'] in codes or not (90 <= r['code'] <= 99):
-            problem('net %s: code %s duplicate or outside 90..99' % (r['name'], r['code']))
+        if r['code'] in codes or not (90 <= r['code'] <= 119):
+            problem('net %s: code %s duplicate or outside 90..119' % (r['name'], r['code']))
         codes.add(r['code'])
         for f in r['fields']:
             if f['type'] not in allowed_types:

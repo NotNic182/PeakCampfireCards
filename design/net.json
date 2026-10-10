@@ -1,7 +1,7 @@
 {
  "_sheet": "Network events between the players of one PEAK lobby. One row = one Photon RaiseEvent code the mod sends. Generated/NetEvents.cs gets a struct per row with Write/Read (BinaryWriter/BinaryReader, little endian) built from the fields column.",
  "_columns": {
-  "code": "Photon event code, byte. PEAK uses 1,2,3,4,18; PUN reserves 200+; the mod owns 90-99",
+  "code": "Photon event code, byte. PEAK uses 1,2,3,4,18; PUN reserves 200+; the mod owns 90-119",
   "name": "struct name",
   "sender": "who sends it",
   "receivers": "Photon ReceiverGroup or 'target' (TargetActors)",
@@ -116,7 +116,7 @@
      "type": "byte[]"
     },
     {
-     "name": "secondWindUsed",
+     "name": "pickFlags",
      "type": "byte[]"
     },
     {
@@ -124,7 +124,7 @@
      "type": "int"
     }
    ],
-   "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards)",
+   "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card)",
    "handler": "OnStateSync"
   },
   {
@@ -163,18 +163,30 @@
   },
   {
    "code": 96,
-   "name": "SecondWindUsed",
-   "sender": "the owner",
+   "name": "CardsGranted",
+   "sender": "host",
    "receivers": "All",
    "reliable": true,
    "fields": [
     {
+     "name": "sessionId",
+     "type": "int"
+    },
+    {
      "name": "actor",
      "type": "int"
+    },
+    {
+     "name": "cards",
+     "type": "byte[]"
+    },
+    {
+     "name": "reason",
+     "type": "byte"
     }
    ],
-   "purpose": "Second Wind fired for this player: everyone marks it used and shows the notice",
-   "handler": "OnSecondWindUsed"
+   "purpose": "bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection",
+   "handler": "OnCardsGranted"
   },
   {
    "code": 97,
@@ -190,6 +202,158 @@
    ],
    "purpose": "all turns done or timed out: close waiting banners",
    "handler": "OnSessionEnd"
+  },
+  {
+   "code": 98,
+   "name": "CardSacrificed",
+   "sender": "the owner",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "actor",
+     "type": "int"
+    },
+    {
+     "name": "cardId",
+     "type": "byte"
+    }
+   ],
+   "purpose": "Mountain's Bargain: the owner gave up this card; everyone removes it from that player's collection",
+   "handler": "OnCardSacrificed"
+  },
+  {
+   "code": 99,
+   "name": "SkipNextPick",
+   "sender": "the owner",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "actor",
+     "type": "int"
+    }
+   ],
+   "purpose": "Phoenix Clause fired: this player skips their next campfire pick",
+   "handler": "OnSkipNextPick"
+  },
+  {
+   "code": 100,
+   "name": "ReviveRequest",
+   "sender": "the downed scout",
+   "receivers": "MasterClient",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "ownerActor",
+     "type": "int"
+    },
+    {
+     "name": "biome",
+     "type": "int"
+    },
+    {
+     "name": "incapEvent",
+     "type": "int"
+    }
+   ],
+   "purpose": "ask the host to spend an Eternal Campfire owner's per-biome revive on this scout",
+   "handler": "OnReviveRequest"
+  },
+  {
+   "code": 101,
+   "name": "ReviveGranted",
+   "sender": "host",
+   "receivers": "target",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "ownerActor",
+     "type": "int"
+    },
+    {
+     "name": "incapEvent",
+     "type": "int"
+    }
+   ],
+   "purpose": "the host approved the revive; the downed scout revives itself",
+   "handler": "OnReviveGranted"
+  },
+  {
+   "code": 102,
+   "name": "InjuryShare",
+   "sender": "the protected scout",
+   "receivers": "target",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "amount",
+     "type": "float"
+    }
+   ],
+   "purpose": "Shared Burden: the card owner takes this much Injury (never re-shared)",
+   "handler": "OnInjuryShare"
+  },
+  {
+   "code": 103,
+   "name": "BonusStamina",
+   "sender": "any scout",
+   "receivers": "target",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "amount",
+     "type": "float"
+    },
+    {
+     "name": "reason",
+     "type": "byte"
+    }
+   ],
+   "purpose": "grant bonus stamina to another scout (Hero's Arrival); the receiver applies it to itself",
+   "handler": "OnBonusStamina"
+  },
+  {
+   "code": 104,
+   "name": "SpawnItem",
+   "sender": "the card owner",
+   "receivers": "MasterClient",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "item",
+     "type": "byte"
+    },
+    {
+     "name": "x",
+     "type": "float"
+    },
+    {
+     "name": "y",
+     "type": "float"
+    },
+    {
+     "name": "z",
+     "type": "float"
+    }
+   ],
+   "purpose": "ask the host to spawn a real world pickup (Rope Baron, Supply Scout) at a safe spot",
+   "handler": "OnSpawnItem"
+  },
+  {
+   "code": 105,
+   "name": "RevivedBy",
+   "sender": "the revived scout",
+   "receivers": "target",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "victimActor",
+     "type": "int"
+    }
+   ],
+   "purpose": "tell the scout who fed you back on your feet that they revived you (Hero's Arrival)",
+   "handler": "OnRevivedBy"
   }
  ]
 }

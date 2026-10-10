@@ -4,6 +4,8 @@ using System.IO;
 
 namespace CampfireCards.Net
 {
+    public interface INetEvent { byte EventCode { get; } byte[] Write(); }
+
     public static class NetCodes
     {
         public const byte Hello = 90;
@@ -12,15 +14,24 @@ namespace CampfireCards.Net
         public const byte StateSync = 93;
         public const byte Arrival = 94;
         public const byte StateRequest = 95;
-        public const byte SecondWindUsed = 96;
+        public const byte CardsGranted = 96;
         public const byte SessionEnd = 97;
-        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97 };
+        public const byte CardSacrificed = 98;
+        public const byte SkipNextPick = 99;
+        public const byte ReviveRequest = 100;
+        public const byte ReviveGranted = 101;
+        public const byte InjuryShare = 102;
+        public const byte BonusStamina = 103;
+        public const byte SpawnItem = 104;
+        public const byte RevivedBy = 105;
+        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105 };
     }
 
     /// <summary>announce the mod, its card count and a hash of the deck so players on different versions get a warning. Sender: anyone entering a room. Receivers: Others.</summary>
-    public struct Hello
+    public struct Hello : INetEvent
     {
         public const byte Code = 90;
+        public byte EventCode => Code;
         public const bool Reliable = true;
         public const string Receivers = "Others";
         public string modVersion;
@@ -50,9 +61,10 @@ namespace CampfireCards.Net
     }
 
     /// <summary>a pick session begins: turn order (actor numbers, last to the fire first) and each player's dealt hand (handSize card ids per player, in order). reason: 0 opening, 1 campfire. Sender: host. Receivers: All.</summary>
-    public struct PickSessionStart
+    public struct PickSessionStart : INetEvent
     {
         public const byte Code = 91;
+        public byte EventCode => Code;
         public const bool Reliable = true;
         public const string Receivers = "All";
         public int sessionId;
@@ -91,9 +103,10 @@ namespace CampfireCards.Net
     }
 
     /// <summary>a player took a card: everyone adds it to that player's cards, applies effects, advances the turn. Sender: the picking player. Receivers: All.</summary>
-    public struct PickMade
+    public struct PickMade : INetEvent
     {
         public const byte Code = 92;
+        public byte EventCode => Code;
         public const bool Reliable = true;
         public const string Receivers = "All";
         public int sessionId;
@@ -125,16 +138,17 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards). Sender: host. Receivers: target.</summary>
-    public struct StateSync
+    /// <summary>full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card). Sender: host. Receivers: target.</summary>
+    public struct StateSync : INetEvent
     {
         public const byte Code = 93;
+        public byte EventCode => Code;
         public const bool Reliable = true;
         public const string Receivers = "target";
         public int[] actors;
         public byte[] counts;
         public byte[] cards;
-        public byte[] secondWindUsed;
+        public byte[] pickFlags;
         public int sessionId;
         public byte[] Write()
         {
@@ -143,7 +157,7 @@ namespace CampfireCards.Net
                 w.Write(actors == null ? 0 : actors.Length); if (actors != null) foreach (var x in actors) w.Write(x);
                 w.Write(counts == null ? 0 : counts.Length); if (counts != null) w.Write(counts);
                 w.Write(cards == null ? 0 : cards.Length); if (cards != null) w.Write(cards);
-                w.Write(secondWindUsed == null ? 0 : secondWindUsed.Length); if (secondWindUsed != null) w.Write(secondWindUsed);
+                w.Write(pickFlags == null ? 0 : pickFlags.Length); if (pickFlags != null) w.Write(pickFlags);
                 w.Write(sessionId);
                 w.Flush(); return ms.ToArray();
             }
@@ -156,7 +170,7 @@ namespace CampfireCards.Net
                 {{ int n = r.ReadInt32(); v.actors = new int[n]; for (int i = 0; i < n; i++) v.actors[i] = r.ReadInt32(); }}
                 {{ int n = r.ReadInt32(); v.counts = r.ReadBytes(n); }}
                 {{ int n = r.ReadInt32(); v.cards = r.ReadBytes(n); }}
-                {{ int n = r.ReadInt32(); v.secondWindUsed = r.ReadBytes(n); }}
+                {{ int n = r.ReadInt32(); v.pickFlags = r.ReadBytes(n); }}
                 v.sessionId = r.ReadInt32();
             }
             return v;
@@ -164,9 +178,10 @@ namespace CampfireCards.Net
     }
 
     /// <summary>this player first came within the campfire's rest radius: time is PhotonNetwork.Time so the host can order picks last-arrival-first. Sender: each player. Receivers: MasterClient.</summary>
-    public struct Arrival
+    public struct Arrival : INetEvent
     {
         public const byte Code = 94;
+        public byte EventCode => Code;
         public const bool Reliable = true;
         public const string Receivers = "MasterClient";
         public byte segment;
@@ -193,9 +208,10 @@ namespace CampfireCards.Net
     }
 
     /// <summary>ask the host for StateSync. Sender: a player who has no state yet. Receivers: MasterClient.</summary>
-    public struct StateRequest
+    public struct StateRequest : INetEvent
     {
         public const byte Code = 95;
+        public byte EventCode => Code;
         public const bool Reliable = true;
         public const string Receivers = "MasterClient";
         public string modVersion;
@@ -218,36 +234,47 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>Second Wind fired for this player: everyone marks it used and shows the notice. Sender: the owner. Receivers: All.</summary>
-    public struct SecondWindUsed
+    /// <summary>bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection. Sender: host. Receivers: All.</summary>
+    public struct CardsGranted : INetEvent
     {
         public const byte Code = 96;
+        public byte EventCode => Code;
         public const bool Reliable = true;
         public const string Receivers = "All";
+        public int sessionId;
         public int actor;
+        public byte[] cards;
+        public byte reason;
         public byte[] Write()
         {
             using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
             {
+                w.Write(sessionId);
                 w.Write(actor);
+                w.Write(cards == null ? 0 : cards.Length); if (cards != null) w.Write(cards);
+                w.Write(reason);
                 w.Flush(); return ms.ToArray();
             }
         }
-        public static SecondWindUsed Read(byte[] data)
+        public static CardsGranted Read(byte[] data)
         {
-            var v = new SecondWindUsed();
+            var v = new CardsGranted();
             using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
             {
+                v.sessionId = r.ReadInt32();
                 v.actor = r.ReadInt32();
+                {{ int n = r.ReadInt32(); v.cards = r.ReadBytes(n); }}
+                v.reason = r.ReadByte();
             }
             return v;
         }
     }
 
     /// <summary>all turns done or timed out: close waiting banners. Sender: host. Receivers: All.</summary>
-    public struct SessionEnd
+    public struct SessionEnd : INetEvent
     {
         public const byte Code = 97;
+        public byte EventCode => Code;
         public const bool Reliable = true;
         public const string Receivers = "All";
         public int sessionId;
@@ -270,6 +297,246 @@ namespace CampfireCards.Net
         }
     }
 
+    /// <summary>Mountain's Bargain: the owner gave up this card; everyone removes it from that player's collection. Sender: the owner. Receivers: All.</summary>
+    public struct CardSacrificed : INetEvent
+    {
+        public const byte Code = 98;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "All";
+        public int actor;
+        public byte cardId;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(actor);
+                w.Write(cardId);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static CardSacrificed Read(byte[] data)
+        {
+            var v = new CardSacrificed();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.actor = r.ReadInt32();
+                v.cardId = r.ReadByte();
+            }
+            return v;
+        }
+    }
+
+    /// <summary>Phoenix Clause fired: this player skips their next campfire pick. Sender: the owner. Receivers: All.</summary>
+    public struct SkipNextPick : INetEvent
+    {
+        public const byte Code = 99;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "All";
+        public int actor;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(actor);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static SkipNextPick Read(byte[] data)
+        {
+            var v = new SkipNextPick();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.actor = r.ReadInt32();
+            }
+            return v;
+        }
+    }
+
+    /// <summary>ask the host to spend an Eternal Campfire owner's per-biome revive on this scout. Sender: the downed scout. Receivers: MasterClient.</summary>
+    public struct ReviveRequest : INetEvent
+    {
+        public const byte Code = 100;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "MasterClient";
+        public int ownerActor;
+        public int biome;
+        public int incapEvent;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(ownerActor);
+                w.Write(biome);
+                w.Write(incapEvent);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static ReviveRequest Read(byte[] data)
+        {
+            var v = new ReviveRequest();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.ownerActor = r.ReadInt32();
+                v.biome = r.ReadInt32();
+                v.incapEvent = r.ReadInt32();
+            }
+            return v;
+        }
+    }
+
+    /// <summary>the host approved the revive; the downed scout revives itself. Sender: host. Receivers: target.</summary>
+    public struct ReviveGranted : INetEvent
+    {
+        public const byte Code = 101;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "target";
+        public int ownerActor;
+        public int incapEvent;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(ownerActor);
+                w.Write(incapEvent);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static ReviveGranted Read(byte[] data)
+        {
+            var v = new ReviveGranted();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.ownerActor = r.ReadInt32();
+                v.incapEvent = r.ReadInt32();
+            }
+            return v;
+        }
+    }
+
+    /// <summary>Shared Burden: the card owner takes this much Injury (never re-shared). Sender: the protected scout. Receivers: target.</summary>
+    public struct InjuryShare : INetEvent
+    {
+        public const byte Code = 102;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "target";
+        public float amount;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(amount);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static InjuryShare Read(byte[] data)
+        {
+            var v = new InjuryShare();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.amount = r.ReadSingle();
+            }
+            return v;
+        }
+    }
+
+    /// <summary>grant bonus stamina to another scout (Hero's Arrival); the receiver applies it to itself. Sender: any scout. Receivers: target.</summary>
+    public struct BonusStamina : INetEvent
+    {
+        public const byte Code = 103;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "target";
+        public float amount;
+        public byte reason;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(amount);
+                w.Write(reason);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static BonusStamina Read(byte[] data)
+        {
+            var v = new BonusStamina();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.amount = r.ReadSingle();
+                v.reason = r.ReadByte();
+            }
+            return v;
+        }
+    }
+
+    /// <summary>ask the host to spawn a real world pickup (Rope Baron, Supply Scout) at a safe spot. Sender: the card owner. Receivers: MasterClient.</summary>
+    public struct SpawnItem : INetEvent
+    {
+        public const byte Code = 104;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "MasterClient";
+        public byte item;
+        public float x;
+        public float y;
+        public float z;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(item);
+                w.Write(x);
+                w.Write(y);
+                w.Write(z);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static SpawnItem Read(byte[] data)
+        {
+            var v = new SpawnItem();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.item = r.ReadByte();
+                v.x = r.ReadSingle();
+                v.y = r.ReadSingle();
+                v.z = r.ReadSingle();
+            }
+            return v;
+        }
+    }
+
+    /// <summary>tell the scout who fed you back on your feet that they revived you (Hero's Arrival). Sender: the revived scout. Receivers: target.</summary>
+    public struct RevivedBy : INetEvent
+    {
+        public const byte Code = 105;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "target";
+        public int victimActor;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(victimActor);
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static RevivedBy Read(byte[] data)
+        {
+            var v = new RevivedBy();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                v.victimActor = r.ReadInt32();
+            }
+            return v;
+        }
+    }
+
     public static partial class NetDispatcher
     {
         /// <summary>Routes a received mod event to its handler. Returns false for codes the mod does not own.</summary>
@@ -283,8 +550,16 @@ namespace CampfireCards.Net
                 case 93: NetHandlers.OnStateSync(StateSync.Read(data), sender); return true;
                 case 94: NetHandlers.OnArrival(Arrival.Read(data), sender); return true;
                 case 95: NetHandlers.OnStateRequest(StateRequest.Read(data), sender); return true;
-                case 96: NetHandlers.OnSecondWindUsed(SecondWindUsed.Read(data), sender); return true;
+                case 96: NetHandlers.OnCardsGranted(CardsGranted.Read(data), sender); return true;
                 case 97: NetHandlers.OnSessionEnd(SessionEnd.Read(data), sender); return true;
+                case 98: NetHandlers.OnCardSacrificed(CardSacrificed.Read(data), sender); return true;
+                case 99: NetHandlers.OnSkipNextPick(SkipNextPick.Read(data), sender); return true;
+                case 100: NetHandlers.OnReviveRequest(ReviveRequest.Read(data), sender); return true;
+                case 101: NetHandlers.OnReviveGranted(ReviveGranted.Read(data), sender); return true;
+                case 102: NetHandlers.OnInjuryShare(InjuryShare.Read(data), sender); return true;
+                case 103: NetHandlers.OnBonusStamina(BonusStamina.Read(data), sender); return true;
+                case 104: NetHandlers.OnSpawnItem(SpawnItem.Read(data), sender); return true;
+                case 105: NetHandlers.OnRevivedBy(RevivedBy.Read(data), sender); return true;
                 default: return false;
             }
         }

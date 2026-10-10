@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CampfireCards.Core;
 using CampfireCards.Generated;
 using CampfireCards.Net;
 using CampfireCards.Ui;
@@ -106,7 +107,7 @@ namespace CampfireCards.Cards
         public static void HostStart(byte reason, byte segment)
         {
             if (!NetSend.IsHost) return;
-            if (!Deck.Ready) { Plugin.Log.LogWarning("No pick session: the deck has fewer cards than a hand"); return; }
+            if (!Deck.Ready) { Plugin.Log.LogWarning("No pick session: the deck is empty"); return; }
             if (reason == 1 && _firesDone.Contains(segment)) return;
             if (reason == 1) _firesDone.Add(segment);
             if (Active) { Plugin.Log.LogWarning("Pick session already active; skipping"); return; }
@@ -124,18 +125,24 @@ namespace CampfireCards.Cards
             });
 
             int id = _nextSessionId++ + NetSend.LocalActor * 10000;
+            int handSize = Math.Max(1, CardSettings.Current.OfferCount);
+            bool solo = NetSend.IsSolo;
+            var claimedMythics = Effects.ClaimedMythics();
             var hands = new List<byte>();
             foreach (var actor in actors)
             {
-                var hand = Deck.Deal(new Random(id * 7919 + actor), Effects.CardsOf(actor), CardTable.HandSize);
-                var fixedHand = new byte[CardTable.HandSize];
+                // Phoenix Clause: skip this pick. Double Down: a one-card offer. Both flags are consumed by this session.
+                byte flags = Effects.Flags(actor);
+                int count = (flags & Effects.FlagSkipNext) != 0 ? 0 : (flags & Effects.FlagOfferOne) != 0 ? 1 : handSize;
+                var hand = count > 0 ? Deck.Deal(new Random(id * 7919 + actor), Effects.CardsOf(actor), count, solo, claimedMythics) : new byte[0];
+                var fixedHand = new byte[handSize];
                 for (int i = 0; i < fixedHand.Length; i++) fixedHand[i] = i < hand.Length ? hand[i] : (byte)0;
                 hands.AddRange(fixedHand);
             }
             NetSend.Raise(new PickSessionStart
             {
                 sessionId = id, reason = reason, order = actors.ToArray(), hands = hands.ToArray(),
-                handSize = (byte)CardTable.HandSize, timeoutSeconds = TimeoutSeconds
+                handSize = (byte)handSize, timeoutSeconds = TimeoutSeconds
             }, Photon.Realtime.ReceiverGroup.All);
         }
 
@@ -156,6 +163,13 @@ namespace CampfireCards.Cards
             }
             TimeoutSeconds = m.timeoutSeconds > 0 ? m.timeoutSeconds : TimeoutSeconds;
             TurnIndex = 0;
+            // the skip / one-card flags were used to deal this session: consume them everywhere
+            foreach (var actor in m.order)
+            {
+                if ((Effects.Flags(actor) & Effects.FlagSkipNext) != 0)
+                    Hud.Toast((actor == NetSend.LocalActor ? "You skip" : NetSend.NameOf(actor) + " skips") + " this pick (Phoenix Clause)");
+                Effects.SetFlag(actor, (byte)(Effects.FlagSkipNext | Effects.FlagOfferOne), false);
+            }
             Plugin.Verbose($"Pick session {SessionId} reason {Reason}: order {string.Join(",", Order)}");
             BeginTurn();
         }
@@ -172,7 +186,7 @@ namespace CampfireCards.Cards
                 if (actor == NetSend.LocalActor)
                 {
                     Hud.HideWaiting();
-                    CardPicker.Ensure().Show(Reason, hand, TimeoutSeconds);
+                    CardPicker.Ensure().Show(Reason, hand, TimeoutSeconds, CardPicker.Mode.Pick);
                 }
                 else
                 {
@@ -192,7 +206,8 @@ namespace CampfireCards.Cards
                 return;
             }
             Plugin.Verbose($"Pick: actor {m.actor} card {m.cardId} auto={m.auto} session {m.sessionId}");
-            Effects.AddCard(m.actor, m.cardId);
+            bool added = Effects.AddCard(m.actor, m.cardId, live: true);
+            if (added && NetSend.IsHost) HostGrantBonus(m.actor, m.cardId, m.sessionId);
             string who = m.actor == NetSend.LocalActor ? "You" : NetSend.NameOf(m.actor);
             Hud.Toast(string.Format(Ui_Toast.TookTemplate, who, Deck.NameOf(m.cardId)) + (m.auto ? " (time ran out)" : ""));
             if (m.actor == NetSend.LocalActor) CardPicker.HideIfOpen();
@@ -201,6 +216,42 @@ namespace CampfireCards.Cards
                 TurnIndex++;
                 BeginTurn();
             }
+        }
+
+        /// <summary>
+        /// Host: a card-draw card (Double Deal, Double Down) was taken; deal its bonus cards right away. Bonus cards are
+        /// never card-draw cards themselves, so draws cannot chain.
+        /// </summary>
+        private static void HostGrantBonus(int actor, byte cardId, int sessionId)
+        {
+            var def = CardSettings.Current.Card(cardId);
+            if (def == null || !def.DrawsCards) return;
+            int count = Math.Max(0, (int)Math.Round(CardSettings.Current.Param(def, "bonusCards", 1f)));
+            if (count == 0) return;
+            var maxRarity = def.Ability == "DoubleDown" ? CardRarity.Rare : CardRarity.Mythic;
+            var cards = Deck.DealBonus(new Random(sessionId * 104729 + actor * 31 + cardId), Effects.CardsOf(actor), count, NetSend.IsSolo, maxRarity);
+            if (cards.Length == 0) return;
+            NetSend.Raise(new CardsGranted { sessionId = sessionId, actor = actor, cards = cards, reason = 1 }, Photon.Realtime.ReceiverGroup.All);
+        }
+
+        /// <summary>Everyone: bonus cards from the host. The local player sees them revealed.</summary>
+        public static void OnCardsGranted(CardsGranted m)
+        {
+            var names = new List<string>();
+            var got = new List<byte>();
+            foreach (var id in m.cards)
+            {
+                if (!Effects.AddCard(m.actor, id, live: true)) continue;
+                got.Add(id);
+                names.Add(Deck.NameOf(id));
+            }
+            if (got.Count == 0) return;
+            if (m.actor == NetSend.LocalActor)
+            {
+                Hud.Toast("Bonus: " + string.Join(", ", names));
+                CardPicker.Ensure().ShowReveal(got.ToArray());
+            }
+            else Hud.Toast(NetSend.NameOf(m.actor) + " gained " + string.Join(", ", names));
         }
 
         public static void LocalPick(byte cardId)
