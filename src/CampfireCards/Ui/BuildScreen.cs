@@ -135,25 +135,24 @@ namespace CampfireCards.Ui
                 bool forTeam = m.Target == ModTarget.team;
                 if (m.When == Generated.Condition.always && !forTeam) continue;
                 var ch = ChannelTable.Defs[(int)m.Channel];
-                string value = m.Op == ModOp.set ? "set to " + BuildStats.Format(s.ModValue(def, i), ch.IsMul, UnitOf(m.Channel))
-                                                 : BuildStats.Format(s.ModValue(def, i), ch.IsMul, UnitOf(m.Channel));
-                string when;
+                string effect = BuildStats.Say(s.ModValue(def, i), ch.IsMul, BuildStats.UnitOf(m.Channel), StatWords.Of(m.Channel));
+                if (effect == null) continue;
+                string line;
                 bool active;
                 if (forTeam)
                 {
-                    when = "for teammates within " + s.Param(def, "radius", 6f).ToString("0.#") + " m";
+                    line = "Teammates within " + s.Param(def, "radius", 6f).ToString("0.#") + " m: " + LowerFirst(effect);
                     active = false;
                 }
                 else
                 {
                     int c = (int)m.When;
-                    when = "while " + (c < ConditionTable.Meaning.Length ? ConditionTable.Meaning[c] : m.When.ToString());
+                    line = effect + " while " + (c < ConditionTable.Shown.Length ? ConditionTable.Shown[c] : m.When.ToString());
                     active = IsActive(def.Id, i);
                 }
-                string state = forTeam ? "" : active ? "  ACTIVE" : "  inactive";
-                var color = forTeam ? Ui_BuildScreen.InactiveColor : active ? Ui_BuildScreen.ActiveColor : Ui_BuildScreen.InactiveColor;
-                sb.Append("<size=88%><color=#").Append(Hex(color)).Append(">   · ").Append(ch.Label).Append(' ').Append(value)
-                  .Append(' ').Append(when).Append(state).Append("</color></size>\n");
+                string state = forTeam ? "" : active ? "  (on now)" : "  (off now)";
+                var color = active ? Ui_BuildScreen.ActiveColor : Ui_BuildScreen.InactiveColor;
+                sb.Append("<size=88%><color=#").Append(Hex(color)).Append(">   · ").Append(line).Append(state).Append("</color></size>\n");
             }
         }
 
@@ -163,7 +162,10 @@ namespace CampfireCards.Ui
             return false;
         }
 
-        private static string UnitOf(Channel c) => c == Channel.maxStamina ? "stamina" : c == Channel.regenDelay ? "seconds" : null;
+        private static string LowerFirst(string t) => string.IsNullOrEmpty(t) ? t : char.ToLowerInvariant(t[0]) + t.Substring(1);
+
+        /// <summary>Green when the value helps the scout, red when it hurts (stats.json better).</summary>
+        private static string GoodOrBad(StatLine l, float v) => Hex(BuildStats.Helps(v, l.IsMul, l.Words) ? Ui_CardEffects.GoodColor : Ui_CardEffects.BadColor);
 
         // ------------------------------------------------------------------ right: combined effects and auras
         private static string StatsText()
@@ -173,16 +175,19 @@ namespace CampfireCards.Ui
             Effects.FoldAlways(_always);
             var lines = BuildStats.Lines(Effects.Local, _always);
             if (lines.Count == 0) sb.Append("<color=#").Append(Hex(Ui_BuildScreen.InactiveColor)).Append(">Nothing changed right now.</color>\n");
+            string grey = Hex(Ui_BuildScreen.InactiveColor);
             foreach (var l in lines)
             {
-                sb.Append(l.Label).Append(": ");
-                if (l.Conditional)
+                string now = BuildStats.Say(l, l.Now), always = BuildStats.Say(l, l.Always);
+                if (!l.Conditional)
+                    sb.Append("<color=#").Append(GoodOrBad(l, l.Now)).Append('>').Append(now).Append(".</color>\n");
+                else if (now == null)
+                    sb.Append("<color=#").Append(grey).Append('>').Append(always).Append(". <size=80%>(not right now)</size></color>\n");
+                else
                 {
-                    sb.Append("<color=#").Append(Hex(Ui_BuildScreen.ActiveColor)).Append('>').Append(BuildStats.Format(l.Now, l.IsMul, l.Unit)).Append(" now</color>")
-                      .Append("<color=#").Append(Hex(Ui_BuildScreen.InactiveColor)).Append(">  (always ").Append(BuildStats.Format(l.Always, l.IsMul, l.Unit)).Append(")</color>");
+                    sb.Append("<color=#").Append(GoodOrBad(l, l.Now)).Append('>').Append(now).Append(".</color> <size=80%><color=#").Append(grey).Append(">(right now)</color></size>\n");
+                    sb.Append("<size=80%><color=#").Append(grey).Append(">   Otherwise: ").Append(always != null ? LowerFirst(always) : "no change").Append(".</color></size>\n");
                 }
-                else sb.Append("<b>").Append(BuildStats.Format(l.Now, l.IsMul, l.Unit)).Append("</b>");
-                sb.Append('\n');
             }
 
             var auras = Auras();
@@ -208,8 +213,8 @@ namespace CampfireCards.Ui
                 list.Add("<color=#" + Hex(Ui_BuildScreen.ActiveColor) + ">" + Deck.NameOf(m.CardId) + "</color> (" + string.Join(", ", owners) + ")");
             }
             if (Effects.SharedBurdenOwner != int.MinValue && Effects.SharedBurdenOwner != me)
-                list.Add("<color=#" + Hex(Ui_BuildScreen.ActiveColor) + ">" + Deck.NameOfAbility("SharedBurden") + "</color> (" + NetSend.NameOf(Effects.SharedBurdenOwner) + "): Injury "
-                         + BuildStats.Format(Effects.SharedBurdenFactor, true, null));
+                list.Add("<color=#" + Hex(Ui_BuildScreen.ActiveColor) + ">" + Deck.NameOfAbility("SharedBurden") + "</color> (" + NetSend.NameOf(Effects.SharedBurdenOwner) + "): "
+                         + LowerFirst(BuildStats.Say(Effects.SharedBurdenFactor, true, null, StatWords.Of(Channel.allInjury)) ?? "no change"));
             return list;
         }
     }

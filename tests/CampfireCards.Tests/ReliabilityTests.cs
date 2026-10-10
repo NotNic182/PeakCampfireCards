@@ -529,9 +529,9 @@ namespace CampfireCards.Tests
             yield return new object[] { "stamina-cost reduction cap", (Action<CardSettings>)(s => s.StaminaCostCap = 0.5f) };
             yield return new object[] { "max-stamina floor", (Action<CardSettings>)(s => s.MaxStaminaFloor = 0.4f) };
             yield return new object[] { "rarity weights", (Action<CardSettings>)(s => s.RarityWeights[4] = 1f) };
-            yield return new object[] { "cards: Sticky Fingers", (Action<CardSettings>)(s => s.ModValues[0][0] = 0.8f) };
+            yield return new object[] { "cards: Piton-Free Fingers", (Action<CardSettings>)(s => s.ModValues[0][0] = 0.8f) };
             yield return new object[] { "cards: Bing BOING", (Action<CardSettings>)(s => s.Params[4]["cooldown"] = 30f) };
-            yield return new object[] { "cards: Mountain Goat", (Action<CardSettings>)(s => s.Enabled[1] = false) };
+            yield return new object[] { "cards: Budget Scout Cannon", (Action<CardSettings>)(s => s.Enabled[1] = false) };
         }
 
         [Theory]
@@ -637,6 +637,46 @@ namespace CampfireCards.Tests
             var lines = BuildStats.Lines(r, r);
             Assert.Equal("none", BuildStats.Format(lines.Single(l => l.Label == "Climbing stamina cost").Now, true, null));
             Assert.DoesNotContain(lines, l => l.Label == ChannelTable.Defs[(int)Channel.invSlots].Label);
+        }
+
+        [Fact]
+        public void CombinedEffectsReadLikeTheCards()
+        {
+            var s = new CardSettings();
+            var r = Fold(s, ("WinterCoat", Always), ("LedgeDancer", Always), ("DeepLungs", Always), ("QuickRecovery", Always), ("RocketAnkles", Always));
+            var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
+            Assert.Equal("You get cold 50% slower", BuildStats.Say(lines["Cold build-up"], lines["Cold build-up"].Now));
+            Assert.Equal("You heat up 30% faster", BuildStats.Say(lines["Heat build-up"], lines["Heat build-up"].Now));
+            Assert.Equal("Grab walls from 20% farther away", BuildStats.Say(lines["Wall-grab reach"], lines["Wall-grab reach"].Now));
+            Assert.Equal("Your stamina bar is 25 longer", BuildStats.Say(lines["Max stamina"], lines["Max stamina"].Now));
+            Assert.Equal("Stamina starts coming back 0.3 seconds sooner", BuildStats.Say(lines["Stamina regen delay"], lines["Stamina regen delay"].Now));
+            Assert.Equal("Falls hurt 80% more", BuildStats.Say(lines["Fall Injury received"], lines["Fall Injury received"].Now));
+            Assert.True(BuildStats.Helps(lines["Cold build-up"].Now, true, lines["Cold build-up"].Words));
+            Assert.False(BuildStats.Helps(lines["Heat build-up"].Now, true, lines["Heat build-up"].Words));
+            Assert.False(BuildStats.Helps(lines["Fall Injury received"].Now, true, lines["Fall Injury received"].Words));
+        }
+
+        [Fact]
+        public void MythicZeroAndNeutralValuesHaveTheirOwnWords()
+        {
+            var s = new CardSettings();
+            var r = Fold(s, ("MountainsHeir", Always));
+            var line = BuildStats.Lines(r, r).Single(l => l.Label == "Climbing stamina cost");
+            Assert.Equal("Climbing never tires you", BuildStats.Say(line, line.Now));
+            Assert.Null(BuildStats.Say(1f, true, null, StatWords.Of(Channel.sprintSpeed)));
+            Assert.Equal("Stamina starts coming back 1 second later", BuildStats.Say(1f, false, "seconds", StatWords.Of(Channel.regenDelay)));
+        }
+
+        [Fact]
+        public void EveryChannelAndConditionHasInGameWords()
+        {
+            foreach (var d in ChannelTable.Defs)
+            {
+                Assert.Contains("{0}", d.More);
+                Assert.Contains("{0}", d.Less);
+            }
+            Assert.Equal(System.Enum.GetValues(typeof(Condition)).Length, ConditionTable.Shown.Length);
+            Assert.All(ConditionTable.Shown, w => Assert.False(string.IsNullOrWhiteSpace(w)));
         }
 
         [Fact]

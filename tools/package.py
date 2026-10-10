@@ -14,6 +14,8 @@ FILES = [
     (os.path.join(BIN, 'CampfireCards.dll'), 'CampfireCards.dll'),
     (os.path.join(ROOT, 'README.md'), 'README.md'),
     (os.path.join(ROOT, 'LICENSE'), 'LICENSE'),
+    (os.path.join(ROOT, 'assets', 'fonts', 'DarumadropOne-Regular.ttf'), 'DarumadropOne-Regular.ttf'),
+    (os.path.join(ROOT, 'assets', 'fonts', 'DarumadropOne-OFL.txt'), 'DarumadropOne-OFL.txt'),
 ]
 
 

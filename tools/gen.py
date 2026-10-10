@@ -34,21 +34,24 @@ def gen_stats(stats, conditions):
     lines.append('    public enum Channel : byte { %s }' % ', '.join(r['id'] for r in rows))
     lines.append('    public enum Condition : byte { %s }' % ', '.join(r['id'] for r in conditions['rows']))
     lines.append('    public enum CapGroup : byte { none, staminaCost, maxStamina }')
-    lines.append('    public struct ChannelDef { public Channel Id; public string Label; public bool IsMul; public CapGroup Cap; public bool HigherIsBetter; }')
+    lines.append('    public struct ChannelDef { public Channel Id; public string Label; public bool IsMul; public CapGroup Cap; public bool HigherIsBetter; public string More; public string Less; public string Never; }')
     lines.append('    public static class ChannelTable')
     lines.append('    {')
     lines.append('        public const int Count = %d;' % len(rows))
     lines.append('        public static readonly ChannelDef[] Defs = new ChannelDef[]')
     lines.append('        {')
     for r in rows:
-        lines.append('            new ChannelDef { Id = Channel.%s, Label = %s, IsMul = %s, Cap = CapGroup.%s, HigherIsBetter = %s },' % (
-            r['id'], cs_str(r['label']), 'true' if r['op'] == 'mul' else 'false', r['capGroup'], 'true' if r['better'] == 'higher' else 'false'))
+        lines.append('            new ChannelDef { Id = Channel.%s, Label = %s, IsMul = %s, Cap = CapGroup.%s, HigherIsBetter = %s, More = %s, Less = %s, Never = %s },' % (
+            r['id'], cs_str(r['label']), 'true' if r['op'] == 'mul' else 'false', r['capGroup'], 'true' if r['better'] == 'higher' else 'false',
+            cs_str(r['more']), cs_str(r['less']), cs_str(r.get('never', ''))))
     lines.append('        };')
     lines.append('    }')
     lines.append('    public static class ConditionTable')
     lines.append('    {')
     lines.append('        /// <summary>conditions.json meaning, indexed by Condition.</summary>')
     lines.append('        public static readonly string[] Meaning = new string[] { %s };' % ', '.join(cs_str(r['meaning']) for r in conditions['rows']))
+    lines.append('        /// <summary>conditions.json shown: the in-game wording after "while", indexed by Condition.</summary>')
+    lines.append('        public static readonly string[] Shown = new string[] { %s };' % ', '.join(cs_str(r['shown']) for r in conditions['rows']))
     lines.append('    }')
     lines.append('}')
     return '\n'.join(lines) + '\n'
@@ -279,6 +282,8 @@ def gen_ui(ui):
     rr = ui['canvas']['referenceResolution']
     lines.append('        public static readonly Vector2 ReferenceResolution = new Vector2(%sf, %sf);' % (rr[0], rr[1]))
     lines.append('        public const int SortingOrder = %d;' % ui['canvas']['sortingOrder'])
+    lines.append('        /// <summary>The UI font file, next to the DLL (assets/fonts in the repo).</summary>')
+    lines.append('        public const string FontFile = %s;' % cs_str(ui['canvas']['font']))
     lines.append('    }')
     lines.append('')
     for r in ui['rows']:
