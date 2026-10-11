@@ -33,12 +33,12 @@ The 60-second pick default, unlimited-time option (`PickTimeoutSeconds = 0`) and
 | To The Bone | Cold reduction while climbing a cold-emitting wall; ordinary warming takes 10% longer. Medical cleanses remain exact |
 | Longer teammate pull | Uses 10 normal stamina units once when a valid pull starts during one continuous reach; other cost cards can scale it |
 | Full extra stamina on revival | Grants 100 yellow stamina to each scout on the first detected feeding revival per biome; existing Book of Bones/Scout Effigy detection limitation remains |
-| Human Carry-On | Default interpretation: a normally paused carried timer drains at **15% of the normal 60-second rate**. If native rules already advance it while carried, that progress is 15% faster. Carrier-side weight reduction stays 35% |
+| Human Carry-On | Approved behavior: a normally paused carried timer drains at **15% of the normal 60-second rate**. If native rules already advance it while carried, that progress is 15% faster. Carrier-side weight reduction stays 35% |
 | Other numerical edits | Added penalties, adjusted fall/curse/status/stamina values and submitted names/descriptions; IDs, rarities and deck size stay stable |
 
 “Flying” uses the native mushroom **Low Gravity** effect. It provides floating; unrestricted flight would need separate movement rules. “Burn/freeze” refers to native Hot/Cold status buildup. Maximum stamina shrinking by 15% means 15 fewer clean bar units; other bonuses still add, and the existing normal-card floor still applies.
 
-Human Carry-On's timer interpretation uses the gentler default because carrying normally pauses the timer. An optional clarification offered the harsher alternative of removing the pause and draining at 115% of normal. In this implementation `carriedDeathRate = 1.15` means 15% of normal drain during the pause, or 15% faster native progression when it is already active.
+You confirmed Human Carry-On's gentler penalty: drain at 15% of the normal death rate while carrying would otherwise pause the timer. In this implementation `carriedDeathRate = 1.15` means 15% of normal drain during the pause, or 15% faster native progression when it is already active.
 
 ## ROOTS Survivor: paired replacement pending
 
@@ -122,7 +122,7 @@ The table below is generated from the preserved review data. “Implemented” d
 | 40 | Clown Luggage Special | Implemented — candidate | Approved pool: +15% climbing cost, +15% sprinting cost, +20% Injury, or +20% Hunger buildup. One selected penalty is kept in state sync and shown in Current Build. The former pocket lock is removed. |
 | 41 | Rule Zero | Implemented — candidate | Submitted names/text and numerical effects applied; other mechanics unchanged. |
 | 42 | First Aid Badge | Implemented — candidate | Submitted names/text and numerical effects applied; other mechanics unchanged. |
-| 43 | Human Carry-On | Implemented — candidate | Vanilla carrying normally pauses the death timer. Default interpretation is the gentler 15% of a normal 60-second timer while paused, or 15% faster if native rules already drain it (e.g. high Spores). Victim owner reads carrier cards. Optional clarification offered a harsher 115% normal drain alternative. |
+| 43 | Human Carry-On | Implemented — candidate | User confirmed the gentler penalty: 15% of a normal 60-second timer while carrying would otherwise pause it. If native rules already drain the timer (e.g. high Spores), their progress remains 15% faster. Victim owner reads carrier cards. |
 | 44 | Happy Camper Huddle | Implemented — candidate | Alone means no living teammate within 6 m; native huddle warming/range bonus is unchanged. |
 | 45 | Otto-Matic Clutch | Implemented — candidate | Grants 100 yellow stamina to each scout on the first detected teammate revival per biome. Existing feeding revive detection remains; Book of Bones and Scout Effigy are not covered. |
 | 46 | You're alright, you're alright | Implemented — candidate | Spend 10 normal stamina units once when a valid teammate pull starts during a continuous reach, rather than every frame. Other stamina-cost cards can scale that cost. |
