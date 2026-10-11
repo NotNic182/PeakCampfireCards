@@ -66,10 +66,10 @@ namespace CampfireCards.Abilities
             if (Active == this) Active = null;
         }
 
-        public override string Status(Character me)
+        public override AbilityStatus Status(Character me)
         {
             Ensure();
-            return _cd.Ready(Now) ? Card.Name + ": ready" : $"{Card.Name}: {Mathf.CeilToInt(_cd.Remaining(Now))}s";
+            return _cd.Ready(Now) ? AbilityStatus.Ok(Line(null, Ui_AbilityBar.Ready)) : AbilityStatus.Wait(Line(null, Mathf.CeilToInt(_cd.Remaining(Now)) + "s"));
         }
     }
 
@@ -104,6 +104,6 @@ namespace CampfireCards.Abilities
 
         public override bool ConditionFlag(Condition c) => c == Condition.momentumActive && _m.Active;
 
-        public override string Status(Character me) => _m.Active ? Card.Name + ": boosting" : null;
+        public override AbilityStatus Status(Character me) => _m.Active ? AbilityStatus.Ok(Card.Name + ": boosting") : AbilityStatus.None;
     }
 }

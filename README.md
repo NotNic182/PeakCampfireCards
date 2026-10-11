@@ -5,8 +5,8 @@ three cards and keeps one. Cards last for the whole run and change how you climb
 About half of the cards have a catch. The deck has 64 cards in five rarities.
 
 By default everyone chooses at the same time, so nobody waits for three other players. The **last climber to reach
-the fire still comes first**: they are dealt first (first claim on a Mythic) and head the pick order shown at the top
-of the screen. With `PickMode = Turns` the last climber picks first and the others see "X is picking a card..." while
+the fire still comes first**: they are dealt first (first claim on a Mythic) and head the deal order shown at the top
+of the screen. With `PickMode = Turns` the last climber picks first and the others see "X is picking a card" while
 they choose.
 
 ## You need
@@ -42,9 +42,25 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
 | N | Budget Checkpoint Flag: place your anchor on flat ground (once per biome) |
 | J | Current Build: every card you own, its benefit and drawback, which conditional effects are active right now, charges and cooldowns, and the combined result (sprint speed, jump height, stamina costs, regeneration, maximum stamina, Injury, item weight and more) |
 
+**With a controller**, move between offered cards with the D-pad or stick and confirm to take one. Each key above also
+gets a controller button: by default the first of D-pad up, down, left, right, View/Select or a stick click that PEAK
+itself does not use. The ability bar and the hints name the button while you play on a controller, and the log says
+which buttons were chosen. Set them yourself under `Keys` (`BuildScreenGamepad` and so on, for example
+`<Gamepad>/dpad/left`, or `none`).
+
+After you take a card, it stays raised and the others dim until the host confirms the pick. If no answer comes within
+5 seconds, you can choose again.
+
+When your build is longer than the Current Build screen, it is split into pages: press the key again for the next
+page; after the last page it closes.
+
+**Screen size.** The card UI fits any resolution and aspect ratio, from a Steam Deck to 32:9. `General.UiScale` sets its
+size: `0` (default) is automatic and a little larger on screens 900 pixels tall or less; `0.75` to `1.5` sets it
+yourself (1 = the size at 1080p).
+
 All keys can be changed in the config. Cards with charges or cooldowns show their state at the bottom right. On
-the Current Build screen, a value that depends on a condition or a teammate's aura shows what applies right now and,
-next to it, the value that always applies.
+the Current Build screen, a value that depends on a condition or a teammate's aura is marked "on now" or "off now":
+it shows what applies now and, next to it, the value that always applies.
 
 ## The cards
 

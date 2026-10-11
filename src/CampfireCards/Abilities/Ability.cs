@@ -32,10 +32,44 @@ namespace CampfireCards.Abilities
         public virtual bool TryRevive(Character me, int incapEvent) => false;
         /// <summary>Manual activation (ability key). Return true if it did something.</summary>
         public virtual bool Activate(Character me) => false;
-        /// <summary>Line for the ability bar, or null when the card has nothing to show.</summary>
-        public virtual string Status(Character me) => null;
+        /// <summary>Line for the ability bar and whether it reads as ready; AbilityStatus.None when there is nothing to show.</summary>
+        public virtual AbilityStatus Status(Character me) => AbilityStatus.None;
         public virtual bool IsManual => false;
         public virtual bool ConditionFlag(Condition c) => false;
+
+        /// <summary>
+        /// The ability bar line for a once-per-biome charge (ui.json AbilityBar): "Name: ready" or "Name: used this biome",
+        /// with the key in brackets when the card is pressed. ready overrides the ready word ("place anchor").
+        /// </summary>
+        protected AbilityStatus BiomeCharge(bool available, string key = null, string ready = null) =>
+            available ? AbilityStatus.Ok(Line(key, ready ?? Ui_AbilityBar.Ready)) : AbilityStatus.Wait(Line(key, Ui_AbilityBar.UsedThisBiome));
+
+        /// <summary>"Name: state", or "Name [key]: state".</summary>
+        protected string Line(string key, string state) =>
+            key == null ? string.Format(Ui_AbilityBar.StatusTemplate, Card.Name, state) : string.Format(Ui_AbilityBar.KeyedTemplate, Card.Name, key, state);
+
+        /// <summary>The toast for pressing a card that has no charge left this biome.</summary>
+        protected string AlreadyUsedThisBiome => string.Format(Ui_AbilityBar.AlreadyUsedThisBiome, Card.Name);
+
+        /// <summary>A status or stamina amount as players read it (0.25 -> "25", 0.075 -> "7.5").</summary>
+        public static string Points(float v) => (v * 100f).ToString("0.#");
+
+        /// <summary>A status by the name players know it by (the game's Hot status is "Heat").</summary>
+        public static string StatusName(CharacterAfflictions.STATUSTYPE t) => t == CharacterAfflictions.STATUSTYPE.Hot ? "Heat" : t.ToString();
+    }
+
+    /// <summary>An ability bar line and its state: Ready shows green, waiting (cooldown, used, placed) shows grey.</summary>
+    public readonly struct AbilityStatus
+    {
+        public readonly string Text;
+        public readonly bool Ready;
+
+        public AbilityStatus(string text, bool ready) { Text = text; Ready = ready; }
+
+        public bool IsEmpty => string.IsNullOrEmpty(Text);
+        public static AbilityStatus None => default;
+        public static AbilityStatus Ok(string text) => new AbilityStatus(text, true);
+        public static AbilityStatus Wait(string text) => new AbilityStatus(text, false);
     }
 
     public struct FoodEvent

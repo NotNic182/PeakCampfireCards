@@ -31,6 +31,7 @@ namespace CampfireCards
 
         public static ConfigEntry<bool> SoundsEnabled;
         public static ConfigEntry<bool> CustomFont;
+        public static ConfigEntry<float> UiScale;
         public static ConfigEntry<float> PickTimeoutSeconds;
         public static ConfigEntry<PickMode> PickModeSetting;
         public static ConfigEntry<bool> VerboseLog;
@@ -39,13 +40,17 @@ namespace CampfireCards
         public static ConfigEntry<Key> BloodBatteryKey;
         public static ConfigEntry<Key> SafetyNetKey;
         public static ConfigEntry<Key> BuildScreenKey;
+        public static ConfigEntry<string> BloodBatteryPad;
+        public static ConfigEntry<string> SafetyNetPad;
+        public static ConfigEntry<string> BuildScreenPad;
 
         /// <summary>Cards that ship disabled because part of their effect cannot be built on PEAK's current code (see README).</summary>
         private static readonly HashSet<string> DisabledByDefault = new HashSet<string> { "PackRat" };
 
-        public static string BloodBatteryKeyLabel => BloodBatteryKey != null ? BloodBatteryKey.Value.ToString() : "?";
-        public static string SafetyNetKeyLabel => SafetyNetKey != null ? SafetyNetKey.Value.ToString() : "?";
-        public static string BuildScreenKeyLabel => BuildScreenKey != null ? BuildScreenKey.Value.ToString() : "?";
+        /// <summary>The key, or the controller button while a controller is in use (Controls).</summary>
+        public static string BloodBatteryKeyLabel => Controls.Label(Controls.Act.BloodBattery);
+        public static string SafetyNetKeyLabel => Controls.Label(Controls.Act.SafetyNet);
+        public static string BuildScreenKeyLabel => Controls.Label(Controls.Act.BuildScreen);
 
         private Harmony _harmony;
 
@@ -58,6 +63,10 @@ namespace CampfireCards
             SoundsEnabled = Config.Bind("General", "Sounds", true, "Play the card sounds.");
             CustomFont = Config.Bind("General", "CustomFont", true,
                 "Show all Campfire Cards text in the bundled Darumadrop One font. Off: the game's own font. Takes effect on the next launch.");
+            UiScale = Config.Bind("General", "UiScale", 0f,
+                new ConfigDescription("Size of all Campfire Cards UI. 0 = automatic (a little larger on small screens such as a Steam Deck); " +
+                    "otherwise " + UiTiming.MinUiScale + " to " + UiTiming.MaxUiScale + ", where 1 is the size at 1080p. Applies right away.",
+                    new AcceptableValueRange<float>(0f, UiTiming.MaxUiScale)));
             PickTimeoutSeconds = Config.Bind("General", "PickTimeoutSeconds", UiTiming.PickTimeoutSeconds,
                 "Safety timer: if a player has not chosen after this many seconds, a random card of their offer is taken (minimum 5). The host's value is used for everyone.");
             PickModeSetting = Config.Bind("General", "PickMode", PickMode.Simultaneous,
@@ -66,6 +75,11 @@ namespace CampfireCards
             BloodBatteryKey = Config.Bind("Keys", "BloodBattery", Key.B, "Activates Bootleg Scoutmaster Bugle (when you own it).");
             SafetyNetKey = Config.Bind("Keys", "SafetyNet", Key.N, "Places the Budget Checkpoint Flag anchor (when you own it).");
             BuildScreenKey = Config.Bind("Keys", "BuildScreen", Key.J, "Opens and closes the Current Build screen (your cards and their combined effects).");
+            const string padNote = " auto: the first of D-pad up, down, left, right, View/Select, left or right stick click that no PEAK action uses. " +
+                                   "none: no controller button. Or an Input System path, for example <Gamepad>/dpad/left.";
+            BloodBatteryPad = Config.Bind("Keys", "BloodBatteryGamepad", Controls.Auto, "Controller button for Bootleg Scoutmaster Bugle." + padNote);
+            SafetyNetPad = Config.Bind("Keys", "SafetyNetGamepad", Controls.Auto, "Controller button for the Budget Checkpoint Flag anchor." + padNote);
+            BuildScreenPad = Config.Bind("Keys", "BuildScreenGamepad", Controls.Auto, "Controller button for the Current Build screen." + padNote);
             VerboseLog = Config.Bind("Debug", "VerboseLog", false, "Log every card event.");
             DevKeys = Config.Bind("Debug", "DevKeys", false,
                 "Testing keys: F9 lights the current campfire, F10 warps you next to it, F11 shows a sample offer, F8 (host) grants the cards listed in GrantCard, F7 logs the active card effects.");

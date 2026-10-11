@@ -289,6 +289,9 @@ def main():
             problem('ui %s: soundOn %s is not a sounds.json id' % (r['id'], r['soundOn']))
         if ('Ui_%s' % r['id']) not in src:
             problem('ui %s: Ui_%s is never used in src' % (r['id'], r['id']))
+        for k, v in r['consts'].items():
+            if isinstance(v, str) and v.startswith('@') and v[1:] not in ui.get('palette', {}):
+                problem('ui %s.%s: colour role %s is not in the palette' % (r['id'], k, v))
 
     # 9. systems -> src classes
     sys_ids = {r['id'] for r in systems['rows']}

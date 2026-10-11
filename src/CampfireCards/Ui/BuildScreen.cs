@@ -17,21 +17,34 @@ namespace CampfireCards.Ui
     /// or not right now) and charge or cooldown; the combined stats from the live Effects fold, next to the always-on
     /// value whenever a condition or an aura changes it; and the teammates' auras affecting you. A non-blocking overlay
     /// toggled with the BuildScreen key; it never computes a modifier itself (Effects and Core.BuildStats do).
+    /// It fits the screen (at most ui.json Size, safeMargin from every edge); what does not fit is split into pages at
+    /// full size, and the key steps through them (scrolling would need the wheel or a stick, which the game uses).
     /// </summary>
     public static class BuildScreen
     {
         private static Image _panel;
-        private static TextMeshProUGUI _cards, _stats, _hint;
+        private static TextMeshProUGUI _title, _cards, _stats, _hint;
         private static float _nextRefresh;
         private static readonly ModResult _always = new ModResult();
+        /// <summary>The page shown (1-based) and how many the longer column needs right now.</summary>
+        private static int _page = 1, _pages = 1;
 
         public static bool IsOpen => _panel != null && _panel.gameObject.activeSelf;
 
+        /// <summary>The key: open on page 1, then the next page, then close after the last.</summary>
         public static void Toggle(Character me)
         {
-            if (IsOpen) { Hide(); return; }
+            if (IsOpen)
+            {
+                if (_page >= _pages) { Hide(); return; }
+                _page++;
+                Refresh(me);
+                return;
+            }
             if (!RunState.OnIsland || me == null) return;
             Ensure();
+            Layout();
+            _page = 1;
             _panel.gameObject.SetActive(true);
             Refresh(me);
         }
@@ -57,68 +70,110 @@ namespace CampfireCards.Ui
             _panel.type = Image.Type.Sliced;
             UiKit.Place(_panel.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
 
-            var size = Ui_BuildScreen.Size;
-            var title = UiKit.Text(_panel.transform, "Title", new Vector2(size.x - 60f, 50f), Ui_BuildScreen.TitleFontSize, Ui_BuildScreen.HeaderColor, TextAlignmentOptions.Center, FontStyles.Bold);
-            UiKit.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -18f));
-            title.text = Ui_BuildScreen.Title;
+            _title = UiKit.Text(_panel.transform, "Title", new Vector2(100f, Ui_BuildScreen.TitleHeight), Ui_BuildScreen.TitleFontSize, Ui_BuildScreen.HeaderColor, TextAlignmentOptions.Center, FontStyles.Bold);
+            UiKit.Place(_title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, Ui_BuildScreen.TitleY));
+            _title.text = Ui_BuildScreen.Title;
 
-            float top = 84f, bottom = 56f, gap = 40f;
-            float leftW = (size.x - 60f - gap) * 0.56f, rightW = size.x - 60f - gap - leftW, h = size.y - top - bottom;
-            _cards = Column("Cards", new Vector2(leftW, h), new Vector2(30f, -top));
-            _stats = Column("Stats", new Vector2(rightW, h), new Vector2(30f + leftW + gap, -top));
+            _cards = Column("Cards");
+            _stats = Column("Stats");
 
-            _hint = UiKit.Text(_panel.transform, "Hint", new Vector2(size.x - 60f, 36f), Ui_BuildScreen.MinFontSize + 3f, Ui_BuildScreen.InactiveColor, TextAlignmentOptions.Center, FontStyles.Italic);
-            UiKit.Place(_hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 14f));
+            _hint = UiKit.Text(_panel.transform, "Hint", new Vector2(100f, Ui_BuildScreen.HintHeight), Ui_BuildScreen.HintFontSize, Ui_BuildScreen.InactiveColor, TextAlignmentOptions.Center, FontStyles.Italic);
+            UiKit.AutoSize(_hint, Ui_BuildScreen.MinFontSize);
+            UiKit.Place(_hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, Ui_BuildScreen.HintY));
             _panel.gameObject.SetActive(false);
         }
 
-        private static TextMeshProUGUI Column(string name, Vector2 size, Vector2 topLeft)
+        /// <summary>Size the panel and its columns for the screen as it is now (resolution and UI scale can change between openings).</summary>
+        private static void Layout()
         {
-            var t = UiKit.Text(_panel.transform, name, size, Ui_BuildScreen.FontSize, Color.white, TextAlignmentOptions.TopLeft);
-            UiKit.Place(t.rectTransform, new Vector2(0f, 1f), topLeft);
-            t.enableAutoSizing = true;
-            t.fontSizeMin = Ui_BuildScreen.MinFontSize;
-            t.fontSizeMax = Ui_BuildScreen.FontSize;
+            var canvas = UiKit.CanvasSize;
+            var size = new Vector2(Mathf.Min(Ui_BuildScreen.Size.x, canvas.x - 2f * UiTiming.SafeMargin),
+                                   Mathf.Min(Ui_BuildScreen.Size.y, canvas.y - 2f * UiTiming.SafeMargin));
+            _panel.rectTransform.sizeDelta = size;
+            float pad = Ui_BuildScreen.PadX, inner = size.x - 2f * pad;
+            _title.rectTransform.sizeDelta = new Vector2(inner, Ui_BuildScreen.TitleHeight);
+            _hint.rectTransform.sizeDelta = new Vector2(inner, Ui_BuildScreen.HintHeight);
+
+            float top = Ui_BuildScreen.ColumnsTop, gap = Ui_BuildScreen.ColumnGap;
+            float leftW = (inner - gap) * Ui_BuildScreen.LeftShare, rightW = inner - gap - leftW, h = size.y - top - Ui_BuildScreen.ColumnsBottom;
+            _cards.rectTransform.sizeDelta = new Vector2(leftW, h);
+            _cards.rectTransform.anchoredPosition = new Vector2(pad, -top);
+            _stats.rectTransform.sizeDelta = new Vector2(rightW, h);
+            _stats.rectTransform.anchoredPosition = new Vector2(pad + leftW + gap, -top);
+        }
+
+        /// <summary>A text column at full size; what does not fit goes onto further pages.</summary>
+        private static TextMeshProUGUI Column(string name)
+        {
+            var t = UiKit.Text(_panel.transform, name, new Vector2(100f, 100f), Ui_BuildScreen.FontSize, UiPalette.Text, TextAlignmentOptions.TopLeft);
+            UiKit.Place(t.rectTransform, new Vector2(0f, 1f), Vector2.zero);
+            UiKit.LineHeight(t, Ui_BuildScreen.LineHeight);
+            t.overflowMode = TextOverflowModes.Page;
             return t;
         }
 
         private static void Refresh(Character me)
         {
-            _nextRefresh = Time.unscaledTime + 0.25f;
+            _nextRefresh = Time.unscaledTime + UiTiming.BuildRefreshSeconds;
             _cards.text = CardsText(me);
             _stats.text = StatsText();
-            _hint.text = string.Format(Ui_BuildScreen.Hint, Plugin.BuildScreenKeyLabel);
+
+            // pages: the longer column sets the count; a shorter one stays on its last page
+            _cards.ForceMeshUpdate(true);
+            _stats.ForceMeshUpdate(true);
+            int cardPages = Mathf.Max(1, _cards.textInfo.pageCount), statPages = Mathf.Max(1, _stats.textInfo.pageCount);
+            _pages = Mathf.Max(cardPages, statPages);
+            _page = Mathf.Clamp(_page, 1, _pages);
+            _cards.pageToDisplay = Mathf.Min(_page, cardPages);
+            _stats.pageToDisplay = Mathf.Min(_page, statPages);
+
+            string key = Plugin.BuildScreenKeyLabel;
+            string action = _pages <= 1 ? string.Format(Ui_BuildScreen.CloseHint, key)
+                : string.Format(_page < _pages ? Ui_BuildScreen.NextPageHint : Ui_BuildScreen.LastPageHint, key, _page, _pages);
+            _hint.text = Ui_BuildScreen.Hint + " " + action;
         }
 
-        private static string Hex(Color c) => UiKit.Hex(c);
+        /// <summary>Opening size tags for the build screen's type roles (ui.json BuildScreen); each is closed with &lt;/size&gt;.</summary>
+        private static readonly string Header = "<size=" + Ui_BuildScreen.HeaderSizePercent.ToString("0") + "%>";
+        private static readonly string Meta = "<size=" + Ui_BuildScreen.MetaSizePercent.ToString("0") + "%>";
+        private static readonly string Detail = "<size=" + Ui_BuildScreen.DetailSizePercent.ToString("0") + "%>";
+        /// <summary>A detail line under a card or a stat: wrapped lines hang under its marker, not back at the margin.</summary>
+        private static readonly string Indent = "<indent=" + Ui_BuildScreen.DetailIndent.ToString("0") + ">";
+        private const string EndIndent = "</indent>";
+
+        /// <summary>A column header, the same step above the body in both columns.</summary>
+        private static void AppendHeader(StringBuilder sb, string text) =>
+            sb.Append(Header).Append("<b>").Append(UiKit.ColorTag(Ui_BuildScreen.HeaderColor)).Append(text).Append("</color></b></size>\n");
 
         // ------------------------------------------------------------------ left: the cards
         private static string CardsText(Character me)
         {
             var mine = Effects.CardsOf(NetSend.LocalActor);
-            if (mine.Count == 0) return "<color=#" + Hex(Ui_BuildScreen.InactiveColor) + ">No cards yet. Pick one at the next campfire.</color>";
-            var abilities = LocalCards.All.ToList();
             var sb = new StringBuilder();
+            AppendHeader(sb, Ui_MyCardsHud.Header);
+            if (mine.Count == 0) return sb.Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor)).Append(Ui_BuildScreen.NoCards).Append("</color>").ToString();
+            var abilities = LocalCards.All.ToList();
             foreach (var id in mine)
             {
                 CardDef def;
                 if (!Deck.TryGet(id, out def)) continue;
-                string rarity = Hex(Deck.RarityColor(def.Rarity));
-                sb.Append("<color=#").Append(rarity).Append(">■ <b>").Append(def.Name).Append("</b></color>  <size=75%><color=#")
-                  .Append(rarity).Append('>').Append(Deck.RarityName(def.Rarity)).Append("</color></size>\n");
-                sb.Append("<color=#").Append(Hex(Ui_CardEffects.GoodColor)).Append(">   + ").Append(def.Positive).Append("</color>\n");
+                Color rarity = Deck.RarityColor(def.Rarity);
+                sb.Append(UiKit.ColorTag(rarity)).Append("■ <b>").Append(def.Name).Append("</b></color>  ").Append(Meta)
+                  .Append(UiKit.ColorTag(rarity)).Append("<cspace=0.08em><uppercase>").Append(Deck.RarityName(def.Rarity))
+                  .Append("</uppercase></cspace></color></size>\n");
+                sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(Indent).Append("+ ").Append(def.Positive).Append(EndIndent).Append("</color>\n");
                 if (string.IsNullOrEmpty(def.Negative))
-                    sb.Append("<color=#").Append(Hex(Ui_CardFlavor.Color)).Append(">   ").Append(Ui_CardEffects.NoDrawback).Append("</color>\n");
+                    sb.Append(UiKit.ColorTag(Ui_CardFlavor.Color)).Append(Indent).Append(Ui_CardEffects.NoDrawback).Append(EndIndent).Append("</color>\n");
                 else
-                    sb.Append("<color=#").Append(Hex(Ui_CardEffects.BadColor)).Append(">   - ").Append(def.Negative).Append("</color>\n");
+                    sb.Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent).Append("- ").Append(def.Negative).Append(EndIndent).Append("</color>\n");
                 AppendConditional(sb, def);
                 foreach (var a in abilities)
                 {
                     if (a.Card == null || a.Card.Id != def.Id) continue;
-                    string status = null;
-                    try { status = a.Status(me); } catch { }
-                    if (!string.IsNullOrEmpty(status))
-                        sb.Append("<color=#").Append(Hex(Ui_BuildScreen.HeaderColor)).Append(">   ").Append(status).Append("</color>\n");
+                    AbilityStatus status;
+                    try { status = a.Status(me); } catch { status = AbilityStatus.None; }
+                    if (!status.IsEmpty)
+                        sb.Append(UiKit.ColorTag(Ui_BuildScreen.HeaderColor)).Append(Indent).Append(status.Text).Append(EndIndent).Append("</color>\n");
                 }
                 sb.Append('\n');
             }
@@ -141,7 +196,7 @@ namespace CampfireCards.Ui
                 bool active;
                 if (forTeam)
                 {
-                    line = "Teammates within " + s.Param(def, "radius", 6f).ToString("0.#") + " m: " + LowerFirst(effect);
+                    line = string.Format(Ui_BuildScreen.TeammatesTemplate, s.Param(def, "radius", 6f).ToString("0.#"), LowerFirst(effect));
                     active = false;
                 }
                 else
@@ -150,9 +205,9 @@ namespace CampfireCards.Ui
                     line = effect + " while " + (c < ConditionTable.Shown.Length ? ConditionTable.Shown[c] : m.When.ToString());
                     active = IsActive(def.Id, i);
                 }
-                string state = forTeam ? "" : active ? "  (on now)" : "  (off now)";
+                string state = forTeam ? "" : "  " + (active ? Ui_BuildScreen.OnNow : Ui_BuildScreen.OffNow);
                 var color = active ? Ui_BuildScreen.ActiveColor : Ui_BuildScreen.InactiveColor;
-                sb.Append("<size=88%><color=#").Append(Hex(color)).Append(">   · ").Append(line).Append(state).Append("</color></size>\n");
+                sb.Append(Detail).Append(UiKit.ColorTag(color)).Append(Indent).Append("· ").Append(line).Append(state).Append(EndIndent).Append("</color></size>\n");
             }
         }
 
@@ -165,35 +220,39 @@ namespace CampfireCards.Ui
         private static string LowerFirst(string t) => string.IsNullOrEmpty(t) ? t : char.ToLowerInvariant(t[0]) + t.Substring(1);
 
         /// <summary>Green when the value helps the scout, red when it hurts (stats.json better).</summary>
-        private static string GoodOrBad(StatLine l, float v) => Hex(BuildStats.Helps(v, l.IsMul, l.Words) ? Ui_CardEffects.GoodColor : Ui_CardEffects.BadColor);
+        private static Color GoodOrBad(StatLine l, float v) => BuildStats.Helps(v, l.IsMul, l.Words) ? Ui_CardEffects.GoodColor : Ui_CardEffects.BadColor;
+
+        /// <summary>The same + / - marker the cards use, so help and harm never rest on green and red alone.</summary>
+        private static string Mark(StatLine l, float v) => BuildStats.Helps(v, l.IsMul, l.Words) ? Ui_CardEffects.GoodPrefix : Ui_CardEffects.BadPrefix;
 
         // ------------------------------------------------------------------ right: combined effects and auras
         private static string StatsText()
         {
             var sb = new StringBuilder();
-            sb.Append("<b><color=#").Append(Hex(Ui_BuildScreen.HeaderColor)).Append('>').Append(Ui_BuildScreen.StatsHeader).Append("</color></b>\n");
+            AppendHeader(sb, Ui_BuildScreen.StatsHeader);
             Effects.FoldAlways(_always);
             var lines = BuildStats.Lines(Effects.Local, _always);
-            if (lines.Count == 0) sb.Append("<color=#").Append(Hex(Ui_BuildScreen.InactiveColor)).Append(">Nothing changed right now.</color>\n");
-            string grey = Hex(Ui_BuildScreen.InactiveColor);
+            if (lines.Count == 0) sb.Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor)).Append(Ui_BuildScreen.NothingNow).Append("</color>\n");
+            Color grey = Ui_BuildScreen.InactiveColor;
             foreach (var l in lines)
             {
                 string now = BuildStats.Say(l, l.Now), always = BuildStats.Say(l, l.Always);
                 if (!l.Conditional)
-                    sb.Append("<color=#").Append(GoodOrBad(l, l.Now)).Append('>').Append(now).Append(".</color>\n");
+                    sb.Append(UiKit.ColorTag(GoodOrBad(l, l.Now))).Append(Mark(l, l.Now)).Append(now).Append(".</color>\n");
                 else if (now == null)
-                    sb.Append("<color=#").Append(grey).Append('>').Append(always).Append(". <size=80%>(not right now)</size></color>\n");
+                    sb.Append(UiKit.ColorTag(grey)).Append(Mark(l, l.Always)).Append(always).Append(". ").Append(Meta).Append(Ui_BuildScreen.OffNow).Append("</size></color>\n");
                 else
                 {
-                    sb.Append("<color=#").Append(GoodOrBad(l, l.Now)).Append('>').Append(now).Append(".</color> <size=80%><color=#").Append(grey).Append(">(right now)</color></size>\n");
-                    sb.Append("<size=80%><color=#").Append(grey).Append(">   Otherwise: ").Append(always != null ? LowerFirst(always) : "no change").Append(".</color></size>\n");
+                    sb.Append(UiKit.ColorTag(GoodOrBad(l, l.Now))).Append(Mark(l, l.Now)).Append(now).Append(".</color> ").Append(Meta).Append(UiKit.ColorTag(grey)).Append(Ui_BuildScreen.OnNow).Append("</color></size>\n");
+                    sb.Append(Meta).Append(UiKit.ColorTag(grey)).Append(Indent).Append(Ui_BuildScreen.Otherwise).Append(always != null ? LowerFirst(always) : Ui_BuildScreen.NoChange).Append('.').Append(EndIndent).Append("</color></size>\n");
                 }
             }
 
             var auras = Auras();
             if (auras.Count > 0)
             {
-                sb.Append("\n<b><color=#").Append(Hex(Ui_BuildScreen.HeaderColor)).Append('>').Append(Ui_BuildScreen.AurasHeader).Append("</color></b>\n");
+                sb.Append('\n');
+                AppendHeader(sb, Ui_BuildScreen.AurasHeader);
                 foreach (var a in auras) sb.Append(a).Append('\n');
             }
             return sb.ToString().TrimEnd();
@@ -210,11 +269,11 @@ namespace CampfireCards.Ui
             {
                 if (mine.Contains(m.CardId) || !seen.Add(m.CardId)) continue;
                 var owners = Effects.CardsByActor.Where(kv => kv.Key != me && kv.Value.Contains(m.CardId)).Select(kv => NetSend.NameOf(kv.Key));
-                list.Add("<color=#" + Hex(Ui_BuildScreen.ActiveColor) + ">" + Deck.NameOf(m.CardId) + "</color> (" + string.Join(", ", owners) + ")");
+                list.Add(UiKit.ColorTag(Ui_BuildScreen.ActiveColor) + Deck.NameOf(m.CardId) + "</color> (" + string.Join(", ", owners) + ")");
             }
             if (Effects.SharedBurdenOwner != int.MinValue && Effects.SharedBurdenOwner != me)
-                list.Add("<color=#" + Hex(Ui_BuildScreen.ActiveColor) + ">" + Deck.NameOfAbility("SharedBurden") + "</color> (" + NetSend.NameOf(Effects.SharedBurdenOwner) + "): "
-                         + LowerFirst(BuildStats.Say(Effects.SharedBurdenFactor, true, null, StatWords.Of(Channel.allInjury)) ?? "no change"));
+                list.Add(UiKit.ColorTag(Ui_BuildScreen.ActiveColor) + Deck.NameOfAbility("SharedBurden") + "</color> (" + NetSend.NameOf(Effects.SharedBurdenOwner) + "): "
+                         + LowerFirst(BuildStats.Say(Effects.SharedBurdenFactor, true, null, StatWords.Of(Channel.allInjury)) ?? Ui_BuildScreen.NoChange));
             return list;
         }
     }

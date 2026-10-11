@@ -11,10 +11,16 @@ The sheets in this folder are the source of truth. Code under `src/CampfireCards
 | `sounds.json` | one synthesised UI sound | `SoundTable.cs` |
 | `hooks.json` | one place the mod attaches to PEAK (Harmony patch or event) | `HarmonyHooks.cs` |
 | `net.json` | one Photon event the lobby exchanges | `NetEvents.cs` |
-| `ui.json` | one UI element | `UiLayout.cs` |
+| `ui.json` | one UI element (plus `canvas`, `timing` and a `palette` of colour roles that rows name as `"@role"`) | `UiLayout.cs` (`Ui_<id>`, `UiTiming`, `UiPalette`) |
 | `systems.json` | one C# class with one job | checked by preflight only |
 
 `tools/preflight.py` lays the sheets over each other: every cell must be filled; every modifier must name a real channel, a matching op, a known condition and target; every ability must have an `Ability_<name>` class; every channel and condition must be applied somewhere in the code; the deck must be 64 cards with the specified rarity counts, Mythics without drawbacks and team cards multiplayer-only. Build only when it prints `PREFLIGHT CLEAN`.
+
+## UI conventions
+- Every number, colour and player-facing string an overlay needs lives in `ui.json`: a row's `consts`, `timing`, `canvas` or `palette`. Code reads them from `Generated/UiLayout.cs`; a literal in `Ui/*.cs` is a missing sheet value.
+- Colours are roles, not swatches: `text`, `textSoft`, `muted`, `faint`, `good`, `bad`, `accent`, `callout`, `surface`, `surfaceStrong`, `backdrop`. The palette's `_note` says which roles pass contrast on which surfaces.
+- Rich text opens a colour with `UiKit.ColorTag(color)`. Sizes, line heights and fitting go through `UiKit.Text`, `UiKit.LineHeight`, `UiKit.AutoSize`, `UiKit.FitBacking` and `UiKit.FitBanner`.
+- An ability's bar line uses `Ability.BiomeCharge` / `Ability.Line` (ui.json AbilityBar wording). Toasts that only one card ever shows stay next to that card's code.
 
 ## Adding or changing a card
 1. Add a row to `cards.json` with a new `id` (never reuse one), a PascalCase `key`, a `name`, `rarity`, `category`, the `positive` and `negative` text, a `theme` and an `art` motif.

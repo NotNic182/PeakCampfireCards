@@ -284,6 +284,18 @@ def gen_ui(ui):
     lines.append('        public const int SortingOrder = %d;' % ui['canvas']['sortingOrder'])
     lines.append('        /// <summary>The UI font file, next to the DLL (assets/fonts in the repo).</summary>')
     lines.append('        public const string FontFile = %s;' % cs_str(ui['canvas']['font']))
+    # every other number in canvas (font tuning, UI scale limits, safe margin) becomes a float const
+    for k, v in ui['canvas'].items():
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and k != 'sortingOrder':
+            lines.append('        public const float %s = %s;' % (k[0].upper() + k[1:], cs_float(v)))
+    lines.append('    }')
+    lines.append('')
+    lines.append('    /// <summary>ui.json palette: the colour roles the rows refer to as "@name".</summary>')
+    lines.append('    public static class UiPalette')
+    lines.append('    {')
+    for k, v in ui['palette'].items():
+        if not k.startswith('_'):
+            lines.append('        public static readonly Color %s = %s;' % (k[0].upper() + k[1:], cs_color(v)))
     lines.append('    }')
     lines.append('')
     for r in ui['rows']:
@@ -296,6 +308,8 @@ def gen_ui(ui):
         lines.append('        public const string Text = %s;' % cs_str(r['text']))
         lines.append('        public const string SoundOn = %s;' % cs_str(r['soundOn']))
         for k, v in r.get('consts', {}).items():
+            if isinstance(v, str) and v.startswith('@'):
+                v = ui['palette'][v[1:]]   # a colour role (preflight checks it exists)
             if isinstance(v, list) and len(v) == 4:
                 lines.append('        public static readonly Color %s = %s;' % (k, cs_color(v)))
             elif isinstance(v, str):

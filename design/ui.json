@@ -19,7 +19,15 @@
     "sortingOrder": 500,
     "font": "DarumadropOne-Regular.ttf",
     "fontLicense": "DarumadropOne-OFL.txt",
-    "fontNote": "every mod text uses this font (assets/fonts, shipped next to the DLL; SIL Open Font License); the game's own font is its fallback, and the whole UI falls back to it when the file is missing or UI.CustomFont is off"
+    "fontNote": "every mod text uses this font (assets/fonts, shipped next to the DLL; SIL Open Font License); the game's own font is its fallback, and the whole UI falls back to it when the file is missing or UI.CustomFont is off. Darumadrop One has one heavy weight: bold is synthesised, so fontBoldStyle and fontBoldSpacing keep TMP's faux bold light (TMP defaults 0.75 and 7 clog its counters at small sizes). Line heights in rows are multiples of the font size; the code converts them for whichever font is in use",
+    "fontBoldStyle": 0.3,
+    "fontBoldSpacing": 2,
+    "scaleNote": "CanvasScaler ScaleWithScreenSize, match 0.5. Config General.UiScale multiplies it (0 = auto: 1, or smallScreenScale on screens at most smallScreenHeight pixels tall, such as a Steam Deck). Layouts that could outgrow the screen (card fan, Current Build) measure the canvas and keep safeMargin from every edge",
+    "smallScreenHeight": 900,
+    "smallScreenScale": 1.15,
+    "minUiScale": 0.75,
+    "maxUiScale": 1.5,
+    "safeMargin": 40
   },
   "timing": {
     "pickTimeoutSeconds": 30,
@@ -27,8 +35,82 @@
     "cardStaggerSeconds": 0.08,
     "hoverScale": 1.08,
     "selectedFlashSeconds": 0.5,
+    "pickPendingRetrySeconds": 5.0,
     "toastSeconds": 3.0,
+    "warningToastSeconds": 8.0,
+    "revealSeconds": 8.0,
+    "hudRefreshSeconds": 0.2,
+    "buildRefreshSeconds": 0.25,
     "openingPickDelaySeconds": 2.0
+  },
+  "palette": {
+    "_note": "Colour roles for every mod overlay: campfire at night. Panels are warm near-black (the cards' world), secondary text is warm grey derived from them, gold is the campfire accent. Row consts refer to a role as \"@name\". Contrast (worst case: panel over snow): text, textSoft, muted, good, accent, callout pass 4.5:1 on every surface; faint and bad pass only on surfaceStrong and on card faces, so use them nowhere else. Green/red never carry meaning alone: card lines and Current Build stats carry + / - markers.",
+    "text": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "textSoft": [
+      1,
+      1,
+      1,
+      0.9
+    ],
+    "muted": [
+      0.8,
+      0.74,
+      0.68,
+      1
+    ],
+    "faint": [
+      0.7,
+      0.64,
+      0.58,
+      1
+    ],
+    "good": [
+      0.62,
+      0.92,
+      0.45,
+      1
+    ],
+    "bad": [
+      0.98,
+      0.52,
+      0.47,
+      1
+    ],
+    "accent": [
+      1,
+      0.86,
+      0.55,
+      1
+    ],
+    "callout": [
+      1,
+      0.92,
+      0.6,
+      1
+    ],
+    "surface": [
+      0.06,
+      0.036,
+      0.024,
+      0.75
+    ],
+    "surfaceStrong": [
+      0.045,
+      0.03,
+      0.02,
+      0.88
+    ],
+    "backdrop": [
+      0.04,
+      0.025,
+      0.015,
+      0.72
+    ]
   },
   "rows": [
     {
@@ -42,14 +124,10 @@
       "visual": "MenuWindow subclass (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop",
       "text": "",
       "consts": {
-        "Backdrop": [
-          0,
-          0,
-          0,
-          0.72
-        ]
+        "Backdrop": "@backdrop",
+        "DimAlpha": 0.35
       },
-      "behaviour": "Open() when it is the local player's turn; Close() after a pick or timeout; the game blocks movement and shows the cursor through MenuWindow",
+      "behaviour": "Open() when it is the local player's turn; Close() after a pick or timeout; the game blocks movement and shows the cursor through MenuWindow. With a controller the first card is selected on open and the D-pad or stick moves between cards (explicit grid navigation), confirm takes the selected card. Reveal and sample fans also close on a click on the backdrop or on cancel.",
       "soundOn": "cardsAppear"
     },
     {
@@ -64,18 +142,15 @@
       "text": "{reasonTitle}",
       "consts": {
         "FontSize": 56,
-        "Color": [
-          1,
-          1,
-          1,
-          1
-        ],
+        "Color": "@text",
         "OpeningTitle": "PICK A CARD",
-        "CampfireTitle": "CAMPFIRE LIT - PICK A CARD",
-        "SacrificeTitle": "MOUNTAIN'S BARGAIN - SACRIFICE A CARD",
-        "BonusTitle": "BONUS CARDS"
+        "CampfireTitle": "CAMPFIRE LIT: PICK A CARD",
+        "SacrificeTitle": "{0}: GIVE UP A CARD",
+        "BonusTitle": "BONUS CARDS",
+        "MinFontSize": 32,
+        "Y": -70
       },
-      "behaviour": "reasonTitle depends on the session reason",
+      "behaviour": "reasonTitle depends on the session reason (SacrificeTitle names the card that asks for it); narrowed to the canvas less safeMargin and shrunk (to MinFontSize) when the screen is narrow",
       "soundOn": "none"
     },
     {
@@ -85,19 +160,20 @@
         1400,
         40
       ],
-      "anchor": "below Title, y=-130",
+      "anchor": "below Title, y=-150 (a clear step under the 56 px title)",
       "visual": "TMP light grey",
-      "text": "Choose one. {timeLeft}s",
+      "text": "Keep one for the whole run. Random pick in {timeLeft}s.",
       "consts": {
         "FontSize": 26,
-        "Color": [
-          0.85,
-          0.85,
-          0.85,
-          1
-        ]
+        "Color": "@muted",
+        "PendingTemplate": "Taking {0}...",
+        "RetryTemplate": "No answer from the host. Pick again. Random pick in {0}s.",
+        "RevealText": "Added to your cards. Click anywhere to continue.",
+        "RevealPadText": "Added to your cards. Press confirm or back to continue.",
+        "SacrificeTemplate": "Pick one to lose for the rest of the run. Random pick in {0}s.",
+        "Y": -150
       },
-      "behaviour": "counts down pickTimeoutSeconds; at 0 a random card of the hand is taken",
+      "behaviour": "counts down pickTimeoutSeconds; at 0 a random card of the hand is taken. After a click it shows PendingTemplate until the host confirms; with no answer after pickPendingRetrySeconds the cards can be chosen again and RetryTemplate counts down",
       "soundOn": "none"
     },
     {
@@ -107,14 +183,18 @@
         1700,
         600
       ],
-      "anchor": "center, y=-20",
+      "anchor": "center, y=-20 (one row) or y=-90 (several rows), moved only as far as needed to stay inside the band below the subtitle",
       "visual": "HorizontalLayoutGroup, middle center",
       "text": "",
       "consts": {
         "Spacing": 24,
-        "SlideFromY": -400
+        "SlideFromY": -400,
+        "TitleBand": 200,
+        "OneRowY": -20,
+        "RowsY": -90,
+        "MaxPerRow": 6
       },
-      "behaviour": "holds handSize Card elements; slides up over fanSlideInSeconds with cardStaggerSeconds between cards",
+      "behaviour": "holds handSize Card elements in rows of up to 6; scaled down to fit the canvas (less safeMargin, below TitleBand); slides up over fanSlideInSeconds with cardStaggerSeconds between cards",
       "soundOn": "none"
     },
     {
@@ -131,9 +211,11 @@
         "FrameWidth": 6,
         "RarityStripHeight": 10,
         "HoverFrameBoost": 0.25,
-        "CornerRadius": 18
+        "CornerRadius": 18,
+        "StripInset": 4,
+        "HoverVolume": 0.8
       },
-      "behaviour": "Button; hover: scale hoverScale and brighten the frame; click: PickMade",
+      "behaviour": "Button; hover or controller selection: scale hoverScale and brighten the frame; click or confirm: PickMade. The chosen card flashes from white to the bright frame over selectedFlashSeconds and keeps that look while the pick is pending; the other cards dim to PickerWindow.DimAlpha",
       "soundOn": "cardSwitch"
     },
     {
@@ -143,11 +225,11 @@
         264,
         150
       ],
-      "anchor": "top, y=-30",
+      "anchor": "top, y=-28 (8 under the rarity strip)",
       "visual": "rounded window in a darker shade of the theme bg with a soft round glow behind the motif; the card's art.json motif animates inside it, clipped to the window",
       "text": "",
       "consts": {
-        "Y": -30,
+        "Y": -28,
         "WindowDarken": 0.45,
         "GlowAlpha": 0.12,
         "GlowSize": 150
@@ -160,14 +242,15 @@
       "parent": "Card",
       "size": [
         280,
-        22
+        20
       ],
-      "anchor": "top, y=-180",
-      "visual": "small caps rarity name in the rarity colour",
+      "anchor": "top, y=-184: 10 below the art, tucked up against the name it labels",
+      "visual": "rarity name in the rarity colour, uppercase and letter-spaced so it reads as a label, not a second name",
       "text": "{rarity}",
       "consts": {
-        "FontSize": 15,
-        "Y": -180
+        "FontSize": 16,
+        "Y": -184,
+        "CharacterSpacing": 8
       },
       "behaviour": "none",
       "soundOn": "none"
@@ -177,21 +260,17 @@
       "parent": "Card",
       "size": [
         280,
-        40
+        66
       ],
-      "anchor": "top, y=-196",
-      "visual": "TMP bold uppercase white, auto-size",
+      "anchor": "top, y=-202",
+      "visual": "uppercase white, up to two lines at full size (shrinks only below that, to MinFontSize), top-aligned",
       "text": "{card.name}",
       "consts": {
         "FontSize": 28,
-        "MinFontSize": 16,
-        "Color": [
-          1,
-          1,
-          1,
-          1
-        ],
-        "Y": -202
+        "MinFontSize": 20,
+        "Color": "@text",
+        "Y": -202,
+        "LineHeight": 1.05
       },
       "behaviour": "none",
       "soundOn": "none"
@@ -203,30 +282,22 @@
         272,
         150
       ],
-      "anchor": "top, y=-246",
-      "visual": "the card's benefit line in green and its drawback line in red (Mythics show 'No drawback')",
+      "anchor": "top, Gap below the card name as laid out; down to Gap above the flavour line, or BottomPad above the card's bottom edge",
+      "visual": "the card's benefit line in green and its drawback line in red, each with its + / - marker; Mythics show 'No drawback' in the theme accent",
       "text": "{positive}\n{negative}",
       "consts": {
-        "FontSize": 17,
-        "MinFontSize": 11,
-        "GoodColor": [
-          0.62,
-          0.92,
-          0.45,
-          1
-        ],
-        "BadColor": [
-          0.95,
-          0.45,
-          0.42,
-          1
-        ],
-        "Y": -246,
+        "FontSize": 20,
+        "MinFontSize": 15,
+        "GoodColor": "@good",
+        "BadColor": "@bad",
         "NoDrawback": "No drawback",
         "GoodPrefix": "+ ",
-        "BadPrefix": "- "
+        "BadPrefix": "- ",
+        "LineHeight": 1.15,
+        "Gap": 10,
+        "BottomPad": 14
       },
-      "behaviour": "none",
+      "behaviour": "auto-size between MinFontSize and FontSize inside the room the name and flavour leave",
       "soundOn": "none"
     },
     {
@@ -234,21 +305,18 @@
       "parent": "Card",
       "size": [
         272,
-        46
+        22
       ],
       "anchor": "bottom, y=14",
-      "visual": "TMP italic, muted",
+      "visual": "italic, in the card theme's accent (secondary text taken from the card's own hue); the Color const is for flavour-style text off the card (No drawback on the Current Build)",
       "text": "{card.flavor}",
       "consts": {
-        "FontSize": 14,
-        "MinFontSize": 10,
-        "Color": [
-          0.82,
-          0.82,
-          0.82,
-          0.9
-        ],
-        "Y": 14
+        "FontSize": 15,
+        "MinFontSize": 12,
+        "Color": "@muted",
+        "Y": 14,
+        "Gap": 6,
+        "AccentAlpha": 0.9
       },
       "behaviour": "none",
       "soundOn": "none"
@@ -260,45 +328,26 @@
         1100,
         84
       ],
-      "anchor": "top center, y=-120",
-      "visual": "dark panel, white status line, and below it the pick order (last to the fire first) with each name coloured by state",
+      "anchor": "top center, y=-Top; first of the top stack (banner, toast, prompt), StackGap apart; never wider than the canvas less safeMargin",
+      "visual": "dark panel, white status line, and below it the order (Turns: the pick order; Simultaneous: the deal order, last to the fire first) with each name coloured by state; the status line names who is still choosing",
       "text": "{status} {timeLeft}s\n{order}",
       "consts": {
         "FontSize": 28,
-        "Panel": [
-          0,
-          0,
-          0,
-          0.6
-        ],
-        "Color": [
-          1,
-          1,
-          1,
-          1
-        ],
-        "Template": "{0} is picking a card...",
-        "SimultaneousTemplate": "Waiting for {0}...",
+        "Panel": "@surface",
+        "Color": "@text",
+        "Template": "{0} is picking a card",
+        "SimultaneousTemplate": "Waiting for {0}",
         "OrderLabel": "Pick order: ",
         "OrderFontSize": 20,
-        "DoneColor": [
-          0.62,
-          0.92,
-          0.45,
-          1
-        ],
-        "PickingColor": [
-          1,
-          1,
-          1,
-          1
-        ],
-        "QueuedColor": [
-          0.65,
-          0.65,
-          0.65,
-          1
-        ]
+        "DoneColor": "@good",
+        "PickingColor": "@text",
+        "QueuedColor": "@muted",
+        "MinFontSize": 16,
+        "DealOrderLabel": "Dealt in this order: ",
+        "Top": 120,
+        "StackGap": 8,
+        "StatusTemplate": "{0}  {1}s",
+        "Separator": "  ·  "
       },
       "behaviour": "shown while a session runs to everyone not choosing right now (in turns mode the others, in simultaneous mode everyone who already chose); not a MenuWindow (no input block)",
       "soundOn": "none"
@@ -311,18 +360,20 @@
         300
       ],
       "anchor": "bottom left, x=20, y=200 (clear of the status icons above the stamina bar)",
-      "visual": "one line per card: a square in the card's rarity colour plus its name; a last line names the Current Build key",
+      "visual": "one line per card: a square in the card's rarity colour plus its name; a last line names the Current Build key (or controller button); on a dark rounded panel fitted to the text so it stays readable over snow and sky",
       "text": "{myCards}",
       "consts": {
-        "FontSize": 18,
-        "Color": [
-          1,
-          1,
-          1,
-          0.9
-        ],
+        "FontSize": 20,
+        "Color": "@textSoft",
         "Header": "YOUR CARDS",
-        "HintTemplate": "[{0}] current build"
+        "HintTemplate": "[{0}] Current Build",
+        "Panel": "@surface",
+        "Padding": 12,
+        "HintColor": "@muted",
+        "MinFontSize": 14,
+        "LineHeight": 1.2,
+        "X": 20,
+        "Y": 200
       },
       "behaviour": "visible on the island when the player holds any card; hidden in menus",
       "soundOn": "none"
@@ -334,60 +385,76 @@
         900,
         60
       ],
-      "anchor": "top center, y=-200",
+      "anchor": "top center, StackGap below the WaitingBanner's slot; never wider than the canvas less safeMargin",
       "visual": "dark panel, white text",
       "text": "{message}",
       "consts": {
-        "FontSize": 26,
-        "Panel": [
-          0,
-          0,
-          0,
-          0.6
-        ],
-        "Color": [
-          1,
-          1,
-          1,
-          1
-        ],
-        "TookTemplate": "{0} took {1}"
+        "FontSize": 24,
+        "Panel": "@surface",
+        "Color": "@text",
+        "TookTemplate": "{0} took {1}",
+        "MinFontSize": 16,
+        "Padding": 16,
+        "AutoTookTemplate": "{0} ran out of time and got {1}",
+        "SkipYouTemplate": "You skip this pick ({0})",
+        "SkipTemplate": "{0} skips this pick ({1})",
+        "BonusTemplate": "{0} also got {1}",
+        "GaveUpTemplate": "{0} gave up {1} ({2})",
+        "SettingsTemplate": "{0} has different Campfire Cards settings ({1}). Everyone should use the same version and config.",
+        "UnreadableTemplate": "Can't read Campfire Cards data from {0}. Everyone needs the same mod version.",
+        "You": "You"
       },
-      "behaviour": "toastSeconds notices",
+      "behaviour": "toastSeconds notices; warnings that ask the players to act (settings or version mismatch) stay warningToastSeconds",
       "soundOn": "none"
     },
     {
       "id": "AbilityBar",
       "parent": "root",
       "size": [
-        460,
-        120
+        560,
+        170
       ],
       "anchor": "bottom right, x=-24, y=150",
-      "visual": "one line per owned ability card: name, key and state (ready, cooldown seconds, used this biome, anchor placed)",
+      "visual": "one line per owned ability card: name, key (or controller button) and state (ready, cooldown seconds, used this biome, anchor placed), green when ready; on a dark rounded panel fitted to the text",
       "text": "{abilityLines}",
       "consts": {
-        "FontSize": 18,
-        "Color": [
-          1,
-          1,
-          1,
-          0.92
-        ],
-        "ReadyColor": [
-          0.62,
-          0.92,
-          0.45,
-          1
-        ],
-        "WaitColor": [
-          0.85,
-          0.85,
-          0.85,
-          0.8
-        ]
+        "FontSize": 20,
+        "Color": "@textSoft",
+        "ReadyColor": "@good",
+        "WaitColor": "@muted",
+        "Panel": "@surface",
+        "Padding": 12,
+        "MinFontSize": 15,
+        "LineHeight": 1.2,
+        "X": -24,
+        "Y": 150,
+        "Ready": "ready",
+        "UsedThisBiome": "used this biome",
+        "UsedThisRun": "used",
+        "AlreadyUsedThisBiome": "{0}: already used this biome",
+        "StatusTemplate": "{0}: {1}",
+        "KeyedTemplate": "{0} [{1}]: {2}"
       },
-      "behaviour": "visible on the island when the player owns an activated or limited ability",
+      "behaviour": "visible on the island when the player owns an activated or limited ability; an ability's line is StatusTemplate (KeyedTemplate when it has a key) with Ready, UsedThisBiome or UsedThisRun for charges",
+      "soundOn": "none"
+    },
+    {
+      "id": "Marker",
+      "parent": "root",
+      "size": [
+        320,
+        28
+      ],
+      "anchor": "at the world position's screen point (markers sit under every other HUD panel)",
+      "visual": "bold label in the marker's colour with a black outline (they float over snow and sky), a square, the label and the distance",
+      "text": "{label} {meters}m",
+      "consts": {
+        "FontSize": 17,
+        "Outline": 0.25,
+        "Color": "@text",
+        "Template": "■ {0}  {1}m"
+      },
+      "behaviour": "Scavenger's Instinct: one pooled label per marker, placed every frame; hidden behind the camera or off the island",
       "soundOn": "none"
     },
     {
@@ -397,23 +464,16 @@
         900,
         60
       ],
-      "anchor": "top center, y=-260",
+      "anchor": "top center, StackGap below the Toast's slot; never wider than the canvas less safeMargin",
       "visual": "dark panel, white text, for choices outside the card fan (pick a card to sacrifice, empty a slot to lock)",
       "text": "{message}",
       "consts": {
         "FontSize": 24,
-        "Panel": [
-          0,
-          0,
-          0,
-          0.65
-        ],
-        "Color": [
-          1,
-          0.92,
-          0.6,
-          1
-        ]
+        "Panel": "@surface",
+        "Color": "@callout",
+        "MinFontSize": 16,
+        "Padding": 16,
+        "GiveUpLaterTemplate": "{0}: after this pick, you give up one of your cards."
       },
       "behaviour": "stays until the choice is made",
       "soundOn": "none"
@@ -425,43 +485,48 @@
         1560,
         860
       ],
-      "anchor": "center",
-      "visual": "dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you",
+      "anchor": "center; at most Size, and never closer than safeMargin to a screen edge",
+      "visual": "dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you; both columns open with a header (YOUR CARDS, COMBINED EFFECTS) on the same line; a card's detail lines hang DetailIndent in, so wrapped lines stay under their marker; every combined-effect line carries the same + / - marker as the cards",
       "text": "{cards} | {stats}",
       "consts": {
-        "Panel": [
-          0.03,
-          0.03,
-          0.04,
-          0.88
-        ],
+        "Panel": "@surfaceStrong",
         "Title": "CURRENT BUILD",
         "TitleFontSize": 34,
-        "FontSize": 18,
-        "MinFontSize": 11,
-        "HeaderColor": [
-          1,
-          0.86,
-          0.55,
-          1
-        ],
-        "ActiveColor": [
-          0.62,
-          0.92,
-          0.45,
-          1
-        ],
-        "InactiveColor": [
-          0.6,
-          0.6,
-          0.6,
-          1
-        ],
+        "FontSize": 20,
+        "MinFontSize": 14,
+        "HeaderColor": "@accent",
+        "ActiveColor": "@good",
+        "InactiveColor": "@faint",
         "StatsHeader": "COMBINED EFFECTS",
         "AurasHeader": "FROM TEAMMATES",
-        "Hint": "Green helps you, red hurts you. (right now) means a condition or a nearby teammate changes it. Press {0} to close."
+        "Hint": "Green helps you, red hurts you. \"On now\" and \"off now\" mark effects that depend on a condition or a nearby teammate.",
+        "LineHeight": 1.25,
+        "HintFontSize": 16,
+        "HeaderSizePercent": 115,
+        "MetaSizePercent": 80,
+        "CloseHint": "Press {0} to close.",
+        "NextPageHint": "Page {1} of {2}. Press {0} for the next page.",
+        "LastPageHint": "Page {1} of {2}. Press {0} to close.",
+        "ColumnGap": 40,
+        "LeftShare": 0.56,
+        "OnNow": "(on now)",
+        "OffNow": "(off now)",
+        "Otherwise": "Otherwise: ",
+        "NoChange": "no change",
+        "NoCards": "No cards yet. You pick one at the next campfire.",
+        "NothingNow": "Your cards change nothing right now.",
+        "TeammatesTemplate": "Teammates within {0} m: {1}",
+        "DetailIndent": 24,
+        "PadX": 30,
+        "ColumnsTop": 84,
+        "ColumnsBottom": 56,
+        "TitleY": -18,
+        "TitleHeight": 50,
+        "HintY": 14,
+        "HintHeight": 36,
+        "DetailSizePercent": 88
       },
-      "behaviour": "toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI",
+      "behaviour": "toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; text that does not fit is split into pages at FontSize (no shrinking), the key steps through the pages and closes after the last; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI",
       "soundOn": "none"
     }
   ]

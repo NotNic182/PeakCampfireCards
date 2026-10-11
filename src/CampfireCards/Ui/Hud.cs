@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using CampfireCards.Abilities;
 using CampfireCards.Cards;
 using CampfireCards.Generated;
 using CampfireCards.Net;
@@ -23,13 +24,23 @@ namespace CampfireCards.Ui
         private static GameObject _root;
         private static RectTransform _rootRect;
         private static Image _waitingPanel; private static TextMeshProUGUI _waitingText, _waitingOrder;
-        private static TextMeshProUGUI _myCards;
+        private static TextMeshProUGUI _myCards; private static Image _myCardsPanel;
         private static Image _toastPanel; private static TextMeshProUGUI _toastText; private static float _toastUntil;
-        private static TextMeshProUGUI _abilityBar;
+        private static TextMeshProUGUI _abilityBar; private static Image _abilityPanel;
+        /// <summary>The input device the hint labels were last written for (they name a key or a controller button).</summary>
+        private static bool _labelsForGamepad;
         private static Image _promptPanel; private static TextMeshProUGUI _promptText;
         private static RectTransform _markerLayer;
         private static readonly List<TextMeshProUGUI> _markerPool = new List<TextMeshProUGUI>();
         private static readonly List<Marker> _markers = new List<Marker>();
+
+        /// <summary>Where YOUR CARDS starts above the bottom edge (ui.json MyCardsHud).</summary>
+        private static readonly float MyCardsBottom = Ui_MyCardsHud.Y;
+
+        /// <summary>The top stack, each slot StackGap under the one above, so the three never touch (ui.json WaitingBanner).</summary>
+        private static readonly float BannerTop = Ui_WaitingBanner.Top;
+        private static readonly float ToastTop = BannerTop + Ui_WaitingBanner.Size.y + Ui_WaitingBanner.StackGap;
+        private static readonly float PromptTop = ToastTop + Ui_Toast.Size.y + Ui_WaitingBanner.StackGap;
 
         public static void Ensure()
         {
@@ -46,31 +57,45 @@ namespace CampfireCards.Ui
             UiKit.Stretch(_markerLayer);
 
             _waitingPanel = UiKit.Panel(_root.transform, "WaitingBanner", Ui_WaitingBanner.Size, Ui_WaitingBanner.Panel);
-            UiKit.Place(_waitingPanel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -120f));
+            UiKit.Place(_waitingPanel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -BannerTop));
             var line = new Vector2(Ui_WaitingBanner.Size.x - 24f, Ui_WaitingBanner.Size.y * 0.5f);
             _waitingText = UiKit.Text(_waitingPanel.transform, "Text", line, Ui_WaitingBanner.FontSize, Ui_WaitingBanner.Color, TextAlignmentOptions.Center, FontStyles.Bold);
             UiKit.Place(_waitingText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -2f));
+            UiKit.AutoSize(_waitingText, Ui_WaitingBanner.MinFontSize);   // long player names shrink before they are cut
             _waitingOrder = UiKit.Text(_waitingPanel.transform, "Order", line, Ui_WaitingBanner.OrderFontSize, Ui_WaitingBanner.Color, TextAlignmentOptions.Center);
             UiKit.Place(_waitingOrder.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 2f));
+            UiKit.AutoSize(_waitingOrder, Mathf.Min(Ui_WaitingBanner.MinFontSize, Ui_WaitingBanner.OrderFontSize));
             _waitingPanel.gameObject.SetActive(false);
 
+            // the corner lists sit straight on the world: a dark panel fitted to the text keeps them readable on snow
+            _myCardsPanel = UiKit.Panel(_root.transform, "MyCardsPanel", Vector2.zero, Ui_MyCardsHud.Panel, Art.Shapes.Panel);
+            _myCardsPanel.type = Image.Type.Sliced;
             _myCards = UiKit.Text(_root.transform, "MyCardsHud", Ui_MyCardsHud.Size, Ui_MyCardsHud.FontSize, Ui_MyCardsHud.Color, TextAlignmentOptions.BottomLeft);
-            UiKit.Place(_myCards.rectTransform, new Vector2(0f, 0f), new Vector2(20f, 200f));   // above the status icons over the bar
-            _myCards.enableAutoSizing = true; _myCards.fontSizeMin = 10f; _myCards.fontSizeMax = Ui_MyCardsHud.FontSize;
-            _myCards.gameObject.SetActive(false);
+            UiKit.Place(_myCards.rectTransform, new Vector2(0f, 0f), new Vector2(Ui_MyCardsHud.X + Ui_MyCardsHud.Padding, MyCardsBottom + Ui_MyCardsHud.Padding));   // panel corner stays above the status icons over the bar
+            UiKit.LineHeight(_myCards, Ui_MyCardsHud.LineHeight);
+            UiKit.AutoSize(_myCards, Ui_MyCardsHud.MinFontSize);
+            ShowCorner(_myCards, _myCardsPanel, false);
 
+            _abilityPanel = UiKit.Panel(_root.transform, "AbilityPanel", Vector2.zero, Ui_AbilityBar.Panel, Art.Shapes.Panel);
+            _abilityPanel.type = Image.Type.Sliced;
             _abilityBar = UiKit.Text(_root.transform, "AbilityBar", Ui_AbilityBar.Size, Ui_AbilityBar.FontSize, Ui_AbilityBar.Color, TextAlignmentOptions.BottomRight);
-            UiKit.Place(_abilityBar.rectTransform, new Vector2(1f, 0f), new Vector2(-24f, 150f));
-            _abilityBar.gameObject.SetActive(false);
+            UiKit.Place(_abilityBar.rectTransform, new Vector2(1f, 0f), new Vector2(Ui_AbilityBar.X - Ui_AbilityBar.Padding, Ui_AbilityBar.Y + Ui_AbilityBar.Padding));
+            UiKit.LineHeight(_abilityBar, Ui_AbilityBar.LineHeight);
+            UiKit.AutoSize(_abilityBar, Ui_AbilityBar.MinFontSize);
+            ShowCorner(_abilityBar, _abilityPanel, false);
 
             _toastPanel = UiKit.Panel(_root.transform, "Toast", Ui_Toast.Size, Ui_Toast.Panel);
-            UiKit.Place(_toastPanel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -200f));
+            UiKit.Place(_toastPanel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -ToastTop));
             _toastText = UiKit.Text(_toastPanel.transform, "Text", Ui_Toast.Size, Ui_Toast.FontSize, Ui_Toast.Color, TextAlignmentOptions.Center);
+            _toastText.margin = new Vector4(Ui_Toast.Padding, 0f, Ui_Toast.Padding, 0f);
+            UiKit.AutoSize(_toastText, Ui_Toast.MinFontSize);
             _toastPanel.gameObject.SetActive(false);
 
             _promptPanel = UiKit.Panel(_root.transform, "Prompt", Ui_Prompt.Size, Ui_Prompt.Panel);
-            UiKit.Place(_promptPanel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -260f));
+            UiKit.Place(_promptPanel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -PromptTop));
             _promptText = UiKit.Text(_promptPanel.transform, "Text", Ui_Prompt.Size, Ui_Prompt.FontSize, Ui_Prompt.Color, TextAlignmentOptions.Center);
+            _promptText.margin = new Vector4(Ui_Prompt.Padding, 0f, Ui_Prompt.Padding, 0f);
+            UiKit.AutoSize(_promptText, Ui_Prompt.MinFontSize);
             _promptPanel.gameObject.SetActive(false);
 
             _root.AddComponent<HudTicker>();
@@ -81,6 +106,7 @@ namespace CampfireCards.Ui
         public static void ShowWaiting(string status, string order)
         {
             Ensure();
+            UiKit.FitBanner(_waitingPanel, Ui_WaitingBanner.Size.x, _waitingText, _waitingOrder);
             _waitingText.text = status;
             _waitingOrder.text = order ?? "";
             _waitingPanel.gameObject.SetActive(true);
@@ -91,18 +117,21 @@ namespace CampfireCards.Ui
             if (_waitingPanel != null) _waitingPanel.gameObject.SetActive(false);
         }
 
-        public static void Toast(string message)
+        /// <summary>A notice for toastSeconds, or longer (warningToastSeconds) when it asks the players to act.</summary>
+        public static void Toast(string message, bool warning = false)
         {
             Ensure();
+            UiKit.FitBanner(_toastPanel, Ui_Toast.Size.x, _toastText);
             _toastText.text = message;
             _toastPanel.gameObject.SetActive(true);
-            _toastUntil = Time.unscaledTime + UiTiming.ToastSeconds;
+            _toastUntil = Time.unscaledTime + (warning ? UiTiming.WarningToastSeconds : UiTiming.ToastSeconds);
             Plugin.Verbose("Toast: " + message);
         }
 
         public static void ShowPrompt(string message)
         {
             Ensure();
+            UiKit.FitBanner(_promptPanel, Ui_Prompt.Size.x, _promptText);
             _promptText.text = message;
             _promptPanel.gameObject.SetActive(true);
         }
@@ -112,24 +141,36 @@ namespace CampfireCards.Ui
             if (_promptPanel != null) _promptPanel.gameObject.SetActive(false);
         }
 
+        /// <summary>A corner list and its backing panel: shown together, the panel fitted around the text.</summary>
+        private static void ShowCorner(TextMeshProUGUI text, Image panel, bool show)
+        {
+            text.gameObject.SetActive(show);
+            if (show) UiKit.FitBacking(panel, text, text == _myCards ? Ui_MyCardsHud.Padding : Ui_AbilityBar.Padding);
+            else panel.gameObject.SetActive(false);
+        }
+
         /// <summary>"YOUR CARDS": one line per card with a dot in its rarity colour.</summary>
         public static void RefreshMyCards()
         {
             if (_myCards == null) return;
+            _labelsForGamepad = Controls.UsingGamepad;
             var cards = Effects.CardsOf(NetSend.LocalActor);
-            if (cards.Count == 0) { _myCards.gameObject.SetActive(false); return; }
+            if (cards.Count == 0) { ShowCorner(_myCards, _myCardsPanel, false); return; }
+            // on a short canvas (big UI scale, 32:9) stay below the prompt: the list shrinks, then cuts, rather than overlap
+            float room = UiKit.CanvasSize.y - MyCardsBottom - (PromptTop + Ui_Prompt.Size.y);
+            _myCards.rectTransform.sizeDelta = new Vector2(Ui_MyCardsHud.Size.x, Mathf.Clamp(room, Ui_MyCardsHud.FontSize * 6f, Ui_MyCardsHud.Size.y));
             var sb = new StringBuilder();
             sb.Append("<b>").Append(Ui_MyCardsHud.Header).Append("</b>\n");
             foreach (var id in cards)
             {
                 CardDef def;
                 var color = Deck.TryGet(id, out def) ? Deck.RarityColor(def.Rarity) : Color.white;
-                sb.Append("<color=#").Append(UiKit.Hex(color)).Append(">■</color> ").Append(Deck.NameOf(id)).Append('\n');
+                sb.Append(UiKit.ColorTag(color)).Append("■</color> ").Append(Deck.NameOf(id)).Append('\n');
             }
-            sb.Append("<size=80%><color=#").Append(UiKit.Hex(Ui_BuildScreen.InactiveColor)).Append('>')
+            sb.Append("<size=80%>").Append(UiKit.ColorTag(Ui_MyCardsHud.HintColor))
               .Append(string.Format(Ui_MyCardsHud.HintTemplate, Plugin.BuildScreenKeyLabel)).Append("</color></size>");
             _myCards.text = sb.ToString().TrimEnd();
-            _myCards.gameObject.SetActive(RunState.OnIsland);
+            ShowCorner(_myCards, _myCardsPanel, RunState.OnIsland);
         }
 
         /// <summary>One line per owned card that has a state to show (charges, cooldowns, activation keys).</summary>
@@ -139,15 +180,16 @@ namespace CampfireCards.Ui
             var sb = new StringBuilder();
             foreach (var a in LocalCards.All)
             {
-                string line;
-                try { line = a.Status(me); } catch { line = null; }
-                if (string.IsNullOrEmpty(line)) continue;
-                bool ready = line.EndsWith("ready") || line.EndsWith("place anchor") || line.EndsWith("boosting");
-                sb.Append("<color=#").Append(UiKit.Hex(ready ? Ui_AbilityBar.ReadyColor : Ui_AbilityBar.WaitColor)).Append('>').Append(line).Append("</color>\n");
+                AbilityStatus status;
+                try { status = a.Status(me); } catch { status = AbilityStatus.None; }
+                if (status.IsEmpty) continue;
+                sb.Append(UiKit.ColorTag(status.Ready ? Ui_AbilityBar.ReadyColor : Ui_AbilityBar.WaitColor)).Append(status.Text).Append("</color>\n");
             }
             string text = sb.ToString().TrimEnd();
+            bool show = text.Length > 0 && RunState.OnIsland;
+            if (text == _abilityBar.text && show == _abilityBar.gameObject.activeSelf) return;   // unchanged: no re-layout
             _abilityBar.text = text;
-            _abilityBar.gameObject.SetActive(text.Length > 0 && RunState.OnIsland);
+            ShowCorner(_abilityBar, _abilityPanel, show);
         }
 
         // ------------------------------------------------------------------ markers
@@ -182,7 +224,7 @@ namespace CampfireCards.Ui
                     var t = MarkerText(used++);
                     t.rectTransform.anchoredPosition = local;
                     int meters = Mathf.RoundToInt(Vector3.Distance(m.World, me.Center));
-                    t.text = "<color=#" + UiKit.Hex(m.Color) + ">■ " + m.Label + "  " + meters + "m</color>";
+                    t.text = UiKit.ColorTag(m.Color) + string.Format(Ui_Marker.Template, m.Label, meters) + "</color>";
                     t.gameObject.SetActive(true);
                 }
             }
@@ -193,9 +235,10 @@ namespace CampfireCards.Ui
         {
             while (_markerPool.Count <= i)
             {
-                var t = UiKit.Text(_markerLayer, "Marker", new Vector2(320f, 28f), 17f, Color.white, TextAlignmentOptions.Center, FontStyles.Bold);
+                var t = UiKit.Text(_markerLayer, "Marker", Ui_Marker.Size, Ui_Marker.FontSize, Ui_Marker.Color, TextAlignmentOptions.Center, FontStyles.Bold);
                 t.rectTransform.anchorMin = t.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
                 t.raycastTarget = false;
+                UiKit.TryOutline(t, Ui_Marker.Outline);   // markers float over any terrain, snow and sky included
                 _markerPool.Add(t);
             }
             return _markerPool[i];
@@ -209,8 +252,8 @@ namespace CampfireCards.Ui
             BuildScreen.Hide();
             ClearMarkers();
             if (_toastPanel != null) _toastPanel.gameObject.SetActive(false);
-            if (_myCards != null) _myCards.gameObject.SetActive(false);
-            if (_abilityBar != null) _abilityBar.gameObject.SetActive(false);
+            if (_myCards != null) ShowCorner(_myCards, _myCardsPanel, false);
+            if (_abilityBar != null) ShowCorner(_abilityBar, _abilityPanel, false);
         }
 
         internal static void TickTimers()
@@ -218,9 +261,10 @@ namespace CampfireCards.Ui
             if (_toastPanel != null && _toastPanel.gameObject.activeSelf && Time.unscaledTime > _toastUntil) _toastPanel.gameObject.SetActive(false);
             if (!RunState.OnIsland)
             {
-                if (_myCards != null && _myCards.gameObject.activeSelf) _myCards.gameObject.SetActive(false);
-                if (_abilityBar != null && _abilityBar.gameObject.activeSelf) _abilityBar.gameObject.SetActive(false);
+                if (_myCards != null && _myCards.gameObject.activeSelf) ShowCorner(_myCards, _myCardsPanel, false);
+                if (_abilityBar != null && _abilityBar.gameObject.activeSelf) ShowCorner(_abilityBar, _abilityPanel, false);
             }
+            else if (_myCards != null && Controls.UsingGamepad != _labelsForGamepad) RefreshMyCards();   // the hint names the other device's button
             DrawMarkers();
         }
     }

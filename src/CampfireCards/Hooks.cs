@@ -204,7 +204,7 @@ namespace CampfireCards
                     // EndOfStream / InvalidData: a malformed message, or another version of the mod
                     Plugin.Log.LogWarning($"Net event {e.Code} from actor {e.Sender} could not be read: {ex.Message}");
                     if (_unreadableFrom.Add(e.Sender))
-                        Hud.Toast($"{NetSend.NameOf(e.Sender)} sent a Campfire Cards message this version cannot read (different mod version?)");
+                        Hud.Toast(string.Format(Ui_Toast.UnreadableTemplate, NetSend.NameOf(e.Sender)), warning: true);
                 }
             }
             catch (Exception ex)
@@ -241,7 +241,7 @@ namespace CampfireCards
 
             if (Time.unscaledTime >= _nextAbilityBar)
             {
-                _nextAbilityBar = Time.unscaledTime + 0.2f;
+                _nextAbilityBar = Time.unscaledTime + UiTiming.HudRefreshSeconds;
                 Hud.RefreshAbilityBar(local);
                 PickSession.UpdateBanner();
             }
@@ -259,29 +259,20 @@ namespace CampfireCards
             if (seg != LocalCards.Biome) LocalCards.OnBiomeStarted(local, seg);
         }
 
-        /// <summary>Blood Battery and Safety Net keys (config Keys). Ignored while a menu or the card picker has focus.</summary>
+        /// <summary>Blood Battery, Safety Net and Current Build buttons (config Keys, keyboard or controller). Ignored while a menu or the card picker has focus.</summary>
         private static void AbilityKeys(Character local)
         {
-            var kb = UnityEngine.InputSystem.Keyboard.current;
-            if (kb == null) return;
             bool blocked = false;
             try { blocked = GUIManager.instance != null && (GUIManager.instance.windowBlockingInput || GUIManager.instance.wheelActive); } catch { }
             if (blocked) return;
-            TryKey(kb, Plugin.BloodBatteryKey, "BloodBattery", local);
-            TryKey(kb, Plugin.SafetyNetKey, "SafetyNet", local);
-            if (WasPressed(kb, Plugin.BuildScreenKey)) BuildScreen.Toggle(local);
+            TryKey(Controls.Act.BloodBattery, "BloodBattery", local);
+            TryKey(Controls.Act.SafetyNet, "SafetyNet", local);
+            if (Controls.WasPressed(Controls.Act.BuildScreen)) BuildScreen.Toggle(local);
         }
 
-        private static bool WasPressed(UnityEngine.InputSystem.Keyboard kb, BepInEx.Configuration.ConfigEntry<UnityEngine.InputSystem.Key> key)
+        private static void TryKey(Controls.Act act, string ability, Character local)
         {
-            if (key == null || key.Value == UnityEngine.InputSystem.Key.None) return false;
-            try { var control = kb[key.Value]; return control != null && control.wasPressedThisFrame; }
-            catch { return false; }
-        }
-
-        private static void TryKey(UnityEngine.InputSystem.Keyboard kb, BepInEx.Configuration.ConfigEntry<UnityEngine.InputSystem.Key> key, string ability, Character local)
-        {
-            if (!WasPressed(kb, key)) return;
+            if (!Controls.WasPressed(act)) return;
             foreach (var a in LocalCards.Manual)
             {
                 if (a.Card.Ability != ability) continue;

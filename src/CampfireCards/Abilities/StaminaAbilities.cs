@@ -16,11 +16,12 @@ namespace CampfireCards.Abilities
             if (me.data.passedOut || me.data.dead) return;
             if (!_latch.Update(me.data.currentStamina, P("threshold", 0.2f))) return;
             if (!_charge.TryUse(LocalCards.Biome)) return;
-            me.AddStamina(P("restore", 0.25f));   // AddStamina clamps to the current maximum
-            Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "!");
+            float restore = P("restore", 0.25f);
+            me.AddStamina(restore);   // AddStamina clamps to the current maximum
+            Ui.Hud.Toast($"{Card.Name.ToUpperInvariant()}! +{Points(restore)} stamina");
         }
 
-        public override string Status(Character me) => _charge.Available(LocalCards.Biome) ? Card.Name + ": ready" : Card.Name + ": used this biome";
+        public override AbilityStatus Status(Character me) => BiomeCharge(_charge.Available(LocalCards.Biome));
     }
 
     /// <summary>Half Tank: bonus stamina whenever a new campfire is lit (on top of the vanilla campfire boost).</summary>
@@ -68,13 +69,15 @@ namespace CampfireCards.Abilities
             bool win = Rolls.LoadedDice(LocalCards.RunSeed, biome, NetSend.LocalActor, P("chance", 0.65f));
             if (win)
             {
-                me.AddExtraStamina(P("bonus", 0.25f));
-                Ui.Hud.Toast(Card.Name + ": lucky roll, extra stamina");
+                float bonus = P("bonus", 0.25f);
+                me.AddExtraStamina(bonus);
+                Ui.Hud.Toast($"{Card.Name}: lucky roll, +{Points(bonus)} extra stamina");
             }
             else
             {
-                CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, P("injury", 0.2f));
-                Ui.Hud.Toast(Card.Name + ": bad roll, Injury");
+                float injury = P("injury", 0.2f);
+                CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, injury);
+                Ui.Hud.Toast($"{Card.Name}: unlucky roll, +{Points(injury)} Injury");
             }
         }
     }
@@ -88,14 +91,14 @@ namespace CampfireCards.Abilities
         public override bool Activate(Character me)
         {
             if (me.data.dead || me.data.passedOut) return false;
-            if (!_charge.TryUse(LocalCards.Biome)) { Ui.Hud.Toast(Card.Name + ": already used this biome"); return false; }
-            me.AddExtraStamina(P("bonus", 0.6f));
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, P("injury", 0.25f));
-            Ui.Hud.Toast(Card.Name + "!");
+            if (!_charge.TryUse(LocalCards.Biome)) { Ui.Hud.Toast(AlreadyUsedThisBiome); return false; }
+            float bonus = P("bonus", 0.6f), injury = P("injury", 0.25f);
+            me.AddExtraStamina(bonus);
+            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, injury);
+            Ui.Hud.Toast($"{Card.Name.ToUpperInvariant()}! +{Points(bonus)} extra stamina, +{Points(injury)} Injury");
             return true;
         }
 
-        public override string Status(Character me) =>
-            $"{Card.Name} [{Plugin.BloodBatteryKeyLabel}]: " + (_charge.Available(LocalCards.Biome) ? "ready" : "used this biome");
+        public override AbilityStatus Status(Character me) => BiomeCharge(_charge.Available(LocalCards.Biome), Plugin.BloodBatteryKeyLabel);
     }
 }

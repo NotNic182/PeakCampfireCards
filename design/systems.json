@@ -75,7 +75,7 @@
     },
     {
       "id": "Abilities",
-      "class": "CampfireCards.Abilities.Ability + CampfireCards.Abilities.AbilityRegistry",
+      "class": "CampfireCards.Abilities.Ability + CampfireCards.Abilities.AbilityRegistry + CampfireCards.Abilities.AbilityStatus",
       "owns": "cards.json ability column",
       "responsibility": "one reusable handler class per ability name (Ability_<name>), found by reflection, created per owned card on the owner only",
       "dependsOn": "Timers,World",
@@ -114,12 +114,20 @@
       "testedBy": "v0.3.0 solo host: PickSessionStart, PickMade, CardsGranted, CardSacrificed, SpawnItem round trips; multiplayer not yet tested"
     },
     {
+      "id": "Controls",
+      "class": "CampfireCards.Controls",
+      "owns": "config Keys (keyboard keys and controller buttons)",
+      "responsibility": "the mod's own buttons: keyboard key or controller button per action, auto-picking a controller button no PEAK gameplay action uses, and the label to show for the input device in use",
+      "dependsOn": "Plugin",
+      "testedBy": ""
+    },
+    {
       "id": "Ui",
       "class": "CampfireCards.Ui.CardPicker + CampfireCards.Ui.Hud + CampfireCards.Ui.BuildScreen",
       "owns": "ui.json (Generated/UiLayout.cs)",
-      "responsibility": "card fan with rarity frame and label, green benefit and red drawback; sacrifice and bonus-reveal modes; waiting banner with pick order, card list, Current Build screen, ability bar, prompt, toasts, Scavenger markers",
+      "responsibility": "card fan with rarity frame and label, green benefit and red drawback; sacrifice and bonus-reveal modes; waiting banner with pick order, card list, Current Build screen, ability bar, prompt, toasts, Scavenger markers; controller navigation, pending-pick state, Current Build pages, screen-size fitting",
       "dependsOn": "Deck,Art,Sfx",
-      "testedBy": "v0.3.0 in game screenshots: rarity frames and labels, green/red lines, No drawback, reveal and sacrifice modes, ability bar, card list, Scavenger marker"
+      "testedBy": "v0.3.0 in game screenshots: rarity frames and labels, green/red lines, No drawback, reveal and sacrifice modes, ability bar, card list, Scavenger marker. 0.5.x UI rework (controller, pending pick, pages, UI scale, palette, layout) builds and passes preflight; not yet tested in game"
     },
     {
       "id": "Art",

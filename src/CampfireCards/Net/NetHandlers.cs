@@ -65,7 +65,7 @@ namespace CampfireCards.Net
                 string who = NetSend.NameOf(sender);
                 Plugin.Log.LogWarning($"Campfire Cards settings differ from {who} (actor {sender}): {string.Join("; ", diffs)}. " +
                                       "The host deals the cards, but each player's card values apply on their own scout: use the same config.");
-                Hud.Toast($"{who} has different Campfire Cards settings: {string.Join("; ", diffs)}");
+                Hud.Toast(string.Format(Ui_Toast.SettingsTemplate, who, string.Join("; ", diffs)), warning: true);
             }
             if (NetSend.IsHost && !FromHost(sender))
             {
@@ -139,7 +139,7 @@ namespace CampfireCards.Net
             if (def == null || def.Rarity == CardRarity.Mythic || def.Ability == "MountainsBargain") return;
             if (!Effects.CardsOf(m.actor).Contains(m.cardId)) return;
             Effects.RemoveCard(m.actor, m.cardId);
-            Hud.Toast((m.actor == NetSend.LocalActor ? "You" : NetSend.NameOf(m.actor)) + " sacrificed " + def.Name + " to the mountain");
+            Hud.Toast(string.Format(Ui_Toast.GaveUpTemplate, m.actor == NetSend.LocalActor ? Ui_Toast.You : NetSend.NameOf(m.actor), def.Name, Deck.NameOfAbility("MountainsBargain")));
         }
 
         /// <summary>Phoenix Clause fired for that player: they skip their next campfire pick (only ever their own).</summary>
@@ -193,8 +193,9 @@ namespace CampfireCards.Net
             if (!_bonusFrom.TryUse(sender, LocalCards.Biome)) { Plugin.Verbose($"Ignored repeated bonus stamina from {sender}"); return; }
             var def = System.Array.Find(CardTable.Cards, c => c.Ability == "HerosArrival");
             float max = def != null ? CardSettings.Current.Param(def, "bonus", 0.25f) : 0.25f;
-            me.AddExtraStamina(Mathf.Min(m.amount, max));
-            Hud.Toast($"{Deck.NameOfAbility("HerosArrival").ToUpperInvariant()}! {NetSend.NameOf(sender)} brought you back strong");
+            float got = Mathf.Min(m.amount, max);
+            me.AddExtraStamina(got);
+            Hud.Toast($"{Deck.NameOfAbility("HerosArrival").ToUpperInvariant()}! {NetSend.NameOf(sender)} revived you: +{Ability.Points(got)} extra stamina");
         }
 
         public static void OnSpawnItem(SpawnItem m, int sender)

@@ -41,7 +41,7 @@ namespace CampfireCards.Abilities
         public bool TryUse()
         {
             if (!_charge.TryUse(LocalCards.Biome)) return false;
-            Hud.Toast(Card.Name + " - that one is still in your hand");
+            Hud.Toast(Card.Name + ": that food is still in your hand");
             return true;
         }
 
@@ -51,10 +51,10 @@ namespace CampfireCards.Abilities
         public void HintUncooked()
         {
             if (_charge.Available(LocalCards.Biome) && _hint.TryUse(LocalCards.Biome))
-                Hud.Toast(Card.Name + " only keeps cooked food: cook it at a campfire first");
+                Hud.Toast(Card.Name + ": only cooked food is kept. Cook it at a campfire first.");
         }
 
-        public override string Status(Character me) => _charge.Available(LocalCards.Biome) ? Card.Name + " (cooked food): ready" : Card.Name + ": used this biome";
+        public override AbilityStatus Status(Character me) => BiomeCharge(_charge.Available(LocalCards.Biome), ready: Ui_AbilityBar.Ready + " (cooked food)");
     }
 
     /// <summary>
@@ -81,8 +81,9 @@ namespace CampfireCards.Abilities
             }
             if (worst > 0f)
             {
-                CardStatus.Remove(me, pick, P("bonus", 0.075f));
-                Hud.Toast(Card.Name + ": " + pick + " eased");
+                float amount = P("bonus", 0.075f);
+                CardStatus.Remove(me, pick, amount);
+                Hud.Toast($"{Card.Name}: -{Points(amount)} {StatusName(pick)}");
             }
         }
     }
@@ -99,7 +100,7 @@ namespace CampfireCards.Abilities
             Hud.Toast(Card.Name + ": the extra pocket is not available in this version (only the weight change applies)");
         }
 
-        public override string Status(Character me) => Card.Name + ": extra pocket unavailable";
+        public override AbilityStatus Status(Character me) => AbilityStatus.Wait(Card.Name + ": extra pocket unavailable");
     }
 
     /// <summary>
@@ -193,6 +194,6 @@ namespace CampfireCards.Abilities
             Hud.Toast(Card.Name + ": your third pocket is locked for the rest of the run");
         }
 
-        public override string Status(Character me) => Card.Name + ": pocket 3 locked";
+        public override AbilityStatus Status(Character me) => AbilityStatus.Wait(Card.Name + ": pocket 3 locked");
     }
 }

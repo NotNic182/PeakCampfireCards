@@ -250,7 +250,9 @@ namespace CampfireCards.Cards
             foreach (var actor in m.order)
             {
                 if ((Effects.Flags(actor) & Effects.FlagSkipNext) != 0)
-                    Hud.Toast((actor == NetSend.LocalActor ? "You skip" : NetSend.NameOf(actor) + " skips") + " this pick (" + Deck.NameOfAbility("PhoenixClause") + ")");
+                    Hud.Toast(actor == NetSend.LocalActor
+                        ? string.Format(Ui_Toast.SkipYouTemplate, Deck.NameOfAbility("PhoenixClause"))
+                        : string.Format(Ui_Toast.SkipTemplate, NetSend.NameOf(actor), Deck.NameOfAbility("PhoenixClause")));
                 Effects.SetFlag(actor, (byte)(Effects.FlagSkipNext | Effects.FlagOfferOne), false);
             }
             Plugin.Verbose($"Pick session {SessionId} reason {Reason} mode {mode}: order {string.Join(",", Turns.Order)}");
@@ -303,7 +305,9 @@ namespace CampfireCards.Cards
             else
                 status = string.Format(Ui_WaitingBanner.SimultaneousTemplate, string.Join(", ", Turns.Pending.Select(NetSend.NameOf)));
             int left = Math.Max(0, (int)Math.Ceiling(TimeoutSeconds - (UnityEngine.Time.unscaledTime - TurnStartTime)));
-            var order = new System.Text.StringBuilder(Ui_WaitingBanner.OrderLabel);
+            // Turns: the order players pick in. Simultaneous: everyone picks at once, so it is the deal order (first claim on a Mythic).
+            string label = Turns.Mode == PickMode.Turns ? Ui_WaitingBanner.OrderLabel : Ui_WaitingBanner.DealOrderLabel;
+            var order = new System.Text.StringBuilder(label);
             for (int i = 0; i < Turns.Order.Count; i++)
             {
                 int a = Turns.Order[i];
@@ -311,21 +315,25 @@ namespace CampfireCards.Cards
                 bool done = Turns.HasPicked(a);
                 bool picking = !done && Turns.CanChoose(a);
                 var color = done ? Ui_WaitingBanner.DoneColor : picking ? Ui_WaitingBanner.PickingColor : Ui_WaitingBanner.QueuedColor;
-                if (order.Length > Ui_WaitingBanner.OrderLabel.Length) order.Append("  ·  ");
-                order.Append("<color=#").Append(UiKit.Hex(color)).Append('>').Append(a == me ? "You" : NetSend.NameOf(a)).Append("</color>");
+                if (order.Length > label.Length) order.Append(Ui_WaitingBanner.Separator);
+                order.Append(UiKit.ColorTag(color)).Append(a == me ? Ui_Toast.You : NetSend.NameOf(a)).Append("</color>");
             }
-            Hud.ShowWaiting(status + "  " + left + "s", order.ToString());
+            Hud.ShowWaiting(string.Format(Ui_WaitingBanner.StatusTemplate, status, left), order.ToString());
         }
 
         // ------------------------------------------------------------------ picks
-        /// <summary>The local player clicked a card: ask the host (the host itself decides directly).</summary>
-        public static void LocalPick(byte cardId)
+        /// <summary>
+        /// The local player clicked a card: ask the host (the host itself decides directly). False when nothing was sent
+        /// (not this player's turn, or their pick is already claimed); the picker then stays choosable.
+        /// </summary>
+        public static bool LocalPick(byte cardId)
         {
             int me = NetSend.LocalActor;
-            if (!Turns.CanChoose(me) || Turns.IsClaimed(me)) return;
+            if (!Turns.CanChoose(me) || Turns.IsClaimed(me)) return false;
             Art.Sfx.Play("cardPick");
             if (NetSend.IsHost) HostOnRequest(new PickRequest { sessionId = SessionId, cardId = cardId }, me);
             else NetSend.RaiseToMaster(new PickRequest { sessionId = SessionId, cardId = cardId });
+            return true;
         }
 
         /// <summary>Host: a player's request. Everything is checked here; the sender can only ever pick for themselves.</summary>
@@ -370,8 +378,8 @@ namespace CampfireCards.Cards
             Plugin.Verbose($"Pick: actor {m.actor} card {m.cardId} auto={m.auto} session {m.sessionId}");
             bool added = Effects.AddCard(m.actor, m.cardId, live: true);
             if (added && NetSend.IsHost) HostGrantBonus(m.actor, m.cardId, m.sessionId);
-            string who = m.actor == NetSend.LocalActor ? "You" : NetSend.NameOf(m.actor);
-            Hud.Toast(string.Format(Ui_Toast.TookTemplate, who, Deck.NameOf(m.cardId)) + (m.auto ? " (time ran out)" : ""));
+            string who = m.actor == NetSend.LocalActor ? Ui_Toast.You : NetSend.NameOf(m.actor);
+            Hud.Toast(string.Format(m.auto ? Ui_Toast.AutoTookTemplate : Ui_Toast.TookTemplate, who, Deck.NameOf(m.cardId)));
             if (m.actor == NetSend.LocalActor) HidePickFan();
             Refresh();
         }
@@ -415,10 +423,10 @@ namespace CampfireCards.Cards
             if (got.Count == 0) return;
             if (m.actor == NetSend.LocalActor)
             {
-                Hud.Toast("Bonus: " + string.Join(", ", names));
+                Hud.Toast(string.Format(Ui_Toast.BonusTemplate, Ui_Toast.You, string.Join(", ", names)));
                 CardPicker.Ensure().ShowReveal(got.ToArray());
             }
-            else Hud.Toast(NetSend.NameOf(m.actor) + " gained " + string.Join(", ", names));
+            else Hud.Toast(string.Format(Ui_Toast.BonusTemplate, NetSend.NameOf(m.actor), string.Join(", ", names)));
         }
 
         public static void OnSessionEnd(SessionEnd m)

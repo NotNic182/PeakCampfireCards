@@ -11,15 +11,43 @@ namespace CampfireCards.Generated
         public const float CardStaggerSeconds = 0.08f;
         public const float HoverScale = 1.08f;
         public const float SelectedFlashSeconds = 0.5f;
+        public const float PickPendingRetrySeconds = 5.0f;
         public const float ToastSeconds = 3.0f;
+        public const float WarningToastSeconds = 8.0f;
+        public const float RevealSeconds = 8.0f;
+        public const float HudRefreshSeconds = 0.2f;
+        public const float BuildRefreshSeconds = 0.25f;
         public const float OpeningPickDelaySeconds = 2.0f;
         public static readonly Vector2 ReferenceResolution = new Vector2(1920f, 1080f);
         public const int SortingOrder = 500;
         /// <summary>The UI font file, next to the DLL (assets/fonts in the repo).</summary>
         public const string FontFile = "DarumadropOne-Regular.ttf";
+        public const float FontBoldStyle = 0.3f;
+        public const float FontBoldSpacing = 2.0f;
+        public const float SmallScreenHeight = 900.0f;
+        public const float SmallScreenScale = 1.15f;
+        public const float MinUiScale = 0.75f;
+        public const float MaxUiScale = 1.5f;
+        public const float SafeMargin = 40.0f;
     }
 
-    /// <summary>MenuWindow subclass (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop. Open() when it is the local player's turn; Close() after a pick or timeout; the game blocks movement and shows the cursor through MenuWindow</summary>
+    /// <summary>ui.json palette: the colour roles the rows refer to as "@name".</summary>
+    public static class UiPalette
+    {
+        public static readonly Color Text = new Color(1f, 1f, 1f, 1f);
+        public static readonly Color TextSoft = new Color(1f, 1f, 1f, 0.9f);
+        public static readonly Color Muted = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public static readonly Color Faint = new Color(0.7f, 0.64f, 0.58f, 1f);
+        public static readonly Color Good = new Color(0.62f, 0.92f, 0.45f, 1f);
+        public static readonly Color Bad = new Color(0.98f, 0.52f, 0.47f, 1f);
+        public static readonly Color Accent = new Color(1f, 0.86f, 0.55f, 1f);
+        public static readonly Color Callout = new Color(1f, 0.92f, 0.6f, 1f);
+        public static readonly Color Surface = new Color(0.06f, 0.036f, 0.024f, 0.75f);
+        public static readonly Color SurfaceStrong = new Color(0.045f, 0.03f, 0.02f, 0.88f);
+        public static readonly Color Backdrop = new Color(0.04f, 0.025f, 0.015f, 0.72f);
+    }
+
+    /// <summary>MenuWindow subclass (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop. Open() when it is the local player's turn; Close() after a pick or timeout; the game blocks movement and shows the cursor through MenuWindow. With a controller the first card is selected on open and the D-pad or stick moves between cards (explicit grid navigation), confirm takes the selected card. Reveal and sample fans also close on a click on the backdrop or on cancel.</summary>
     public static class Ui_PickerWindow
     {
         public const string Parent = "root";
@@ -27,10 +55,11 @@ namespace CampfireCards.Generated
         public const string Anchor = "stretch";
         public const string Text = "";
         public const string SoundOn = "cardsAppear";
-        public static readonly Color Backdrop = new Color(0f, 0f, 0f, 0.72f);
+        public static readonly Color Backdrop = new Color(0.04f, 0.025f, 0.015f, 0.72f);
+        public const float DimAlpha = 0.35f;
     }
 
-    /// <summary>TMP bold uppercase white on a soft dark band. reasonTitle depends on the session reason</summary>
+    /// <summary>TMP bold uppercase white on a soft dark band. reasonTitle depends on the session reason (SacrificeTitle names the card that asks for it); narrowed to the canvas less safeMargin and shrunk (to MinFontSize) when the screen is narrow</summary>
     public static class Ui_Title
     {
         public const string Parent = "PickerWindow";
@@ -41,36 +70,48 @@ namespace CampfireCards.Generated
         public const float FontSize = 56.0f;
         public static readonly Color Color = new Color(1f, 1f, 1f, 1f);
         public const string OpeningTitle = "PICK A CARD";
-        public const string CampfireTitle = "CAMPFIRE LIT - PICK A CARD";
-        public const string SacrificeTitle = "MOUNTAIN'S BARGAIN - SACRIFICE A CARD";
+        public const string CampfireTitle = "CAMPFIRE LIT: PICK A CARD";
+        public const string SacrificeTitle = "{0}: GIVE UP A CARD";
         public const string BonusTitle = "BONUS CARDS";
+        public const float MinFontSize = 32.0f;
+        public const float Y = -70.0f;
     }
 
-    /// <summary>TMP light grey. counts down pickTimeoutSeconds; at 0 a random card of the hand is taken</summary>
+    /// <summary>TMP light grey. counts down pickTimeoutSeconds; at 0 a random card of the hand is taken. After a click it shows PendingTemplate until the host confirms; with no answer after pickPendingRetrySeconds the cards can be chosen again and RetryTemplate counts down</summary>
     public static class Ui_Subtitle
     {
         public const string Parent = "PickerWindow";
         public static readonly Vector2 Size = new Vector2(1400f, 40f);
-        public const string Anchor = "below Title, y=-130";
-        public const string Text = "Choose one. {timeLeft}s";
+        public const string Anchor = "below Title, y=-150 (a clear step under the 56 px title)";
+        public const string Text = "Keep one for the whole run. Random pick in {timeLeft}s.";
         public const string SoundOn = "none";
         public const float FontSize = 26.0f;
-        public static readonly Color Color = new Color(0.85f, 0.85f, 0.85f, 1f);
+        public static readonly Color Color = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public const string PendingTemplate = "Taking {0}...";
+        public const string RetryTemplate = "No answer from the host. Pick again. Random pick in {0}s.";
+        public const string RevealText = "Added to your cards. Click anywhere to continue.";
+        public const string RevealPadText = "Added to your cards. Press confirm or back to continue.";
+        public const string SacrificeTemplate = "Pick one to lose for the rest of the run. Random pick in {0}s.";
+        public const float Y = -150.0f;
     }
 
-    /// <summary>HorizontalLayoutGroup, middle center. holds handSize Card elements; slides up over fanSlideInSeconds with cardStaggerSeconds between cards</summary>
+    /// <summary>HorizontalLayoutGroup, middle center. holds handSize Card elements in rows of up to 6; scaled down to fit the canvas (less safeMargin, below TitleBand); slides up over fanSlideInSeconds with cardStaggerSeconds between cards</summary>
     public static class Ui_Fan
     {
         public const string Parent = "PickerWindow";
         public static readonly Vector2 Size = new Vector2(1700f, 600f);
-        public const string Anchor = "center, y=-20";
+        public const string Anchor = "center, y=-20 (one row) or y=-90 (several rows), moved only as far as needed to stay inside the band below the subtitle";
         public const string Text = "";
         public const string SoundOn = "none";
         public const float Spacing = 24.0f;
         public const float SlideFromY = -400.0f;
+        public const float TitleBand = 200.0f;
+        public const float OneRowY = -20.0f;
+        public const float RowsY = -90.0f;
+        public const float MaxPerRow = 6.0f;
     }
 
-    /// <summary>rounded frame in the card's rarity colour (cards.json rarityColors) around a rounded background in the theme bg colour; rarity strip along the top. Button; hover: scale hoverScale and brighten the frame; click: PickMade</summary>
+    /// <summary>rounded frame in the card's rarity colour (cards.json rarityColors) around a rounded background in the theme bg colour; rarity strip along the top. Button; hover or controller selection: scale hoverScale and brighten the frame; click or confirm: PickMade. The chosen card flashes from white to the bright frame over selectedFlashSeconds and keeps that look while the pick is pending; the other cards dim to PickerWindow.DimAlpha</summary>
     public static class Ui_Card
     {
         public const string Parent = "Fan";
@@ -82,6 +123,8 @@ namespace CampfireCards.Generated
         public const float RarityStripHeight = 10.0f;
         public const float HoverFrameBoost = 0.25f;
         public const float CornerRadius = 18.0f;
+        public const float StripInset = 4.0f;
+        public const float HoverVolume = 0.8f;
     }
 
     /// <summary>rounded window in a darker shade of the theme bg with a soft round glow behind the motif; the card's art.json motif animates inside it, clipped to the window. layers animate on unscaled time so they keep moving while the game pauses</summary>
@@ -89,94 +132,106 @@ namespace CampfireCards.Generated
     {
         public const string Parent = "Card";
         public static readonly Vector2 Size = new Vector2(264f, 150f);
-        public const string Anchor = "top, y=-30";
+        public const string Anchor = "top, y=-28 (8 under the rarity strip)";
         public const string Text = "";
         public const string SoundOn = "none";
-        public const float Y = -30.0f;
+        public const float Y = -28.0f;
         public const float WindowDarken = 0.45f;
         public const float GlowAlpha = 0.12f;
         public const float GlowSize = 150.0f;
     }
 
-    /// <summary>small caps rarity name in the rarity colour. none</summary>
+    /// <summary>rarity name in the rarity colour, uppercase and letter-spaced so it reads as a label, not a second name. none</summary>
     public static class Ui_CardRarity
     {
         public const string Parent = "Card";
-        public static readonly Vector2 Size = new Vector2(280f, 22f);
-        public const string Anchor = "top, y=-180";
+        public static readonly Vector2 Size = new Vector2(280f, 20f);
+        public const string Anchor = "top, y=-184: 10 below the art, tucked up against the name it labels";
         public const string Text = "{rarity}";
         public const string SoundOn = "none";
-        public const float FontSize = 15.0f;
-        public const float Y = -180.0f;
+        public const float FontSize = 16.0f;
+        public const float Y = -184.0f;
+        public const float CharacterSpacing = 8.0f;
     }
 
-    /// <summary>TMP bold uppercase white, auto-size. none</summary>
+    /// <summary>uppercase white, up to two lines at full size (shrinks only below that, to MinFontSize), top-aligned. none</summary>
     public static class Ui_CardName
     {
         public const string Parent = "Card";
-        public static readonly Vector2 Size = new Vector2(280f, 40f);
-        public const string Anchor = "top, y=-196";
+        public static readonly Vector2 Size = new Vector2(280f, 66f);
+        public const string Anchor = "top, y=-202";
         public const string Text = "{card.name}";
         public const string SoundOn = "none";
         public const float FontSize = 28.0f;
-        public const float MinFontSize = 16.0f;
+        public const float MinFontSize = 20.0f;
         public static readonly Color Color = new Color(1f, 1f, 1f, 1f);
         public const float Y = -202.0f;
+        public const float LineHeight = 1.05f;
     }
 
-    /// <summary>the card's benefit line in green and its drawback line in red (Mythics show 'No drawback'). none</summary>
+    /// <summary>the card's benefit line in green and its drawback line in red, each with its + / - marker; Mythics show 'No drawback' in the theme accent. auto-size between MinFontSize and FontSize inside the room the name and flavour leave</summary>
     public static class Ui_CardEffects
     {
         public const string Parent = "Card";
         public static readonly Vector2 Size = new Vector2(272f, 150f);
-        public const string Anchor = "top, y=-246";
+        public const string Anchor = "top, Gap below the card name as laid out; down to Gap above the flavour line, or BottomPad above the card's bottom edge";
         public const string Text = "{positive}\n{negative}";
         public const string SoundOn = "none";
-        public const float FontSize = 17.0f;
-        public const float MinFontSize = 11.0f;
+        public const float FontSize = 20.0f;
+        public const float MinFontSize = 15.0f;
         public static readonly Color GoodColor = new Color(0.62f, 0.92f, 0.45f, 1f);
-        public static readonly Color BadColor = new Color(0.95f, 0.45f, 0.42f, 1f);
-        public const float Y = -246.0f;
+        public static readonly Color BadColor = new Color(0.98f, 0.52f, 0.47f, 1f);
         public const string NoDrawback = "No drawback";
         public const string GoodPrefix = "+ ";
         public const string BadPrefix = "- ";
+        public const float LineHeight = 1.15f;
+        public const float Gap = 10.0f;
+        public const float BottomPad = 14.0f;
     }
 
-    /// <summary>TMP italic, muted. none</summary>
+    /// <summary>italic, in the card theme's accent (secondary text taken from the card's own hue); the Color const is for flavour-style text off the card (No drawback on the Current Build). none</summary>
     public static class Ui_CardFlavor
     {
         public const string Parent = "Card";
-        public static readonly Vector2 Size = new Vector2(272f, 46f);
+        public static readonly Vector2 Size = new Vector2(272f, 22f);
         public const string Anchor = "bottom, y=14";
         public const string Text = "{card.flavor}";
         public const string SoundOn = "none";
-        public const float FontSize = 14.0f;
-        public const float MinFontSize = 10.0f;
-        public static readonly Color Color = new Color(0.82f, 0.82f, 0.82f, 0.9f);
+        public const float FontSize = 15.0f;
+        public const float MinFontSize = 12.0f;
+        public static readonly Color Color = new Color(0.8f, 0.74f, 0.68f, 1f);
         public const float Y = 14.0f;
+        public const float Gap = 6.0f;
+        public const float AccentAlpha = 0.9f;
     }
 
-    /// <summary>dark panel, white status line, and below it the pick order (last to the fire first) with each name coloured by state. shown while a session runs to everyone not choosing right now (in turns mode the others, in simultaneous mode everyone who already chose); not a MenuWindow (no input block)</summary>
+    /// <summary>dark panel, white status line, and below it the order (Turns: the pick order; Simultaneous: the deal order, last to the fire first) with each name coloured by state; the status line names who is still choosing. shown while a session runs to everyone not choosing right now (in turns mode the others, in simultaneous mode everyone who already chose); not a MenuWindow (no input block)</summary>
     public static class Ui_WaitingBanner
     {
         public const string Parent = "root";
         public static readonly Vector2 Size = new Vector2(1100f, 84f);
-        public const string Anchor = "top center, y=-120";
+        public const string Anchor = "top center, y=-Top; first of the top stack (banner, toast, prompt), StackGap apart; never wider than the canvas less safeMargin";
         public const string Text = "{status} {timeLeft}s\n{order}";
         public const string SoundOn = "none";
         public const float FontSize = 28.0f;
-        public static readonly Color Panel = new Color(0f, 0f, 0f, 0.6f);
+        public static readonly Color Panel = new Color(0.06f, 0.036f, 0.024f, 0.75f);
         public static readonly Color Color = new Color(1f, 1f, 1f, 1f);
-        public const string Template = "{0} is picking a card...";
-        public const string SimultaneousTemplate = "Waiting for {0}...";
+        public const string Template = "{0} is picking a card";
+        public const string SimultaneousTemplate = "Waiting for {0}";
         public const string OrderLabel = "Pick order: ";
         public const float OrderFontSize = 20.0f;
         public static readonly Color DoneColor = new Color(0.62f, 0.92f, 0.45f, 1f);
         public static readonly Color PickingColor = new Color(1f, 1f, 1f, 1f);
-        public static readonly Color QueuedColor = new Color(0.65f, 0.65f, 0.65f, 1f);
+        public static readonly Color QueuedColor = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public const float MinFontSize = 16.0f;
+        public const string DealOrderLabel = "Dealt in this order: ";
+        public const float Top = 120.0f;
+        public const float StackGap = 8.0f;
+        public const string StatusTemplate = "{0}  {1}s";
+        public const string Separator = "  ·  ";
     }
 
-    /// <summary>one line per card: a square in the card's rarity colour plus its name; a last line names the Current Build key. visible on the island when the player holds any card; hidden in menus</summary>
+    /// <summary>one line per card: a square in the card's rarity colour plus its name; a last line names the Current Build key (or controller button); on a dark rounded panel fitted to the text so it stays readable over snow and sky. visible on the island when the player holds any card; hidden in menus</summary>
     public static class Ui_MyCardsHud
     {
         public const string Parent = "root";
@@ -184,38 +239,81 @@ namespace CampfireCards.Generated
         public const string Anchor = "bottom left, x=20, y=200 (clear of the status icons above the stamina bar)";
         public const string Text = "{myCards}";
         public const string SoundOn = "none";
-        public const float FontSize = 18.0f;
+        public const float FontSize = 20.0f;
         public static readonly Color Color = new Color(1f, 1f, 1f, 0.9f);
         public const string Header = "YOUR CARDS";
-        public const string HintTemplate = "[{0}] current build";
+        public const string HintTemplate = "[{0}] Current Build";
+        public static readonly Color Panel = new Color(0.06f, 0.036f, 0.024f, 0.75f);
+        public const float Padding = 12.0f;
+        public static readonly Color HintColor = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public const float MinFontSize = 14.0f;
+        public const float LineHeight = 1.2f;
+        public const float X = 20.0f;
+        public const float Y = 200.0f;
     }
 
-    /// <summary>dark panel, white text. toastSeconds notices</summary>
+    /// <summary>dark panel, white text. toastSeconds notices; warnings that ask the players to act (settings or version mismatch) stay warningToastSeconds</summary>
     public static class Ui_Toast
     {
         public const string Parent = "root";
         public static readonly Vector2 Size = new Vector2(900f, 60f);
-        public const string Anchor = "top center, y=-200";
+        public const string Anchor = "top center, StackGap below the WaitingBanner's slot; never wider than the canvas less safeMargin";
         public const string Text = "{message}";
         public const string SoundOn = "none";
-        public const float FontSize = 26.0f;
-        public static readonly Color Panel = new Color(0f, 0f, 0f, 0.6f);
+        public const float FontSize = 24.0f;
+        public static readonly Color Panel = new Color(0.06f, 0.036f, 0.024f, 0.75f);
         public static readonly Color Color = new Color(1f, 1f, 1f, 1f);
         public const string TookTemplate = "{0} took {1}";
+        public const float MinFontSize = 16.0f;
+        public const float Padding = 16.0f;
+        public const string AutoTookTemplate = "{0} ran out of time and got {1}";
+        public const string SkipYouTemplate = "You skip this pick ({0})";
+        public const string SkipTemplate = "{0} skips this pick ({1})";
+        public const string BonusTemplate = "{0} also got {1}";
+        public const string GaveUpTemplate = "{0} gave up {1} ({2})";
+        public const string SettingsTemplate = "{0} has different Campfire Cards settings ({1}). Everyone should use the same version and config.";
+        public const string UnreadableTemplate = "Can't read Campfire Cards data from {0}. Everyone needs the same mod version.";
+        public const string You = "You";
     }
 
-    /// <summary>one line per owned ability card: name, key and state (ready, cooldown seconds, used this biome, anchor placed). visible on the island when the player owns an activated or limited ability</summary>
+    /// <summary>one line per owned ability card: name, key (or controller button) and state (ready, cooldown seconds, used this biome, anchor placed), green when ready; on a dark rounded panel fitted to the text. visible on the island when the player owns an activated or limited ability; an ability's line is StatusTemplate (KeyedTemplate when it has a key) with Ready, UsedThisBiome or UsedThisRun for charges</summary>
     public static class Ui_AbilityBar
     {
         public const string Parent = "root";
-        public static readonly Vector2 Size = new Vector2(460f, 120f);
+        public static readonly Vector2 Size = new Vector2(560f, 170f);
         public const string Anchor = "bottom right, x=-24, y=150";
         public const string Text = "{abilityLines}";
         public const string SoundOn = "none";
-        public const float FontSize = 18.0f;
-        public static readonly Color Color = new Color(1f, 1f, 1f, 0.92f);
+        public const float FontSize = 20.0f;
+        public static readonly Color Color = new Color(1f, 1f, 1f, 0.9f);
         public static readonly Color ReadyColor = new Color(0.62f, 0.92f, 0.45f, 1f);
-        public static readonly Color WaitColor = new Color(0.85f, 0.85f, 0.85f, 0.8f);
+        public static readonly Color WaitColor = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public static readonly Color Panel = new Color(0.06f, 0.036f, 0.024f, 0.75f);
+        public const float Padding = 12.0f;
+        public const float MinFontSize = 15.0f;
+        public const float LineHeight = 1.2f;
+        public const float X = -24.0f;
+        public const float Y = 150.0f;
+        public const string Ready = "ready";
+        public const string UsedThisBiome = "used this biome";
+        public const string UsedThisRun = "used";
+        public const string AlreadyUsedThisBiome = "{0}: already used this biome";
+        public const string StatusTemplate = "{0}: {1}";
+        public const string KeyedTemplate = "{0} [{1}]: {2}";
+    }
+
+    /// <summary>bold label in the marker's colour with a black outline (they float over snow and sky), a square, the label and the distance. Scavenger's Instinct: one pooled label per marker, placed every frame; hidden behind the camera or off the island</summary>
+    public static class Ui_Marker
+    {
+        public const string Parent = "root";
+        public static readonly Vector2 Size = new Vector2(320f, 28f);
+        public const string Anchor = "at the world position's screen point (markers sit under every other HUD panel)";
+        public const string Text = "{label} {meters}m";
+        public const string SoundOn = "none";
+        public const float FontSize = 17.0f;
+        public const float Outline = 0.25f;
+        public static readonly Color Color = new Color(1f, 1f, 1f, 1f);
+        public const string Template = "■ {0}  {1}m";
     }
 
     /// <summary>dark panel, white text, for choices outside the card fan (pick a card to sacrifice, empty a slot to lock). stays until the choice is made</summary>
@@ -223,33 +321,61 @@ namespace CampfireCards.Generated
     {
         public const string Parent = "root";
         public static readonly Vector2 Size = new Vector2(900f, 60f);
-        public const string Anchor = "top center, y=-260";
+        public const string Anchor = "top center, StackGap below the Toast's slot; never wider than the canvas less safeMargin";
         public const string Text = "{message}";
         public const string SoundOn = "none";
         public const float FontSize = 24.0f;
-        public static readonly Color Panel = new Color(0f, 0f, 0f, 0.65f);
+        public static readonly Color Panel = new Color(0.06f, 0.036f, 0.024f, 0.75f);
         public static readonly Color Color = new Color(1f, 0.92f, 0.6f, 1f);
+        public const float MinFontSize = 16.0f;
+        public const float Padding = 16.0f;
+        public const string GiveUpLaterTemplate = "{0}: after this pick, you give up one of your cards.";
     }
 
-    /// <summary>dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you. toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI</summary>
+    /// <summary>dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you; both columns open with a header (YOUR CARDS, COMBINED EFFECTS) on the same line; a card's detail lines hang DetailIndent in, so wrapped lines stay under their marker; every combined-effect line carries the same + / - marker as the cards. toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; text that does not fit is split into pages at FontSize (no shrinking), the key steps through the pages and closes after the last; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI</summary>
     public static class Ui_BuildScreen
     {
         public const string Parent = "root";
         public static readonly Vector2 Size = new Vector2(1560f, 860f);
-        public const string Anchor = "center";
+        public const string Anchor = "center; at most Size, and never closer than safeMargin to a screen edge";
         public const string Text = "{cards} | {stats}";
         public const string SoundOn = "none";
-        public static readonly Color Panel = new Color(0.03f, 0.03f, 0.04f, 0.88f);
+        public static readonly Color Panel = new Color(0.045f, 0.03f, 0.02f, 0.88f);
         public const string Title = "CURRENT BUILD";
         public const float TitleFontSize = 34.0f;
-        public const float FontSize = 18.0f;
-        public const float MinFontSize = 11.0f;
+        public const float FontSize = 20.0f;
+        public const float MinFontSize = 14.0f;
         public static readonly Color HeaderColor = new Color(1f, 0.86f, 0.55f, 1f);
         public static readonly Color ActiveColor = new Color(0.62f, 0.92f, 0.45f, 1f);
-        public static readonly Color InactiveColor = new Color(0.6f, 0.6f, 0.6f, 1f);
+        public static readonly Color InactiveColor = new Color(0.7f, 0.64f, 0.58f, 1f);
         public const string StatsHeader = "COMBINED EFFECTS";
         public const string AurasHeader = "FROM TEAMMATES";
-        public const string Hint = "Green helps you, red hurts you. (right now) means a condition or a nearby teammate changes it. Press {0} to close.";
+        public const string Hint = "Green helps you, red hurts you. \"On now\" and \"off now\" mark effects that depend on a condition or a nearby teammate.";
+        public const float LineHeight = 1.25f;
+        public const float HintFontSize = 16.0f;
+        public const float HeaderSizePercent = 115.0f;
+        public const float MetaSizePercent = 80.0f;
+        public const string CloseHint = "Press {0} to close.";
+        public const string NextPageHint = "Page {1} of {2}. Press {0} for the next page.";
+        public const string LastPageHint = "Page {1} of {2}. Press {0} to close.";
+        public const float ColumnGap = 40.0f;
+        public const float LeftShare = 0.56f;
+        public const string OnNow = "(on now)";
+        public const string OffNow = "(off now)";
+        public const string Otherwise = "Otherwise: ";
+        public const string NoChange = "no change";
+        public const string NoCards = "No cards yet. You pick one at the next campfire.";
+        public const string NothingNow = "Your cards change nothing right now.";
+        public const string TeammatesTemplate = "Teammates within {0} m: {1}";
+        public const float DetailIndent = 24.0f;
+        public const float PadX = 30.0f;
+        public const float ColumnsTop = 84.0f;
+        public const float ColumnsBottom = 56.0f;
+        public const float TitleY = -18.0f;
+        public const float TitleHeight = 50.0f;
+        public const float HintY = 14.0f;
+        public const float HintHeight = 36.0f;
+        public const float DetailSizePercent = 88.0f;
     }
 
 }
