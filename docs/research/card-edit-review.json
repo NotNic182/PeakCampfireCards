@@ -1684,7 +1684,7 @@
         "theme": "sky",
         "art": "rope"
       },
-      "implementationNote": "Vanilla carrying normally pauses the death timer. Default interpretation is the gentler 15% of a normal 60-second timer while paused, or 15% faster if native rules already drain it (e.g. high Spores). Victim owner reads carrier cards. Optional clarification offered a harsher 115% normal drain alternative."
+      "implementationNote": "User confirmed the gentler penalty: 15% of a normal 60-second timer while carrying would otherwise pause it. If native rules already drain the timer (e.g. high Spores), their progress remains 15% faster. Victim owner reads carrier cards."
     },
     {
       "id": 44,
@@ -2226,7 +2226,7 @@
       "hungerBuildupMultiplier": 1.2
     }
   },
-  "carriedDeathDefaultInterpretation": "15% normal drain while vanilla pauses, 15% faster native progress when active; optional clarification pending, gentler default chosen.",
+  "carriedDeathDefaultInterpretation": "User confirmed: 15% normal drain while vanilla pauses; 15% faster native progress when already active.",
   "validation": {
     "csharpTestsPassed": 148,
     "catalogTestsPassed": 5,
@@ -2235,5 +2235,6 @@
     "fullReleaseBuildErrors": 0,
     "referenceGameVersion": "2.5.a",
     "runtimeTested": false
-  }
+  },
+  "carriedDeathSelectionConfirmed": true
 }
