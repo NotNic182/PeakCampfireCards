@@ -87,19 +87,15 @@ namespace CampfireCards.Abilities
         }
     }
 
-    /// <summary>
-    /// Pack Rat: the heavier carried items are a modifier. The extra inventory slot is NOT implemented: PEAK hard-wires
-    /// slot id 3 to the backpack in its inventory code, HUD, hotbar keys and network sync (see README "Known limitations").
-    /// The card is disabled by default in the config for that reason.
-    /// </summary>
-    public sealed class Ability_PackRat : Ability
+    /// <summary>Half weight in exchange for blocking new use of pocket three; existing items can still be taken out.</summary>
+    public sealed class Ability_PocketTradeoff : Ability
     {
         public override void OnAcquired(Character me)
         {
-            Hud.Toast(Card.Name + ": the extra pocket is not available in this version (only the weight change applies)");
+            Hud.Toast(Card.Name + ": your third pocket is locked for the rest of the run");
         }
 
-        public override string Status(Character me) => Card.Name + ": extra pocket unavailable";
+        public override string Status(Character me) => Card.Name + ": pocket 3 locked";
     }
 
     /// <summary>
@@ -183,16 +179,26 @@ namespace CampfireCards.Abilities
     }
 
     /// <summary>
-    /// Double Deal: the host deals 2 bonus cards (never card-draw cards, see PickSession). The locked pocket is enforced
-    /// by the host in Hooks.OnAddItemPrefix; an item already in that pocket stays there.
+    /// Double Deal: the host deals two bonus cards; the owner rolls one persistent modifier and syncs it.
     /// </summary>
     public sealed class Ability_DoubleDeal : Ability
     {
         public override void OnAcquired(Character me)
         {
-            Hud.Toast(Card.Name + ": your third pocket is locked for the rest of the run");
+            int actor = NetSend.LocalActor;
+            byte variant = (byte)Random.Range(1, 5);
+            if (!Effects.Penalties.TrySet(actor, variant)) return;
+            NetSend.Raise(new CardPenalty { actor = actor, variant = variant }, Photon.Realtime.ReceiverGroup.All);
+            Hud.Toast(Status(me));
         }
 
-        public override string Status(Character me) => Card.Name + ": pocket 3 locked";
+        public override string Status(Character me)
+        {
+            byte v = Effects.Penalties.Of(NetSend.LocalActor);
+            if (!PenaltyLedger.Valid(v)) return Card.Name + ": syncing drawback";
+            var channel = CardPenaltyRules.ChannelFor(v);
+            float value = S.Param(Card, CardPenaltyRules.Parameter(v), v <= 2 ? 1.15f : 1.2f);
+            return Card.Name + ": " + BuildStats.Say(value, true, null, StatWords.Of(channel));
+        }
     }
 }

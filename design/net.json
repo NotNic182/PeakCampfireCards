@@ -86,7 +86,7 @@
      "type": "byte"
     }
    ],
-   "purpose": "a pick session begins: pick order (actor numbers, last to the fire first; also the dealing order), each player's dealt hand (handSize card ids per player, in order), the host's timer and mode (Core.PickMode: 0 everyone chooses at once, 1 one at a time). reason: 0 opening, 1 campfire; segment: the campfire segment (255 = opening), so every client knows which session started and a new host can continue the queue",
+   "purpose": "a pick session begins: pick order (actor numbers, last to the fire first; also the dealing order), each player's dealt hand (handSize card ids per player, in order), the host's timer and mode (Core.PickMode: 0 everyone chooses at once, 1 one at a time). reason: 0 opening, 1 campfire; segment: the campfire segment (255 = opening), so every client knows which session started and a new host can continue the queue; timeoutSeconds = 0 means unlimited time; ghosts are excluded from the order",
    "handler": "OnPickSessionStart"
   },
   {
@@ -142,6 +142,10 @@
     {
      "name": "sessionId",
      "type": "int"
+    },
+    {
+     "name": "penaltyVariants",
+     "type": "byte[]"
     }
    ],
    "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card)",
@@ -385,6 +389,59 @@
    ],
    "purpose": "a player asks to take a card from their offer; the host validates it (session, turn, hand, not picked or claimed yet) and answers everyone with PickMade",
    "handler": "OnPickRequest"
+  },
+  {
+   "code": 107,
+   "name": "PickSkipped",
+   "sender": "host",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "sessionId",
+     "type": "int"
+    },
+    {
+     "name": "actor",
+     "type": "int"
+    }
+   ],
+   "purpose": "the host removes a scout who died before choosing; every client advances the session without granting a card; stale and repeated skips do nothing",
+   "handler": "OnPickSkipped"
+  },
+  {
+   "code": 108,
+   "name": "CardPenalty",
+   "sender": "the card owner",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "actor",
+     "type": "int"
+    },
+    {
+     "name": "variant",
+     "type": "byte"
+    }
+   ],
+   "purpose": "Clown Luggage Special chooses one permanent penalty; its first valid choice is retained and included in state sync.",
+   "handler": "OnCardPenalty"
+  },
+  {
+   "code": 109,
+   "name": "CardRewardUsed",
+   "sender": "host",
+   "receivers": "All",
+   "reliable": true,
+   "fields": [
+    {
+     "name": "actor",
+     "type": "int"
+    }
+   ],
+   "purpose": "The host spawned the one-time Balloon Bunch; retain the used bit in pickFlags for state sync and host migration.",
+   "handler": "OnCardRewardUsed"
   }
  ]
 }

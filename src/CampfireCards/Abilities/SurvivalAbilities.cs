@@ -8,37 +8,9 @@ using UnityEngine;
 
 namespace CampfireCards.Abilities
 {
-    /// <summary>Emergency Purge: once per biome, when Poison, Spores or Drowsy reaches 35, remove 25 of that one status.</summary>
-    public sealed class Ability_EmergencyPurge : Ability
-    {
-        private readonly Charge _charge = new Charge(perBiome: true);
-        private readonly Dictionary<CharacterAfflictions.STATUSTYPE, AboveLatch> _latches = new Dictionary<CharacterAfflictions.STATUSTYPE, AboveLatch>
-        {
-            { CharacterAfflictions.STATUSTYPE.Poison, new AboveLatch() },
-            { CharacterAfflictions.STATUSTYPE.Spores, new AboveLatch() },
-            { CharacterAfflictions.STATUSTYPE.Drowsy, new AboveLatch() },
-        };
-
-        public override void Tick(Character me, float dt)
-        {
-            if (me.data.dead) return;
-            float threshold = P("threshold", 0.35f);
-            foreach (var kv in _latches)
-            {
-                if (!kv.Value.Update(CardStatus.Get(me, kv.Key), threshold - 0.0001f)) continue;
-                if (!_charge.TryUse(LocalCards.Biome)) continue;
-                CardStatus.Remove(me, kv.Key, P("remove", 0.2f));
-                Ui.Hud.Toast(Card.Name + ": " + kv.Key + " cleansed");
-                return;   // only the status that triggered
-            }
-        }
-
-        public override string Status(Character me) => _charge.Available(LocalCards.Biome) ? Card.Name + ": ready" : Card.Name + ": used this biome";
-    }
-
     /// <summary>
     /// Phoenix Clause: once per run, a fall that would knock you out (or a kill plane) is cancelled; you are moved to a
-    /// recent safe foothold with 40 Injury and skip your next campfire pick.
+    /// recent safe foothold without extra Injury and skip your next campfire pick.
     /// </summary>
     public sealed class Ability_PhoenixClause : Ability
     {
@@ -80,7 +52,7 @@ namespace CampfireCards.Abilities
             }
             _charge.TryUse(0);
             _shieldUntil = Time.time + 4f;
-            Revival.TeleportTo(me, pos, P("injury", 0.4f));
+            Revival.TeleportTo(me, pos, -1f); // prevents this fall; does not add or clear unrelated Injury
             NetSend.Raise(new SkipNextPick { actor = NetSend.LocalActor }, Photon.Realtime.ReceiverGroup.All);
             Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! You skip your next card pick.");
             return true;
@@ -111,7 +83,7 @@ namespace CampfireCards.Abilities
 
         public override void OnRemoved(Character me) => _q.Clear();
 
-        public override string Status(Character me) => _q.Pending > 0 ? $"{Card.Name}: {_q.Pending} pending" : null;
+        public override string Status(Character me) => _q.Pending > 0 ? $"{Card.Name}: {_q.Pending} delayed fall hit(s) queued" : null;
     }
 
     /// <summary>Safety Net: once per biome, press the key to place an anchor on safe ground; going down revives you there with 40 Injury.</summary>
@@ -166,8 +138,8 @@ namespace CampfireCards.Abilities
         public override string Status(Character me)
         {
             string key = Plugin.SafetyNetKeyLabel;
-            if (_hasAnchor) return $"{Card.Name} [{key}]: anchor placed";
-            return $"{Card.Name} [{key}]: " + (_charge.Available(LocalCards.Biome) ? "place anchor" : "used this biome");
+            if (_hasAnchor) return $"{Card.Name} [{key}]: revive anchor placed";
+            return $"{Card.Name} [{key}]: " + (_charge.Available(LocalCards.Biome) ? "place anchor on flat ground" : "used this biome");
         }
     }
 
@@ -268,7 +240,7 @@ namespace CampfireCards.Abilities
             var me = Character.localCharacter;
             if (a == null || me == null || victimActor == NetSend.LocalActor) return;
             if (!a._charge.TryUse(LocalCards.Biome)) return;
-            float bonus = a.P("bonus", 0.2f);
+            float bonus = a.P("bonus", 1f);
             me.AddExtraStamina(bonus);
             NetSend.RaiseTo(new BonusStamina { amount = bonus, reason = 1 }, victimActor);
             Ui.Hud.Toast(a.Card.Name.ToUpperInvariant() + "!");

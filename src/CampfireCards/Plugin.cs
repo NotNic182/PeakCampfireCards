@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.5.0";
+        public const string Version = "0.6.1";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -37,13 +37,14 @@ namespace CampfireCards
         public static ConfigEntry<bool> DevKeys;
         public static ConfigEntry<string> DevGrantCard;
         public static ConfigEntry<Key> BloodBatteryKey;
+        public static ConfigEntry<Key> SecondWindKey;
+        public static ConfigEntry<Key> EmergencyPurgeKey;
         public static ConfigEntry<Key> SafetyNetKey;
         public static ConfigEntry<Key> BuildScreenKey;
 
-        /// <summary>Cards that ship disabled because part of their effect cannot be built on PEAK's current code (see README).</summary>
-        private static readonly HashSet<string> DisabledByDefault = new HashSet<string> { "PackRat" };
-
         public static string BloodBatteryKeyLabel => BloodBatteryKey != null ? BloodBatteryKey.Value.ToString() : "?";
+        public static string SecondWindKeyLabel => SecondWindKey != null ? SecondWindKey.Value.ToString() : "?";
+        public static string EmergencyPurgeKeyLabel => EmergencyPurgeKey != null ? EmergencyPurgeKey.Value.ToString() : "?";
         public static string SafetyNetKeyLabel => SafetyNetKey != null ? SafetyNetKey.Value.ToString() : "?";
         public static string BuildScreenKeyLabel => BuildScreenKey != null ? BuildScreenKey.Value.ToString() : "?";
 
@@ -59,11 +60,17 @@ namespace CampfireCards
             CustomFont = Config.Bind("General", "CustomFont", true,
                 "Show all Campfire Cards text in the bundled Darumadrop One font. Off: the game's own font. Takes effect on the next launch.");
             PickTimeoutSeconds = Config.Bind("General", "PickTimeoutSeconds", UiTiming.PickTimeoutSeconds,
-                "Safety timer: if a player has not chosen after this many seconds, a random card of their offer is taken (minimum 5). The host's value is used for everyone.");
+                "Seconds to choose a card (default 60). Set to 0 for unlimited time, with no automatic pick. Positive values have a minimum of 5. The host's value is used for everyone.");
+            var timerVersion = Config.Bind("General", "PickTimerSettingsVersion", 0,
+                "Tracks the one-time upgrade from the old 30-second default to 60 seconds. Leave this value as it is.");
+            PickTimeoutSeconds.Value = PickTiming.UpgradeLegacyDefault(PickTimeoutSeconds.Value, timerVersion.Value);
+            timerVersion.Value = 1;
             PickModeSetting = Config.Bind("General", "PickMode", PickMode.Simultaneous,
                 "Simultaneous: everyone chooses at the same time (the last to reach the fire is still dealt first and listed first). " +
                 "Turns: one player at a time, last to the fire first. The host's choice is used for everyone.");
-            BloodBatteryKey = Config.Bind("Keys", "BloodBattery", Key.B, "Activates Bootleg Scoutmaster Bugle (when you own it).");
+            BloodBatteryKey = Config.Bind("Keys", "BloodBattery", Key.B, "Activates Bootleg Scoutmaster Bugle (once per biome).");
+            SecondWindKey = Config.Bind("Keys", "SecondWind", Key.V, "Activates Nic of Time below its stamina threshold (five-minute cooldown).");
+            EmergencyPurgeKey = Config.Bind("Keys", "EmergencyPurge", Key.K, "Activates Discount Cure-All at 35+ Poison, Spores or Drowsy (once per biome).");
             SafetyNetKey = Config.Bind("Keys", "SafetyNet", Key.N, "Places the Budget Checkpoint Flag anchor (when you own it).");
             BuildScreenKey = Config.Bind("Keys", "BuildScreen", Key.J, "Opens and closes the Current Build screen (your cards and their combined effects).");
             VerboseLog = Config.Bind("Debug", "VerboseLog", false, "Log every card event.");
@@ -72,7 +79,6 @@ namespace CampfireCards
             DevGrantCard = Config.Bind("Debug", "GrantCard", "", "Card keys granted by F8 with DevKeys on, comma separated (for example GeckoGrip, BloodBattery). Re-read on every press.");
 
             CardSettings.Current = LoadSettings(Config);
-            WarnAboutUnbuiltCards(CardSettings.Current);
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
@@ -86,9 +92,9 @@ namespace CampfireCards
         /// <summary>
         /// The card balance this build ships. A config written for an older balance gets every card's numbers (modifier
         /// values and parameters) reset to the new defaults once; Enabled choices and every other setting are kept.
-        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1 (34 cards without a drawback).
+        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign.
         /// </summary>
-        public const int CardBalanceVersion = 2;
+        public const int CardBalanceVersion = 3;
 
         public static CardSettings LoadSettings(ConfigFile cfg)
         {
@@ -116,9 +122,7 @@ namespace CampfireCards
             {
                 var c = cards[i];
                 string section = "Card - " + c.Key;
-                bool defaultOn = !DisabledByDefault.Contains(c.Key);
-                string note = defaultOn ? "" : " Off by default: its extra inventory slot cannot be added to PEAK yet, only the weight drawback works.";
-                s.Enabled[i] = cfg.Bind(section, "Enabled", defaultOn, $"{c.Name} ({c.Rarity}) can be offered.{note}").Value;
+                s.Enabled[i] = cfg.Bind(section, "Enabled", true, $"{c.Name} ({c.Rarity}) can be offered.").Value;
                 var seen = new Dictionary<string, int>();
                 for (int m = 0; m < c.Mods.Length; m++)
                 {
@@ -143,14 +147,6 @@ namespace CampfireCards
             return s;
         }
 
-        /// <summary>A card from DisabledByDefault was switched on: only its drawback works, say so once in the log.</summary>
-        private static void WarnAboutUnbuiltCards(CardSettings s)
-        {
-            foreach (var c in CardTable.Cards)
-                if (DisabledByDefault.Contains(c.Key) && s.IsEnabled(c))
-                    Log.LogWarning($"{c.Name} is enabled in the config, but its benefit cannot be built on this version of PEAK: only its drawback applies (see README, Known limitations).");
-        }
-
         /// <summary>A card value from the config, first put back to its default when the balance changed.</summary>
         private static float Current(ConfigEntry<float> entry, bool reset)
         {
@@ -169,6 +165,8 @@ namespace CampfireCards
                 if (Time.frameCount % 300 == 0) Log.LogError("Tick: " + e);
             }
         }
+
+        private void OnDestroy() => Art.CustomCardImages.Clear();
 
         public static Coroutine Run(IEnumerator routine) => Instance.StartCoroutine(routine);
 

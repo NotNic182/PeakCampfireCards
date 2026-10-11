@@ -19,6 +19,13 @@ namespace CampfireCards.Core
         /// <summary>Weight of the item in hand (Hooks.OnUpdateWeight): carried-item weight times held-item weight.</summary>
         public static float HeldItemWeight(ModResult r) => r[Channel.itemWeight] * r[Channel.heldItemWeight];
 
+        public static float CarriedWeight(ModResult r, float carried, float held, float backpackContents, float scout, float stuck) =>
+            (r[Channel.itemWeight] * (carried + held * r[Channel.heldItemWeight] + backpackContents * r[Channel.backpackItemWeight])
+                + scout * r[Channel.carryScoutWeight] + stuck) * r[Channel.totalWeight];
+        public static float StaminaCost(ModResult r, bool climbing) => r[Channel.staminaUsage] * (climbing ? r[Channel.climbStamina] : 1f);
+        public static float FoodNutrition(ModResult r, bool cooked) =>
+            r[Channel.foodHunger] * (cooked ? r[Channel.cookedFoodHunger] : r[Channel.uncookedFoodHunger]);
+
         public static float Thorns(ModResult r) => StatusGain(r, Channel.thornsRate);
 
         /// <summary>
@@ -91,7 +98,7 @@ namespace CampfireCards.Core
             More = "Other statuses build up {0} faster", Less = "Other statuses build up {0} slower", Never = "Other statuses never build up", HigherIsBetter = false,
         };
 
-        /// <summary>Channels the game cannot apply yet (preflight KNOWN_UNAPPLIED; Pack Rat's slot): never shown as a stat.</summary>
+        /// <summary>Reserved channels without a game implementation are never shown as applied stats.</summary>
         private static readonly string[] NotApplied = { "invSlots" };
 
         private static readonly Row[] Rows = BuildRows();
@@ -103,17 +110,21 @@ namespace CampfireCards.Core
                 Ch(Channel.sprintSpeed),
                 Ch(Channel.jumpHeight),
                 Ch(Channel.climbSpeed),
-                Ch(Channel.climbStamina),
-                Ch(Channel.sprintStamina),
+                Mul("Climbing stamina cost", r => StatComposites.StaminaCost(r, true), Channel.climbStamina, Channel.staminaUsage),
+                Mul("Sprinting stamina cost", r => r[Channel.sprintStamina] * r[Channel.staminaUsage], Channel.sprintStamina, Channel.staminaUsage),
+                Ch(Channel.staminaUsage),
                 Ch(Channel.regenRate),
                 Ch(Channel.regenDelay, "seconds"),
                 Ch(Channel.maxStamina, "stamina"),
                 Ch(Channel.bonusStaminaGain),
                 Mul("Fall Injury received", r => StatComposites.Injury(r, true), Channel.fallInjury, Channel.allInjury),
                 Mul("Other Injury received", r => StatComposites.Injury(r, false), Channel.nonFallInjury, Channel.allInjury),
-                Mul("Carried item weight", r => r[Channel.itemWeight], Channel.itemWeight),
-                Mul("Item in hand weight", StatComposites.HeldItemWeight, Channel.itemWeight, Channel.heldItemWeight),
-                Ch(Channel.carryScoutWeight),
+                Mul("Carried item weight", r => r[Channel.itemWeight] * r[Channel.totalWeight], Channel.itemWeight, Channel.totalWeight),
+                Mul("Item in hand weight", r => StatComposites.HeldItemWeight(r) * r[Channel.totalWeight], Channel.heldItemWeight, Channel.itemWeight, Channel.totalWeight),
+                Mul("Backpack contents weight", r => r[Channel.itemWeight] * r[Channel.backpackItemWeight] * r[Channel.totalWeight], Channel.backpackItemWeight, Channel.itemWeight, Channel.totalWeight),
+                Mul("Carried scout weight", r => r[Channel.carryScoutWeight] * r[Channel.totalWeight], Channel.carryScoutWeight, Channel.totalWeight),
+                Mul("Cooked food nutrition", r => StatComposites.FoodNutrition(r, true), Channel.cookedFoodHunger, Channel.foodHunger),
+                Mul("Uncooked food nutrition", r => StatComposites.FoodNutrition(r, false), Channel.uncookedFoodHunger, Channel.foodHunger),
             };
             foreach (var rate in new[] { Channel.hungerRate, Channel.coldRate, Channel.heatRate, Channel.poisonRate, Channel.sporesRate,
                                          Channel.drowsyRate, Channel.thornsRate, Channel.curseRate, Channel.petrifyRate })

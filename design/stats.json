@@ -12,7 +12,10 @@
     "appliesVia": "where the mod applies it in the game",
     "designNote": "notes on units or edge cases"
   },
-  "_optionalEmpty": ["designNote", "never"],
+  "_optionalEmpty": [
+    "designNote",
+    "never"
+  ],
   "rows": [
     {"id": "maxStamina", "label": "Max stamina", "op": "add", "better": "higher", "more": "Your stamina bar is {0} longer", "less": "Your stamina bar is {0} shorter", "never": "", "capGroup": "maxStamina", "appliesVia": "Harmony postfix on Character.GetMaxStamina (owner)", "designNote": "+20 in the spec = +0.20 here"},
     {"id": "climbStamina", "label": "Climbing stamina cost", "op": "mul", "better": "lower", "more": "Climbing tires you {0} more", "less": "Climbing tires you {0} less", "never": "Climbing never tires you", "capGroup": "staminaCost", "appliesVia": "climbing stamina usage (wall, rope and vine) on the owner", "designNote": "Mythic override can set it to 0"},
@@ -52,6 +55,14 @@
     {"id": "healSelfUse", "label": "Injury healed by items (used on yourself)", "op": "mul", "better": "higher", "more": "Healing items you use on yourself heal {0} more", "less": "Healing items you use on yourself heal {0} less", "never": "", "capGroup": "none", "appliesVia": "the healer's multiplier when healing themselves", "designNote": ""},
     {"id": "bonusStaminaGain", "label": "Bonus stamina received", "op": "mul", "better": "higher", "more": "You get {0} more extra (yellow) stamina", "less": "You get {0} less extra (yellow) stamina", "never": "", "capGroup": "none", "appliesVia": "every bonus stamina grant", "designNote": ""},
     {"id": "invSlots", "label": "Inventory slots", "op": "add", "better": "higher", "more": "{0} extra pockets", "less": "{0} fewer pockets", "never": "", "capGroup": "none", "appliesVia": "normal inventory slots", "designNote": ""},
-    {"id": "huddleStrength", "label": "Huddle radius and cold removal", "op": "mul", "better": "higher", "more": "Huddling warms you {0} more, from farther away", "less": "Huddling warms you {0} less, from closer", "never": "", "capGroup": "none", "appliesVia": "warming near teammates", "designNote": ""}
+    {"id": "huddleStrength", "label": "Huddle radius and cold removal", "op": "mul", "better": "higher", "more": "Huddling warms you {0} more, from farther away", "less": "Huddling warms you {0} less, from closer", "never": "", "capGroup": "none", "appliesVia": "warming near teammates", "designNote": ""},
+    {"id": "staminaUsage", "label": "All stamina costs", "op": "mul", "better": "lower", "more": "Every stamina use costs {0} more", "less": "Every stamina use costs {0} less", "never": "Using stamina costs nothing", "capGroup": "none", "appliesVia": "Character.UseStamina for every action", "designNote": ""},
+    {"id": "dynamiteInjury", "label": "Dynamite Injury", "op": "mul", "better": "lower", "more": "Dynamite explosions hurt {0} more", "less": "Dynamite explosions hurt {0} less", "never": "Dynamite explosions never hurt", "capGroup": "none", "appliesVia": "Injury from an AOE created by Dynamite.RPC_Explode", "designNote": ""},
+    {"id": "thornRemovalTime", "label": "Thorn removal time", "op": "mul", "better": "lower", "more": "Thorns take {0} longer to remove", "less": "Thorns take {0} less time to remove", "never": "", "capGroup": "none", "appliesVia": "ThornOnMe.GetInteractTime and GetPopOutTime", "designNote": ""},
+    {"id": "reviveCurse", "label": "Curse added by revival", "op": "mul", "better": "lower", "more": "Revival adds {0} more Curse", "less": "Revival adds {0} less Curse", "never": "Reviving adds no Curse", "capGroup": "none", "appliesVia": "Character.ApplyPostReviveStatus Curse delta", "designNote": ""},
+    {"id": "totalWeight", "label": "All carried weight", "op": "mul", "better": "lower", "more": "All carried weight is {0} heavier", "less": "All carried weight is {0} lighter", "never": "All carried weight is zero", "capGroup": "none", "appliesVia": "Weight rebuilt from items, backpack, scout and stuck objects", "designNote": ""},
+    {"id": "backpackItemWeight", "label": "Backpack content weight", "op": "mul", "better": "lower", "more": "Backpack contents weigh {0} more", "less": "Backpack contents weigh {0} less", "never": "Backpack contents weigh nothing", "capGroup": "none", "appliesVia": "BackpackData.itemSlots weights independently of the container", "designNote": ""},
+    {"id": "uncookedFoodHunger", "label": "Uncooked food nutrition", "op": "mul", "better": "higher", "more": "Uncooked food fills you up {0} more", "less": "Uncooked food fills you up {0} less", "never": "", "capGroup": "none", "appliesVia": "Action_RestoreHunger only when the food is uncooked", "designNote": ""},
+    {"id": "carriedDeathRate", "label": "Carried scout death timer", "op": "mul", "better": "lower", "more": "A carried scout's death timer advances {0} faster", "less": "A carried scout's death timer advances {0} slower", "never": "", "capGroup": "none", "appliesVia": "Character.HandleDeath owner-side timer delta while carried", "designNote": "Native timer normally pauses while carried: excess over 1 drains that fraction of a normal 60-second rate. Active native progress is scaled by this multiplier."}
   ]
 }

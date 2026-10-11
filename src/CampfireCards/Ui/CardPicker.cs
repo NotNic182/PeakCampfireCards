@@ -62,6 +62,7 @@ namespace CampfireCards.Ui
         private const int MaxPerRow = 6;
         private readonly List<GameObject> _cards = new List<GameObject>();
         private float _deadline;
+        private bool _hasTimer;
         private bool _picked;
         private byte[] _hand;
         public Mode Current { get; private set; }
@@ -149,7 +150,7 @@ namespace CampfireCards.Ui
             }
             _onSacrifice = onChosen;
             _title.text = Ui_Title.SacrificeTitle;
-            float timeout = Plugin.PickTimeoutSeconds != null ? Plugin.PickTimeoutSeconds.Value : UiTiming.PickTimeoutSeconds;
+            float timeout = PickSession.TimeoutSeconds;
             Open(cards, timeout, Mode.Sacrifice);
             Hud.HidePrompt();
         }
@@ -168,6 +169,7 @@ namespace CampfireCards.Ui
             Current = mode;
             _hand = hand;
             _picked = false;
+            _hasTimer = timeoutSeconds > 0f;
             _deadline = Time.unscaledTime + timeoutSeconds;
             foreach (var c in _cards) Destroy(c);
             _cards.Clear();
@@ -260,15 +262,15 @@ namespace CampfireCards.Ui
             switch (Current)
             {
                 case Mode.Sacrifice:
-                    _subtitle.text = "Choose a card to give up. " + Mathf.CeilToInt(left) + "s";
-                    if (left <= 0f && _hand != null && _hand.Length > 0) Choose(_hand[Random.Range(0, _hand.Length)]);
+                    _subtitle.text = "Choose a card to give up." + (_hasTimer ? " " + Mathf.CeilToInt(left) + "s" : " Take your time.");
+                    if (_hasTimer && left <= 0f && _hand != null && _hand.Length > 0) Choose(_hand[Random.Range(0, _hand.Length)]);
                     break;
                 case Mode.Reveal:
                     _subtitle.text = "Added to your cards. Click to continue.";
                     if (left <= 0f) HideNow();
                     break;
                 default:
-                    _subtitle.text = Ui_Subtitle.Text.Replace("{timeLeft}", Mathf.CeilToInt(left).ToString());
+                    _subtitle.text = _hasTimer ? Ui_Subtitle.Text.Replace("{timeLeft}", Mathf.CeilToInt(left).ToString()) : Ui_Subtitle.UntimedText;
                     break;
             }
         }
@@ -304,7 +306,7 @@ namespace CampfireCards.Ui
             window.gameObject.AddComponent<Mask>().showMaskGraphic = true;
             var glow = UiKit.Panel(window.transform, "Glow", Vector2.one * Ui_CardArt.GlowSize, new Color(accent.r, accent.g, accent.b, Ui_CardArt.GlowAlpha), Shapes.Get(ArtShape.circle));
             UiKit.Place(glow.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
-            CardArt.Build(window.rectTransform, def.Art, theme);
+            CardArt.Build(window.rectTransform, def.Art, theme, def.Key);
 
             // rarity name in the rarity colour (ui.json CardRarity)
             var rarityText = UiKit.Text(inner.transform, "RarityName", Ui_CardRarity.Size, Ui_CardRarity.FontSize, rarity, TextAlignmentOptions.Center, FontStyles.Bold);
@@ -321,6 +323,8 @@ namespace CampfireCards.Ui
             var effects = UiKit.Text(inner.transform, "Effects", Ui_CardEffects.Size, Ui_CardEffects.FontSize, Color.white, TextAlignmentOptions.Top);
             UiKit.Place(effects.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, Ui_CardEffects.Y));
             effects.enableAutoSizing = true; effects.fontSizeMin = Ui_CardEffects.MinFontSize; effects.fontSizeMax = Ui_CardEffects.FontSize;
+            // Reserve the footer only on cards with flavor, so it cannot overlap the effect text.
+            if (!string.IsNullOrEmpty(def.Flavor)) effects.rectTransform.sizeDelta = new Vector2(Ui_CardEffects.Size.x, 108f);
             effects.text = EffectText(def);
 
             // flavour (ui.json CardFlavor)
@@ -338,24 +342,17 @@ namespace CampfireCards.Ui
             return slot;
         }
 
-        /// <summary>The card's benefit and drawback lines exactly as written in cards.json.</summary>
+        /// <summary>The card's benefit and drawback with its live key binding.</summary>
         public static string EffectText(CardDef def)
         {
             var sb = new StringBuilder();
             sb.Append("<color=#").Append(UiKit.Hex(Ui_CardEffects.GoodColor)).Append('>')
-              .Append(Prefixed(Ui_CardEffects.GoodPrefix, def.Positive)).Append("</color>\n");
+              .Append("<b>").Append(Ui_CardEffects.GoodPrefix).Append("</b>").Append(CardPresentation.Text(def, def.Positive)).Append("</color>\n");
             bool none = string.IsNullOrEmpty(def.Negative);
-            string bad = none ? Ui_CardEffects.NoDrawback : Prefixed(Ui_CardEffects.BadPrefix, def.Negative);
+            string bad = none ? Ui_CardEffects.NoDrawback : "<b>" + Ui_CardEffects.BadPrefix + "</b>" + CardPresentation.Text(def, def.Negative);
             sb.Append("<color=#").Append(UiKit.Hex(none ? Ui_CardFlavor.Color : Ui_CardEffects.BadColor)).Append('>').Append(bad).Append("</color>");
             return sb.ToString();
         }
 
-        /// <summary>The +/- marker, unless the text already starts with a sign ("+20 bonus stamina", "+10 Curse").</summary>
-        private static string Prefixed(string prefix, string text)
-        {
-            if (string.IsNullOrEmpty(text)) return text;
-            char c = text[0];
-            return c == '+' || c == '-' ? text : prefix + text;
-        }
     }
 }

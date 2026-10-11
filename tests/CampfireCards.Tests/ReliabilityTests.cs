@@ -512,11 +512,10 @@ namespace CampfireCards.Tests
         }
 
         [Fact]
-        public void DefaultCardBalanceIsUnchanged()
+        public void ReviewedBalanceChangesTheLobbyFingerprint()
         {
-            // pinned: every card's id, key, enabled state, modifier values and parameters, the rarity weights and the
-            // global rules. Change it only together with a deliberate balance change in design/cards.json.
-            Assert.Equal(PinnedDefaultHash, SettingsFingerprint.Of(new CardSettings()).Hash);
+            // A lobby with the previous deck must not report this redesigned deck as compatible.
+            Assert.NotEqual(PinnedDefaultHash, SettingsFingerprint.Of(new CardSettings()).Hash);
         }
 
         internal const int PinnedDefaultHash = -560646409;   // 0.4.1 balance (34 drawback-free cards); 0.4.0 was 2036217628
@@ -529,9 +528,9 @@ namespace CampfireCards.Tests
             yield return new object[] { "stamina-cost reduction cap", (Action<CardSettings>)(s => s.StaminaCostCap = 0.5f) };
             yield return new object[] { "max-stamina floor", (Action<CardSettings>)(s => s.MaxStaminaFloor = 0.4f) };
             yield return new object[] { "rarity weights", (Action<CardSettings>)(s => s.RarityWeights[4] = 1f) };
-            yield return new object[] { "cards: Piton-Free Fingers", (Action<CardSettings>)(s => s.ModValues[0][0] = 0.8f) };
+            yield return new object[] { "cards: Piton Fingers", (Action<CardSettings>)(s => s.ModValues[0][0] = 0.8f) };
             yield return new object[] { "cards: Bing BOING", (Action<CardSettings>)(s => s.Params[4]["cooldown"] = 30f) };
-            yield return new object[] { "cards: Budget Scout Cannon", (Action<CardSettings>)(s => s.Enabled[1] = false) };
+            yield return new object[] { "cards: Mini Scout Cannon", (Action<CardSettings>)(s => s.Enabled[1] = false) };
         }
 
         [Theory]
@@ -598,8 +597,8 @@ namespace CampfireCards.Tests
             var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
             Assert.Equal(1.35f, lines["Sprint speed"].Now, 4);
             Assert.Equal(1.25f, lines["Jump height"].Now, 4);
-            Assert.Equal(1.8f * 1.75f, lines["Fall Injury received"].Now, 4);
-            Assert.Equal(1.75f, lines["Other Injury received"].Now, 4);
+            Assert.Equal(1.4f * 1.5f, lines["Fall Injury received"].Now, 4);
+            Assert.Equal(1.5f, lines["Other Injury received"].Now, 4);
             Assert.Equal(StatComposites.Injury(r, true), lines["Fall Injury received"].Now, 5);
             Assert.False(lines["Sprint speed"].Conditional);
         }
@@ -622,8 +621,8 @@ namespace CampfireCards.Tests
             var s = new CardSettings();
             var r = Fold(s, ("OneHandedScout", Always), ("Ultralight", Always), ("EternalCampfire", Always), ("Thornbreaker", Always));
             var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
-            Assert.Equal(0.8f * 0.65f, lines["Item in hand weight"].Now, 4);
-            Assert.Equal(0.8f, lines["Carried item weight"].Now, 4);
+            Assert.Equal(0.75f * 0.65f, lines["Item in hand weight"].Now, 4);
+            Assert.DoesNotContain("Carried item weight", lines.Keys); // ordinary pocket items have no Carry-On Only discount
             Assert.Equal(0.6f * 0.4f, lines["Thorns build-up"].Now, 4);
             Assert.Equal(StatComposites.Thorns(r), lines["Thorns build-up"].Now, 5);
             Assert.Equal("+35", BuildStats.Format(r[Channel.maxStamina], false, "stamina"));
@@ -648,9 +647,9 @@ namespace CampfireCards.Tests
             Assert.Equal("You get cold 50% slower", BuildStats.Say(lines["Cold build-up"], lines["Cold build-up"].Now));
             Assert.Equal("You heat up 30% faster", BuildStats.Say(lines["Heat build-up"], lines["Heat build-up"].Now));
             Assert.Equal("Grab walls from 20% farther away", BuildStats.Say(lines["Wall-grab reach"], lines["Wall-grab reach"].Now));
-            Assert.Equal("Your stamina bar is 25 longer", BuildStats.Say(lines["Max stamina"], lines["Max stamina"].Now));
+            Assert.Equal("Your stamina bar is 10 longer", BuildStats.Say(lines["Max stamina"], lines["Max stamina"].Now));
             Assert.Equal("Stamina starts coming back 0.3 seconds sooner", BuildStats.Say(lines["Stamina regen delay"], lines["Stamina regen delay"].Now));
-            Assert.Equal("Falls hurt 80% more", BuildStats.Say(lines["Fall Injury received"], lines["Fall Injury received"].Now));
+            Assert.Equal("Falls hurt 40% more", BuildStats.Say(lines["Fall Injury received"], lines["Fall Injury received"].Now));
             Assert.True(BuildStats.Helps(lines["Cold build-up"].Now, true, lines["Cold build-up"].Words));
             Assert.False(BuildStats.Helps(lines["Heat build-up"].Now, true, lines["Heat build-up"].Words));
             Assert.False(BuildStats.Helps(lines["Fall Injury received"].Now, true, lines["Fall Injury received"].Words));

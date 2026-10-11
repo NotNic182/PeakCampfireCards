@@ -16,7 +16,28 @@ FILES = [
     (os.path.join(ROOT, 'LICENSE'), 'LICENSE'),
     (os.path.join(ROOT, 'assets', 'fonts', 'DarumadropOne-Regular.ttf'), 'DarumadropOne-Regular.ttf'),
     (os.path.join(ROOT, 'assets', 'fonts', 'DarumadropOne-OFL.txt'), 'DarumadropOne-OFL.txt'),
+    (os.path.join(ROOT, 'design', 'editable', 'card-editing.xlsx'), 'design/editable/card-editing.xlsx'),
+    (os.path.join(ROOT, 'design', 'editable', 'card-editing.csv'), 'design/editable/card-editing.csv'),
+    (os.path.join(ROOT, 'design', 'editable', 'README.md'), 'design/editable/README.md'),
+    (os.path.join(ROOT, 'docs', 'effect-feasibility.md'), 'docs/effect-feasibility.md'),
+    (os.path.join(ROOT, 'docs', 'research', 'peak-api-2.5.json'), 'docs/research/peak-api-2.5.json'),
+    (os.path.join(ROOT, 'docs', 'research', 'peak-api-redesign.json'), 'docs/research/peak-api-redesign.json'),
+    (os.path.join(ROOT, 'docs', 'research', 'card-edit-review.json'), 'docs/research/card-edit-review.json'),
+    (os.path.join(ROOT, 'docs', 'card-edit-review.md'), 'docs/card-edit-review.md'),
+    (os.path.join(ROOT, 'design', 'editable', 'card-edit-review.xlsx'), 'design/editable/card-edit-review.xlsx'),
+    (os.path.join(ROOT, 'design', 'reviews', 'card-editing-submitted.xlsx'), 'design/reviews/card-editing-submitted.xlsx'),
+    (os.path.join(ROOT, 'docs', 'card-images.md'), 'docs/card-images.md'),
+    (os.path.join(ROOT, 'docs', 'card-text-and-playtest.md'), 'docs/card-text-and-playtest.md'),
+    (os.path.join(ROOT, 'docs', 'research', 'card-copy-review.json'), 'docs/research/card-copy-review.json'),
+    (os.path.join(ROOT, 'assets', 'card-images', 'README.md'), 'art/cards/README.md'),
+    (os.path.join(ROOT, 'design', 'editable', 'card-image-map.csv'), 'art/cards/card-image-map.csv'),
+    (os.path.join(ROOT, 'design', 'editable', 'card-image-map.csv'), 'design/editable/card-image-map.csv'),
 ]
+
+# Optional artwork stays beside the DLL; files are named with stable card keys.
+for name in sorted(os.listdir(os.path.join(ROOT, 'assets', 'card-images'))):
+    if name.endswith('.png'):
+        FILES.append((os.path.join(ROOT, 'assets', 'card-images', name), 'art/cards/' + name))
 
 
 def main():
@@ -37,7 +58,9 @@ def main():
         dst = os.path.join(PEAK, 'BepInEx', 'plugins', 'CampfireCards')
         os.makedirs(dst, exist_ok=True)
         for src, name in FILES:
-            shutil.copy2(src, os.path.join(dst, name))
+            target = os.path.join(dst, name)
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copy2(src, target)
         pdb = os.path.join(BIN, 'CampfireCards.pdb')
         if os.path.exists(pdb):
             shutil.copy2(pdb, os.path.join(dst, 'CampfireCards.pdb'))

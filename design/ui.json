@@ -22,7 +22,7 @@
     "fontNote": "every mod text uses this font (assets/fonts, shipped next to the DLL; SIL Open Font License); the game's own font is its fallback, and the whole UI falls back to it when the file is missing or UI.CustomFont is off"
   },
   "timing": {
-    "pickTimeoutSeconds": 30,
+    "pickTimeoutSeconds": 60,
     "fanSlideInSeconds": 0.35,
     "cardStaggerSeconds": 0.08,
     "hoverScale": 1.08,
@@ -95,9 +95,10 @@
           0.85,
           0.85,
           1
-        ]
+        ],
+        "UntimedText": "Choose one. Take your time."
       },
-      "behaviour": "counts down pickTimeoutSeconds; at 0 a random card of the hand is taken",
+      "behaviour": "With a positive host timeout, counts down and the host takes a random card at 0; with timeoutSeconds = 0, no countdown or automatic pick",
       "soundOn": "none"
     },
     {
@@ -204,7 +205,7 @@
         150
       ],
       "anchor": "top, y=-246",
-      "visual": "the card's benefit line in green and its drawback line in red (Mythics show 'No drawback')",
+      "visual": "named Benefit and Drawback lines with green/red cues; blank drawback shows No drawback",
       "text": "{positive}\n{negative}",
       "consts": {
         "FontSize": 17,
@@ -223,10 +224,10 @@
         ],
         "Y": -246,
         "NoDrawback": "No drawback",
-        "GoodPrefix": "+ ",
-        "BadPrefix": "- "
+        "GoodPrefix": "Benefit: ",
+        "BadPrefix": "Drawback: "
       },
-      "behaviour": "none",
+      "behaviour": "reserve footer space when flavor is present; resolve manual key placeholders",
       "soundOn": "none"
     },
     {
@@ -364,7 +365,7 @@
         120
       ],
       "anchor": "bottom right, x=-24, y=150",
-      "visual": "one line per owned ability card: name, key and state (ready, cooldown seconds, used this biome, anchor placed)",
+      "visual": "ability name, configured key, trigger, readable cooldown, or remaining use state",
       "text": "{abilityLines}",
       "consts": {
         "FontSize": 18,
@@ -387,7 +388,7 @@
           0.8
         ]
       },
-      "behaviour": "visible on the island when the player owns an activated or limited ability",
+      "behaviour": "visible on the island for owned activated or limited abilities; grows to 300 px and can fit text down to 14 px",
       "soundOn": "none"
     },
     {
