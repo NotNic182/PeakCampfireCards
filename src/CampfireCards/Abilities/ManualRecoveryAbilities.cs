@@ -13,18 +13,26 @@ namespace CampfireCards.Abilities
         public override bool Activate(Character me)
         {
             if (me.data.passedOut || me.data.fullyPassedOut || me.data.dead) return false;
-            if (!_cooldown.Ready(Now)) { Ui.Hud.Toast(Card.Name + ": still cooling down"); return false; }
-            if (me.data.currentStamina >= P("threshold", 0.2f)) { Ui.Hud.Toast(Card.Name + ": stamina must be below 20"); return false; }
+            if (!_cooldown.Ready(Now)) { Ui.Hud.Toast(Card.Name + ": cooldown " + CardCopy.Countdown(_cooldown.Remaining(Now))); return false; }
+            if (me.data.currentStamina >= P("threshold", 0.2f)) { Ui.Hud.Toast(Card.Name + ": needs stamina below " + CardCopy.Points(P("threshold", .2f))); return false; }
             if (me.GetMaxStamina() <= me.data.currentStamina) { Ui.Hud.Toast(Card.Name + ": statuses leave no room to recover"); return false; }
+            float before = me.data.currentStamina;
             me.AddStamina(P("restore", 0.25f));   // AddStamina clamps to the current maximum
             _cooldown.Seconds = Mathf.Max(0f, P("cooldown", 300f));
             _cooldown.Trigger(Now);
-            Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "!");
+            Ui.Hud.Toast(Card.Name + ": recovered " + CardCopy.Points(me.data.currentStamina - before) + " stamina");
             return true;
         }
 
-        public override string Status(Character me) => $"{Card.Name} [{Plugin.SecondWindKeyLabel}]: " +
-            (_cooldown.Ready(Now) ? (me.data.currentStamina < P("threshold", .2f) ? "ready" : "needs stamina below 20") : $"{Mathf.CeilToInt(_cooldown.Remaining(Now))}s");
+        public override string Status(Character me)
+        {
+            string prefix = $"{Card.Name} [{Plugin.SecondWindKeyLabel}]: ";
+            if (me.data.dead || me.data.passedOut || me.data.fullyPassedOut) return prefix + "unavailable while down";
+            if (!_cooldown.Ready(Now)) return prefix + "cooldown " + CardCopy.Countdown(_cooldown.Remaining(Now));
+            if (me.data.currentStamina >= P("threshold", .2f)) return prefix + "needs stamina below " + CardCopy.Points(P("threshold", .2f));
+            if (me.GetMaxStamina() <= me.data.currentStamina) return prefix + "no room to recover";
+            return prefix + "ready";
+        }
     }
 
     /// <summary>Emergency Purge: manually clear 20 from the worst eligible status, once per biome.</summary>
@@ -42,21 +50,37 @@ namespace CampfireCards.Abilities
             if (me.data.dead || me.data.passedOut || me.data.fullyPassedOut) return false;
             if (!_charge.Available(LocalCards.Biome)) { Ui.Hud.Toast(Card.Name + ": already used this biome"); return false; }
             float threshold = P("threshold", 0.35f);
-            float worst = 0f;
-            var chosen = Candidates[0];
-            foreach (var t in Candidates)
-            {
-                float value = CardStatus.Get(me, t);
-                if (value > worst) { worst = value; chosen = t; }
-            }
-            if (worst < threshold - 0.0001f) { Ui.Hud.Toast(Card.Name + ": needs 35+ Poison, Spores or Drowsy"); return false; }
+            var chosen = Worst(me, out float worst);
+            if (worst < threshold - 0.0001f) { Ui.Hud.Toast(Card.Name + ": " + Requirement()); return false; }
             _charge.TryUse(LocalCards.Biome);
+            float before = CardStatus.Get(me, chosen);
             CardStatus.Remove(me, chosen, P("remove", 0.2f));
-            Ui.Hud.Toast(Card.Name + ": " + chosen + " cleansed");
+            Ui.Hud.Toast(Card.Name + ": removed " + CardCopy.Points(before - CardStatus.Get(me, chosen)) + " " + chosen);
             return true;
         }
 
-        public override string Status(Character me) => $"{Card.Name} [{Plugin.EmergencyPurgeKeyLabel}]: " + (_charge.Available(LocalCards.Biome) ? "ready at 35+ status" : "used this biome");
+        public override string Status(Character me)
+        {
+            string prefix = $"{Card.Name} [{Plugin.EmergencyPurgeKeyLabel}]: ";
+            if (me.data.dead || me.data.passedOut || me.data.fullyPassedOut) return prefix + "unavailable while down";
+            if (!_charge.Available(LocalCards.Biome)) return prefix + "used this biome";
+            Worst(me, out float worst);
+            return prefix + (worst < P("threshold", .35f) - .0001f ? Requirement() : "ready");
+        }
+
+        private string Requirement() => "needs " + CardCopy.Points(P("threshold", .35f)) + "+ Poison, Spores or Drowsy";
+
+        private static CharacterAfflictions.STATUSTYPE Worst(Character me, out float amount)
+        {
+            amount = 0f;
+            var chosen = Candidates[0];
+            foreach (var type in Candidates)
+            {
+                float value = CardStatus.Get(me, type);
+                if (value > amount) { amount = value; chosen = type; }
+            }
+            return chosen;
+        }
     }
 
 }

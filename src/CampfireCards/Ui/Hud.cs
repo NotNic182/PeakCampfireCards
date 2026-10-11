@@ -60,6 +60,9 @@ namespace CampfireCards.Ui
             _myCards.gameObject.SetActive(false);
 
             _abilityBar = UiKit.Text(_root.transform, "AbilityBar", Ui_AbilityBar.Size, Ui_AbilityBar.FontSize, Ui_AbilityBar.Color, TextAlignmentOptions.BottomRight);
+            _abilityBar.enableAutoSizing = true;
+            _abilityBar.fontSizeMin = 14f;
+            _abilityBar.fontSizeMax = Ui_AbilityBar.FontSize;
             UiKit.Place(_abilityBar.rectTransform, new Vector2(1f, 0f), new Vector2(-24f, 150f));
             _abilityBar.gameObject.SetActive(false);
 
@@ -142,11 +145,13 @@ namespace CampfireCards.Ui
                 string line;
                 try { line = a.Status(me); } catch { line = null; }
                 if (string.IsNullOrEmpty(line)) continue;
-                bool ready = line.EndsWith("ready") || line.EndsWith("place anchor") || line.EndsWith("boosting");
+                bool ready = line.EndsWith("ready") || line.EndsWith("place anchor on flat ground") || line.EndsWith("active");
                 sb.Append("<color=#").Append(UiKit.Hex(ready ? Ui_AbilityBar.ReadyColor : Ui_AbilityBar.WaitColor)).Append('>').Append(line).Append("</color>\n");
             }
             string text = sb.ToString().TrimEnd();
             _abilityBar.text = text;
+            float height = Mathf.Clamp(_abilityBar.GetPreferredValues(text, Ui_AbilityBar.Size.x, Mathf.Infinity).y + 8f, Ui_AbilityBar.Size.y, 300f);
+            _abilityBar.rectTransform.sizeDelta = new Vector2(Ui_AbilityBar.Size.x, height);
             _abilityBar.gameObject.SetActive(text.Length > 0 && RunState.OnIsland);
         }
 

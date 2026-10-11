@@ -22,8 +22,24 @@ namespace CampfireCards.Art
 
         private readonly List<Live> _layers = new List<Live>();
 
-        public static void Build(RectTransform window, int motifIndex, ThemeDef theme)
+        public static void Build(RectTransform window, int motifIndex, ThemeDef theme, string cardKey)
         {
+            var custom = CustomCardImages.Get(cardKey);
+            if (custom != null)
+            {
+                var go = new GameObject("CustomArt", typeof(RectTransform));
+                go.transform.SetParent(window, false);
+                var rt = (RectTransform)go.transform;
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = rt.offsetMax = Vector2.zero;
+                var image = go.AddComponent<Image>();
+                image.sprite = custom;
+                image.color = Color.white;
+                image.preserveAspect = true;
+                image.raycastTarget = false;
+                return;
+            }
             var art = window.gameObject.AddComponent<CardArt>();
             if (motifIndex < 0 || motifIndex >= ArtTable.Motifs.Length) return;
             foreach (var l in ArtTable.Motifs[motifIndex].Layers)

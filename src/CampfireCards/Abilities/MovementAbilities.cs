@@ -69,7 +69,7 @@ namespace CampfireCards.Abilities
         public override string Status(Character me)
         {
             Ensure();
-            return _cd.Ready(Now) ? Card.Name + ": ready" : $"{Card.Name}: {Mathf.CeilToInt(_cd.Remaining(Now))}s";
+            return _cd.Ready(Now) ? Card.Name + " (double jump): ready" : Card.Name + ": cooldown " + CardCopy.Countdown(_cd.Remaining(Now));
         }
     }
 
@@ -104,6 +104,6 @@ namespace CampfireCards.Abilities
 
         public override bool ConditionFlag(Condition c) => c == Condition.momentumActive && _m.Active;
 
-        public override string Status(Character me) => _m.Active ? Card.Name + ": boosting" : null;
+        public override string Status(Character me) => _m.Active ? Card.Name + ": sprint boost active" : null;
     }
 }

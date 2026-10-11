@@ -1,8 +1,10 @@
-# Review of your card edits — candidate 0.6.0
+# Review of your card edits — candidate 0.6.1
 
 Target: **PEAK 2.6.b**. Your two uploaded workbooks are identical. There are **50 edited cards** among the 64 stable card IDs. The supported changes are implemented in this candidate; the paired ROOTS Survivor replacement is held back. The original submitted workbook is preserved alongside the reviewed workbook.
 
-**This is compiled and unit-tested code, not an in-game verification on 2.6.b.** Available game references are stripped/publicized **2.5.a** APIs. They establish member signatures, not behavior, prefab presence or multiplayer correctness. No PEAK game or Unity physics ran here.
+**The new 0.6.1 candidate is compiled and unit tested here.** Your supplied 0.6.0 log shows successful startup and solo picks on a session reporting PEAK 2.6; it does not verify all effects, ghosts or co-op. See [playtest and copy notes](card-text-and-playtest.md). Available game references are stripped/publicized **2.5.a** APIs. They establish member signatures, not behavior, prefab presence or multiplayer correctness. No PEAK game or Unity physics ran here.
+
+The 0.6.1 copy pass keeps these mechanics and balance, clarifies descriptions and status messages, and adds optional [PNG card art](card-images.md). The editable files include the new wording; original requests remain preserved.
 
 ## Download and edit
 
@@ -11,7 +13,7 @@ Target: **PEAK 2.6.b**. Your two uploaded workbooks are identical. There are **5
 - [Original submitted workbook](../design/reviews/card-editing-submitted.xlsx): unchanged backup of your upload.
 - [Machine-readable review](research/card-edit-review.json): exact before/requested values and final definitions for all 50 edited cards.
 
-The 60-second pick default, unlimited-time option (`PickTimeoutSeconds = 0`) and ghost pick exclusions remain included. Every player in a lobby needs **0.6.0** with matching card settings because the synced card state now includes the random penalty and one-time Balloon Bunch reward.
+The 60-second pick default, unlimited-time option (`PickTimeoutSeconds = 0`) and ghost pick exclusions remain included. Every player in a lobby needs **0.6.1** with matching card settings because the synced card state now includes the random penalty and one-time Balloon Bunch reward.
 
 ## Supported mechanics and interpretations
 
@@ -54,11 +56,11 @@ Ability cooldowns and native buff instances still follow the existing local abil
 
 ## Validation and next playtest
 
-Checks passed: **148 C# tests**, **5 catalog tests**, design preflight, and a full Release build with **zero warnings/errors**. All **53 Harmony hook signatures** and 15 capability groups were found in the available reference metadata. Preflight retains a warning for the reserved `invSlots` channel, which no current card uses.
+Checks passed: **165 C# tests**, **5 catalog tests**, design preflight, and a full Release build with **zero warnings/errors**. All **53 Harmony hook signatures** and 15 capability groups were found in the available reference metadata. Preflight retains a warning for the reserved `invSlots` channel, which no current card uses.
 
 Automated validation runs the production manual recovery abilities and pick session logic against small substitutes for the game boundary, plus modifier, timer and wire-format checks. The full plugin compiles against the available references. [API metadata results](research/peak-api-redesign.json) record the assembly hash and hook signatures. Compilation cannot substitute for the following live checks:
 
-1. With everyone on 0.6.0, check opening/campfire offers, 60-second and unlimited timing, ghosts, revival after lighting and death during a pick in both modes.
+1. With everyone on 0.6.1, check opening/campfire offers, 60-second and unlimited timing, ghosts, revival after lighting and death during a pick in both modes.
 2. Test all three manual abilities together; verify separate keys, failed attempts preserving charges, five-minute cooldown and biome refill behavior.
 3. Compare dynamite with unrelated Injury, chained explosions, and thorn removal by yourself and a teammate; arrows should keep their normal timing.
 4. Check cold walls, natural warming, huddles, and medical cleanses; verify that fire/night Cold while off a cold wall is unaffected by its conditional benefit.
@@ -114,7 +116,7 @@ The table below is generated from the preserved review data. “Implemented” d
 | 28 | Discount Cure-All | Implemented — candidate | Manual K per user separate-key preference; one use per biome clears 20 from the worst eligible status at 35+. |
 | 29 | BingBong Parachute | Implemented — candidate | Fatal fall is prevented without the old extra 40 Injury. Other existing Injury stays. The next card pick is still skipped. |
 | 31 | Book of Broken Bones | Implemented — candidate | Removes only new revive Curse via the native ApplyPostReviveStatus path. Existing Curse stays; unchanged +25% Injury drawback is retained. |
-| 32 | Mini  Tenacity | Implemented — candidate | Submitted names/text and numerical effects applied; other mechanics unchanged. |
+| 32 | Mini Tenacity | Implemented — candidate | Submitted names/text and numerical effects applied; other mechanics unchanged. |
 | 33 | Bing Bong's Baggage | Implemented — candidate | 50% less total carried weight, including a scout, backpack shell and contents. Third pocket blocks new items; existing contents remain retrievable. Fresh config enables it, but an old Enabled=false setting is preserved. |
 | 34 | Carry-On Only | Implemented — candidate | 25% lighter held items; 10% heavier backpack contents. The bag shell follows held/carried item rules, not the contents penalty. |
 | 36 | Cook It, Keep It | Implemented — candidate | Submitted names/text and numerical effects applied; other mechanics unchanged. |

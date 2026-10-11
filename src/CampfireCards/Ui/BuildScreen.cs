@@ -106,11 +106,11 @@ namespace CampfireCards.Ui
                 string rarity = Hex(Deck.RarityColor(def.Rarity));
                 sb.Append("<color=#").Append(rarity).Append(">■ <b>").Append(def.Name).Append("</b></color>  <size=75%><color=#")
                   .Append(rarity).Append('>').Append(Deck.RarityName(def.Rarity)).Append("</color></size>\n");
-                sb.Append("<color=#").Append(Hex(Ui_CardEffects.GoodColor)).Append(">   + ").Append(def.Positive).Append("</color>\n");
+                sb.Append("<color=#").Append(Hex(Ui_CardEffects.GoodColor)).Append(">   <b>").Append(Ui_CardEffects.GoodPrefix).Append("</b>").Append(CardPresentation.Text(def, def.Positive)).Append("</color>\n");
                 if (string.IsNullOrEmpty(def.Negative))
                     sb.Append("<color=#").Append(Hex(Ui_CardFlavor.Color)).Append(">   ").Append(Ui_CardEffects.NoDrawback).Append("</color>\n");
                 else
-                    sb.Append("<color=#").Append(Hex(Ui_CardEffects.BadColor)).Append(">   - ").Append(def.Negative).Append("</color>\n");
+                    sb.Append("<color=#").Append(Hex(Ui_CardEffects.BadColor)).Append(">   <b>").Append(Ui_CardEffects.BadPrefix).Append("</b>").Append(CardPresentation.Text(def, def.Negative)).Append("</color>\n");
                 AppendConditional(sb, def);
                 foreach (var a in abilities)
                 {
@@ -150,7 +150,7 @@ namespace CampfireCards.Ui
                     line = effect + " while " + (c < ConditionTable.Shown.Length ? ConditionTable.Shown[c] : m.When.ToString());
                     active = IsActive(def.Id, i);
                 }
-                string state = forTeam ? "" : active ? "  (on now)" : "  (off now)";
+                string state = forTeam ? "" : active ? "  (active now)" : "  (inactive now)";
                 var color = active ? Ui_BuildScreen.ActiveColor : Ui_BuildScreen.InactiveColor;
                 sb.Append("<size=88%><color=#").Append(Hex(color)).Append(">   · ").Append(line).Append(state).Append("</color></size>\n");
             }

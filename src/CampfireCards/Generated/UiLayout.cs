@@ -125,7 +125,7 @@ namespace CampfireCards.Generated
         public const float Y = -202.0f;
     }
 
-    /// <summary>the card's benefit line in green and its drawback line in red (Mythics show 'No drawback'). none</summary>
+    /// <summary>named Benefit and Drawback lines with green/red cues; blank drawback shows No drawback. reserve footer space when flavor is present; resolve manual key placeholders</summary>
     public static class Ui_CardEffects
     {
         public const string Parent = "Card";
@@ -139,8 +139,8 @@ namespace CampfireCards.Generated
         public static readonly Color BadColor = new Color(0.95f, 0.45f, 0.42f, 1f);
         public const float Y = -246.0f;
         public const string NoDrawback = "No drawback";
-        public const string GoodPrefix = "+ ";
-        public const string BadPrefix = "- ";
+        public const string GoodPrefix = "Benefit: ";
+        public const string BadPrefix = "Drawback: ";
     }
 
     /// <summary>TMP italic, muted. none</summary>
@@ -205,7 +205,7 @@ namespace CampfireCards.Generated
         public const string TookTemplate = "{0} took {1}";
     }
 
-    /// <summary>one line per owned ability card: name, key and state (ready, cooldown seconds, used this biome, anchor placed). visible on the island when the player owns an activated or limited ability</summary>
+    /// <summary>ability name, configured key, trigger, readable cooldown, or remaining use state. visible on the island for owned activated or limited abilities; grows to 300 px and can fit text down to 14 px</summary>
     public static class Ui_AbilityBar
     {
         public const string Parent = "root";

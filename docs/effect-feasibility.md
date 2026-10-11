@@ -2,14 +2,16 @@
 
 Target: **PEAK 2.6.b**, as reported by NotNic. Investigation date: 2026-10-10.
 
-The original catalog investigation is now extended by the [0.6.0 card edit review](card-edit-review.md).
+The original catalog investigation is now extended by the [current card edit review](card-edit-review.md).
 All 64 stable card IDs remain. The editable files contain the current shipped effects; the review preserves
 your requested changes and explains the pending zombie spawn and native Low Gravity behavior.
+
+The user’s supplied **0.6.0** playtest log shows successful startup and solo picks in a session reporting PEAK 2.6. It does not establish every effect, ghost or co-op behavior. [The 0.6.1 copy and playtest notes](card-text-and-playtest.md) explain that evidence and the new wording and PNG support.
 
 ## What was checked
 
 - The existing card logic suite passed before any change: 107 tests.
-- Final automated checks passed: **148 C# tests** and **5 catalog tests**, plus the normal design preflight.
+- Final automated checks passed: **165 C# tests** and **5 catalog tests**, plus the normal design preflight.
   Preflight retains the known warning for the unimplemented `invSlots` channel.
 - Session regression tests execute the real `PickSession` and `PickTurns` against small substitutes for the
   game, UI and transport. They cover ghost offers, revival after lighting, queued fires, death before picking,
@@ -112,7 +114,7 @@ if available; then proposed effects can be implemented against the installed API
 
 ## Playtest the fixes on 2.6.b
 
-1. With everyone on 0.6.0, test opening and campfire offers in both pick modes. Default timer: 60 seconds;
+1. With everyone on 0.6.1, test opening and campfire offers in both pick modes. Default timer: 60 seconds;
    after 59 seconds no automatic card should have been taken. Custom durations should be preserved.
 2. Set the host's `General/PickTimeoutSeconds = 0`. Wait longer than 70 seconds: no random card, countdown
    or forced session closure. Choose manually and confirm all living scouts can finish.

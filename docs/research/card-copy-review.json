@@ -1,0 +1,1015 @@
+{
+  "version": "0.6.1",
+  "balanceChanged": false,
+  "manualKeyToken": "{key} resolves to the player's configured binding",
+  "cards": [
+    {
+      "id": 1,
+      "key": "GeckoGrip",
+      "before": {
+        "name": "Piton Fingers",
+        "positive": "Lose stamina 12% slower when climbing.",
+        "negative": "Sprinting stamina drains 12% faster",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Piton Fingers",
+        "positive": "Climbing uses 12% less stamina.",
+        "negative": "Sprinting uses 12% more stamina.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 2,
+      "key": "MountainGoat",
+      "before": {
+        "name": "Mini Scout Cannon",
+        "positive": "Jump 30% higher.",
+        "negative": "30% more fall damage.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Mini Scout Cannon",
+        "positive": "Jump 30% higher.",
+        "negative": "Take 30% more fall Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 3,
+      "key": "Surefooted",
+      "before": {
+        "name": "To The Bone",
+        "positive": "You take 35% less cold when climbing on blue ice.",
+        "negative": "Takes 10% longer to warm back up.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "To The Bone",
+        "positive": "Cold builds 35% slower while climbing blue ice.",
+        "negative": "Warming up takes 10% longer.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 4,
+      "key": "OverhangArtist",
+      "before": {
+        "name": "Pitonless Pit Stop",
+        "positive": "Hang still on a wall to get 4 stamina back every second.",
+        "negative": "Climbing speed is reduced by 30%",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Pitonless Pit Stop",
+        "positive": "Hang still on a wall to recover 4 stamina per second.",
+        "negative": "Climb 30% slower.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 5,
+      "key": "SecondSpring",
+      "before": {
+        "name": "Bing BOING",
+        "positive": "Double jump: one extra jump in mid-air. (35 second cooldown)",
+        "negative": "Each double jump makes you a bit drowsy (+7.5 Drowsy).",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Bing BOING",
+        "positive": "Jump again in mid-air for a double jump. Cooldown: 35s.",
+        "negative": "Each double jump adds 7.5 Drowsy.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 6,
+      "key": "FastFingers",
+      "before": {
+        "name": "Energy Drink Overdose",
+        "positive": "You climb 30% faster.",
+        "negative": "Climbing tires you 20% more.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Energy Drink Overdose",
+        "positive": "Climb 30% faster.",
+        "negative": "Climbing uses 20% more stamina.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 7,
+      "key": "Featherfall",
+      "before": {
+        "name": "Tenderfoot Insurance",
+        "positive": "Falls hurt 25% less.",
+        "negative": "Dynamite explosions deal 3 times as much Injury.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Tenderfoot Insurance",
+        "positive": "Take 25% less fall Injury.",
+        "negative": "Dynamite deals 3 times as much Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 8,
+      "key": "LedgeDancer",
+      "before": {
+        "name": "Daddy",
+        "positive": "Grab walls from 20% farther away.",
+        "negative": "Stamina drains 10% faster.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Daddy",
+        "positive": "Grab walls from 20% farther away.",
+        "negative": "All stamina costs are 10% higher.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 9,
+      "key": "DeepLungs",
+      "before": {
+        "name": "Cookie Addiction",
+        "positive": "Your stamina bar is 25 longer.",
+        "negative": "You get hungry 35% faster.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Cookie Addiction",
+        "positive": "Gain 25 maximum stamina.",
+        "negative": "Hunger builds 35% faster.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 10,
+      "key": "SecondWind",
+      "before": {
+        "name": "Nic of Time",
+        "positive": "Below 20 stamina, press V to restore 25 stamina (5-minute cooldown).",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Nic of Time",
+        "positive": "Press {key} below 20 stamina to recover 25. Cooldown: 5 min.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 11,
+      "key": "MarathonLegs",
+      "before": {
+        "name": "Hasty Badge Training",
+        "positive": "Sprinting tires you 15% less.",
+        "negative": "Climbing uses 15% more stamina.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Hasty Badge Training",
+        "positive": "Sprinting uses 15% less stamina.",
+        "negative": "Climbing uses 15% more stamina.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 12,
+      "key": "QuickRecovery",
+      "before": {
+        "name": "HOLD",
+        "positive": "Stamina starts coming back 0.3 seconds sooner.",
+        "negative": "Stamina bar shrinks 15%",
+        "flavor": ""
+      },
+      "after": {
+        "name": "HOLD",
+        "positive": "Stamina regeneration starts 0.3s sooner.",
+        "negative": "Lose 15 maximum stamina.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 13,
+      "key": "QuietBreathing",
+      "before": {
+        "name": "Meditation",
+        "positive": "Crouch and stay still to get stamina back 35% faster.",
+        "negative": "Nothing. You're already crouched down staying still",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Meditation",
+        "positive": "Crouch and stay still to recover stamina 35% faster.",
+        "negative": "",
+        "flavor": "You're already crouched. Take a breather."
+      }
+    },
+    {
+      "id": 14,
+      "key": "CardioTax",
+      "before": {
+        "name": "I'm getting Scoutmastered",
+        "positive": "You sprint 25% faster.",
+        "negative": "Your stamina bar is 12.5 shorter.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "I'm getting Scoutmastered",
+        "positive": "Sprint 25% faster.",
+        "negative": "Lose 12.5 maximum stamina.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 15,
+      "key": "PulseClimber",
+      "before": {
+        "name": "Endurance Badge",
+        "positive": "Climb for 3 seconds straight, and the next second of climbing costs 35% less stamina.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Endurance Badge",
+        "positive": "Climb for 3s straight: climbing uses 35% less stamina for the next 1s.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 16,
+      "key": "HalfTank",
+      "before": {
+        "name": "Marshmallow Morale",
+        "positive": "Every time a campfire is lit, all your Hunger clears.",
+        "negative": "You can't eat cooked food, even when a teammate feeds you.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Marshmallow Morale",
+        "positive": "Each new campfire clears your Hunger.",
+        "negative": "You cannot eat cooked food, including food fed to you.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 17,
+      "key": "DesertBlood",
+      "before": {
+        "name": "Cool, Calm, and Collected.",
+        "positive": "You burn 50% slower.",
+        "negative": "You freeze 30% faster.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Cool, Calm, and Collected.",
+        "positive": "Heat builds 50% slower.",
+        "negative": "Cold builds 30% faster.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 18,
+      "key": "WinterCoat",
+      "before": {
+        "name": "Just hot.",
+        "positive": "You freeze 50% slower.",
+        "negative": "You burn 30% faster.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Just hot.",
+        "positive": "Cold builds 50% slower.",
+        "negative": "Heat builds 30% faster.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 19,
+      "key": "VenomAntibodies",
+      "before": {
+        "name": "Antidote Enthusiast",
+        "positive": "Poison builds up 35% slower.",
+        "negative": "You burn and freeze 25% faster.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Antidote Enthusiast",
+        "positive": "Poison builds 35% slower.",
+        "negative": "Heat and Cold build 25% faster.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 20,
+      "key": "SporeLungs",
+      "before": {
+        "name": "ROOTS Survivor",
+        "positive": "Spores build up 35% slower.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "ROOTS Survivor",
+        "positive": "Spores build 35% slower.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 21,
+      "key": "Thornbreaker",
+      "before": {
+        "name": "Cactus? What Cactus?",
+        "positive": "New thorns count 40% less.",
+        "negative": "Takes twice as long to remove the thorns.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Cactus? What Cactus?",
+        "positive": "New Thorns add 40% less status, rounded up to whole thorns.",
+        "negative": "Removing Thorns takes twice as long.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 22,
+      "key": "HeatShedding",
+      "before": {
+        "name": "Aloe",
+        "positive": "Once you're out of the heat, it wears off 60% faster.",
+        "negative": "You burn 15% faster.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Aloe",
+        "positive": "Heat wears off 60% faster.",
+        "negative": "Heat builds 15% faster.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 23,
+      "key": "Frostwalker",
+      "before": {
+        "name": "Heat Pack",
+        "positive": "Once you're out of the cold, it wears off 60% faster.",
+        "negative": "You freeze 15% faster.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Heat Pack",
+        "positive": "Cold wears off 60% faster.",
+        "negative": "Cold builds 15% faster.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 25,
+      "key": "BonePlating",
+      "before": {
+        "name": "BingBong",
+        "positive": "Every 10 minutes while alive, gain Infinite Stamina, Invincibility or Low Gravity for 20 seconds.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "BingBong",
+        "positive": "Every 10 min alive: a random 20s burst of Infinite Stamina, Invincibility or Low Gravity.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 26,
+      "key": "EfficientMedic",
+      "before": {
+        "name": "Tara",
+        "positive": "Bandages and medkits heal you 25% more.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Tara",
+        "positive": "Healing items remove 25% more Injury from you.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 27,
+      "key": "PainEngine",
+      "before": {
+        "name": "Walk It Off",
+        "positive": "While you have 20+ Injury, climbing and sprinting use 25% less stamina .",
+        "negative": "Every injury hurts 10% more.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Walk It Off",
+        "positive": "At 20+ Injury, climbing and sprinting use 25% less stamina.",
+        "negative": "Take 10% more Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 28,
+      "key": "EmergencyPurge",
+      "before": {
+        "name": "Discount Cure-All",
+        "positive": "Once per biome, press K when Poison, Spores or Drowsy reaches 35 to clear 20 of the worst one.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Discount Cure-All",
+        "positive": "Press {key} at 35+ Poison, Spores or Drowsy to remove 20 from the highest. Once per biome.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 29,
+      "key": "PhoenixClause",
+      "before": {
+        "name": "BingBong Parachute",
+        "positive": "Once per run, a fall that would knock you out puts you back on safe ground instead.",
+        "negative": "If used, prevents the next card pick.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "BingBong Parachute",
+        "positive": "Once per run, cancel a fatal fall and return to safe ground.",
+        "negative": "Using it skips your next card pick.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 30,
+      "key": "IronStomach",
+      "before": {
+        "name": "Gourmand's Gut",
+        "positive": "Food fills you up 20% more.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Gourmand's Gut",
+        "positive": "Food removes 20% more Hunger.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 31,
+      "key": "CurseBargain",
+      "before": {
+        "name": "Book of Broken Bones",
+        "positive": "Reviving does not add Curse.",
+        "negative": "Every injury hurts 25% more.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Book of Broken Bones",
+        "positive": "Reviving does not add Curse.",
+        "negative": "Take 25% more Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 32,
+      "key": "CleansingRitual",
+      "before": {
+        "name": "Mini  Tenacity",
+        "positive": "Medical items also clear 7.5 of your worst other status.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Mini Tenacity",
+        "positive": "Medical items also remove 7.5 from your highest other status.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 33,
+      "key": "PackRat",
+      "before": {
+        "name": "Bing Bong's Baggage",
+        "positive": "All carried weight is cut in half, including your backpack and a carried scout.",
+        "negative": "Your third pocket is locked for the rest of the run.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Bing Bong's Baggage",
+        "positive": "All carried weight is 50% lighter, including backpacks and scouts.",
+        "negative": "Your third pocket cannot hold new items.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 34,
+      "key": "Ultralight",
+      "before": {
+        "name": "Carry-On Only",
+        "positive": "Items in your hands weigh 25% less.",
+        "negative": "Items inside your backpack weigh 10% more.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Carry-On Only",
+        "positive": "Held items weigh 25% less.",
+        "negative": "Backpack contents weigh 10% more.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 35,
+      "key": "OneHandedScout",
+      "before": {
+        "name": "Idol Hands",
+        "positive": "The item in your hands weighs 35% less.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Idol Hands",
+        "positive": "Held items weigh 35% less.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 36,
+      "key": "LuckyLunch",
+      "before": {
+        "name": "Cook It, Keep It",
+        "positive": "Once per biome, the first cooked food you eat isn't used up.",
+        "negative": "Uncooked food cures hunger 50% less.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Cook It, Keep It",
+        "positive": "Once per biome, your first cooked meal is not consumed.",
+        "negative": "Uncooked food removes 50% less Hunger.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 37,
+      "key": "CampChef",
+      "before": {
+        "name": "Cooking Badge Deluxe",
+        "positive": "Cooked food fills you up 50% more.",
+        "negative": "Eating uncooked food poisons you a little (+7.5 Poison).",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Cooking Badge Deluxe",
+        "positive": "Cooked food removes 50% more Hunger.",
+        "negative": "Eating cookable food raw adds 7.5 Poison.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 38,
+      "key": "RopeBaron",
+      "before": {
+        "name": "Balright",
+        "positive": "A Balloon Bunch appears for you at the next campfire (once per run).",
+        "negative": "Every stamina use costs 10% more.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Balright",
+        "positive": "Get one Balloon Bunch at the next campfire. Once per run.",
+        "negative": "All stamina costs are 10% higher.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 39,
+      "key": "SupplyScout",
+      "before": {
+        "name": "Scoutmaster's Care Package",
+        "positive": "A free bandage appears for you at each new campfire.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Scoutmaster's Care Package",
+        "positive": "Get a Bandage at each new campfire after picking this card.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 40,
+      "key": "DoubleDeal",
+      "before": {
+        "name": "Clown Luggage Special",
+        "positive": "Get 2 more random cards right now.",
+        "negative": "Gain one random, permanent drawback: +15% climbing cost, +15% sprint cost, +20% Injury or +20% Hunger.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Clown Luggage Special",
+        "positive": "Immediately gain 2 random bonus cards.",
+        "negative": "One permanent random penalty: climbing or sprinting cost +15%, Injury +20%, or Hunger buildup +20%.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 41,
+      "key": "BelayBuddy",
+      "before": {
+        "name": "Rule Zero",
+        "positive": "Climbing near a teammate uses 15% less stamina for you both.",
+        "negative": "Climbing alone tires you 15% more.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Rule Zero",
+        "positive": "You and teammates within 6 m use 15% less climbing stamina.",
+        "negative": "With no teammate within 6 m, climbing uses 15% more stamina.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 42,
+      "key": "FieldMedic",
+      "before": {
+        "name": "First Aid Badge",
+        "positive": "Healing items you use on teammates heal 60% more.",
+        "negative": "Healing items you use on yourself heal 35% less.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "First Aid Badge",
+        "positive": "Healing items used on teammates remove 60% more Injury.",
+        "negative": "Healing items used on yourself remove 35% less Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 43,
+      "key": "RescueHarness",
+      "before": {
+        "name": "Human Carry-On",
+        "positive": "Carrying a scout feels 35% lighter.",
+        "negative": "While you carry a passed-out scout, their paused death timer drains at 15% of normal speed (or 15% faster if already draining).",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Human Carry-On",
+        "positive": "Carried scouts weigh 35% less.",
+        "negative": "Their paused death timer drains at 15% of normal speed. Already-active timers drain 15% faster.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 44,
+      "key": "HeatHuddle",
+      "before": {
+        "name": "Happy Camper Huddle",
+        "positive": "Huddling warms you 35% more, from 35% farther away.",
+        "negative": "With no teammate within 6 m, you get cold 20% faster.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Happy Camper Huddle",
+        "positive": "Huddling warms you 35% more, from 35% farther away.",
+        "negative": "With no teammate within 6 m, Cold builds 20% faster.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 45,
+      "key": "HerosArrival",
+      "before": {
+        "name": "Otto-Matic Clutch",
+        "positive": "The first time you revive a teammate in each biome, you both get full extra stamina bar.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Otto-Matic Clutch",
+        "positive": "First teammate revive by feeding or statue each biome: both gain 100 yellow stamina.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 46,
+      "key": "LongArm",
+      "before": {
+        "name": "You're alright, you're alright",
+        "positive": "Pull teammates up from 30% farther away.",
+        "negative": "Starting a teammate pull costs you 10 stamina (once per reach).",
+        "flavor": ""
+      },
+      "after": {
+        "name": "You're alright, you're alright",
+        "positive": "Pull teammates up from 30% farther away.",
+        "negative": "Starting a pull costs 10 stamina, once per continuous reach.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 47,
+      "key": "SharedBurden",
+      "before": {
+        "name": "Take One for the Troop",
+        "positive": "Teammates near you (6 m) take 30% less injury.",
+        "negative": "You take half of what you saved them (at most 10 per hit).",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Take One for the Troop",
+        "positive": "Teammates within 6 m take 30% less Injury.",
+        "negative": "You take half the prevented Injury, up to 10 per hit.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 48,
+      "key": "CampChoir",
+      "before": {
+        "name": "Friendship Bugle Choir",
+        "positive": "Teammates near you (6 m) get stamina back 12% faster.",
+        "negative": "With no teammate within 6 m, every stamina use costs you 10% more.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Friendship Bugle Choir",
+        "positive": "Teammates within 6 m recover stamina 12% faster.",
+        "negative": "With no teammate within 6 m, all stamina costs are 10% higher.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 49,
+      "key": "RocketAnkles",
+      "before": {
+        "name": "Scout Cannon Legs",
+        "positive": "Sprint 35% faster and jump 25% higher.",
+        "negative": "Falls hurt 40% more.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Scout Cannon Legs",
+        "positive": "Sprint 35% faster and jump 25% higher.",
+        "negative": "Take 40% more fall Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 50,
+      "key": "CursedCrown",
+      "before": {
+        "name": "Crown of Bad Decisions",
+        "positive": "Get 30 extra stamina now, and 20 more at every campfire after.",
+        "negative": "Get 10 Curse now, and 2 more at every campfire after.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Crown of Bad Decisions",
+        "positive": "Gain 30 yellow stamina now, then 20 at each later campfire.",
+        "negative": "Gain 10 Curse now, then 2 at each later campfire.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 51,
+      "key": "LoadedDice",
+      "before": {
+        "name": "Pandora's Pocket Gamble",
+        "positive": "Everything you carry is 10% lighter. In each biome, a 65% chance of 25 extra stamina.",
+        "negative": "Otherwise, you take 20 Injury.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Pandora's Pocket Gamble",
+        "positive": "Inventory items weigh 10% less. Each biome: 65% chance of 25 yellow stamina.",
+        "negative": "A failed roll adds 20 Injury instead.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 52,
+      "key": "BloodBattery",
+      "before": {
+        "name": "Bootleg Scoutmaster Bugle",
+        "positive": "Once per biome, press B for 60 extra stamina.",
+        "negative": "Using it costs you 15 Injury.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Bootleg Scoutmaster Bugle",
+        "positive": "Press {key} to gain 60 yellow stamina. Once per biome.",
+        "negative": "Each use adds 15 Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 53,
+      "key": "MomentumFiend",
+      "before": {
+        "name": "Big Lollipop Crash",
+        "positive": "Sprint for 2 seconds and you speed up 30% until you stop.",
+        "negative": "Stopping after the speed-up makes you a bit drowsy (+7.5 Drowsy, at most every 30 seconds).",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Big Lollipop Crash",
+        "positive": "Sprint for 2s to move 30% faster until you stop.",
+        "negative": "Stopping after a boost adds 7.5 Drowsy, at most once every 30s.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 54,
+      "key": "DelayedConsequences",
+      "before": {
+        "name": "Piton Payment Plan",
+        "positive": "Falls hurt 15% less, and most of the injury only arrives 20 seconds later.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Piton Payment Plan",
+        "positive": "Take 25% of a fall's Injury now and 60% after 20s: 15% less in total.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 55,
+      "key": "GlassHeart",
+      "before": {
+        "name": "Glass Scout Cannon",
+        "positive": "Your stamina bar is 40 longer.",
+        "negative": "Every injury hurts 50% more.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Glass Scout Cannon",
+        "positive": "Gain 40 maximum stamina.",
+        "negative": "Take 50% more Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 56,
+      "key": "PacklessNomad",
+      "before": {
+        "name": "Baggage Claim Escapee",
+        "positive": "Without a backpack, sprint 30% faster and jump 20% higher.",
+        "negative": "With a backpack, you sprint 15% slower.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Baggage Claim Escapee",
+        "positive": "Without a backpack: sprint 30% faster and jump 20% higher.",
+        "negative": "With a backpack: sprint 15% slower.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 57,
+      "key": "DoubleDown",
+      "before": {
+        "name": "Scout's Dishonor",
+        "positive": "Get 1 more random card right now (Common to Rare).",
+        "negative": "Get 10 Curse now, and the next campfire offers you only 1 card.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Scout's Dishonor",
+        "positive": "Immediately gain 1 random bonus card, Common to Rare.",
+        "negative": "Gain 10 Curse. Your next campfire offers only 1 card.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 58,
+      "key": "ScavengersInstinct",
+      "before": {
+        "name": "BingBong Baggage Scanner",
+        "positive": "See food, items and luggage within 12 m, even through rock.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "BingBong Baggage Scanner",
+        "positive": "Mark food, items and luggage within 12 m, even through terrain.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 59,
+      "key": "HungryHands",
+      "before": {
+        "name": "Medicinal Munchies",
+        "positive": "Eating while you have 20+ Injury heals 7.5 Injury.",
+        "negative": "",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Medicinal Munchies",
+        "positive": "At 20+ Injury, eating food removes 7.5 Injury.",
+        "negative": "",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 60,
+      "key": "SafetyNet",
+      "before": {
+        "name": "Budget Checkpoint Flag",
+        "positive": "Once per biome, press N to set an anchor. If you pass out, you wake up there.",
+        "negative": "Your stamina bar is 15 shorter.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Budget Checkpoint Flag",
+        "positive": "Press {key} on flat ground: your next pass-out revives you here. Once per biome.",
+        "negative": "Lose 15 maximum stamina. The revival leaves 40 Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 61,
+      "key": "Stoneblood",
+      "before": {
+        "name": "Petrify Procrastination",
+        "positive": "You turn to stone 35% slower.",
+        "negative": "Fall damage hurts 15% more",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Petrify Procrastination",
+        "positive": "Petrification builds 35% slower.",
+        "negative": "Take 15% more fall Injury.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 62,
+      "key": "MountainsBargain",
+      "before": {
+        "name": "Fine Print",
+        "positive": "Give up one of your cards: your stamina bar becomes 35 longer.",
+        "negative": "Get 5 Curse at every campfire after.",
+        "flavor": ""
+      },
+      "after": {
+        "name": "Fine Print",
+        "positive": "Sacrifice one of your cards to gain 35 maximum stamina.",
+        "negative": "Gain 5 Curse at each later campfire.",
+        "flavor": ""
+      }
+    },
+    {
+      "id": 63,
+      "key": "MountainsHeir",
+      "before": {
+        "name": "Scoutmaster",
+        "positive": "Climbing never tires you, falls never hurt, and you sprint 25% faster.",
+        "negative": "",
+        "flavor": "The mountain no longer challenges you. It obeys you."
+      },
+      "after": {
+        "name": "Scoutmaster",
+        "positive": "Climbing costs no stamina and falls cause no Injury. Sprint 25% faster.",
+        "negative": "",
+        "flavor": "The mountain no longer challenges you. It obeys you."
+      }
+    },
+    {
+      "id": 64,
+      "key": "EternalCampfire",
+      "before": {
+        "name": "The Eternal Campfire",
+        "positive": "Everyone within 15 m of you (you too) gets a stamina bar 35 longer and takes 60% less injury and statuses. Once per biome, the first scout nearby who passes out is revived.",
+        "negative": "",
+        "flavor": "Where you stand, no Scout is left behind."
+      },
+      "after": {
+        "name": "The Eternal Campfire",
+        "positive": "You and scouts within 15 m: maximum stamina +35; Injury and status buildup -60%. Share 1 auto-revive per biome.",
+        "negative": "",
+        "flavor": "Where you stand, no Scout is left behind."
+      }
+    }
+  ]
+}
