@@ -24,10 +24,11 @@ namespace CampfireCards.Cards
     /// </summary>
     public static class Effects
     {
-        public const byte FlagSkipNext = 1, FlagOfferOne = 2;
+        public const byte FlagSkipNext = 1, FlagOfferOne = 2, FlagBalloonUsed = 4;
+        public static readonly PenaltyLedger Penalties = new PenaltyLedger();
 
         public static readonly Dictionary<int, List<byte>> CardsByActor = new Dictionary<int, List<byte>>();
-        /// <summary>Per player: bit 1 skip next campfire pick (Phoenix Clause), bit 2 next offer is one card (Double Down).</summary>
+        /// <summary>Per player: bits 1 skip next pick, 2 next offer is one card, 4 one-time Balloon Bunch already spawned.</summary>
         public static readonly Dictionary<int, byte> PickFlags = new Dictionary<int, byte>();
 
         /// <summary>Folded modifiers for the local scout, refreshed every frame.</summary>
@@ -68,6 +69,7 @@ namespace CampfireCards.Cards
                         if (m.Target == ModTarget.team || m.When != Generated.Condition.always) continue;
                         mods.Add(new ActiveMod { CardId = def.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = s.ModValue(def, i), Rarity = def.Rarity });
                     }
+                    AddPenalty(mods, NetSend.LocalActor, def);
                 }
             }
             into.Fold(mods, s);
@@ -165,6 +167,8 @@ namespace CampfireCards.Cards
                     if (m.Channel != channel || m.Target != ModTarget.self || m.When != Generated.Condition.always) continue;
                     mods.Add(new ActiveMod { CardId = def.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = s.ModValue(def, i), Rarity = def.Rarity });
                 }
+                if (def.Ability == "DoubleDeal" && PenaltyLedger.Valid(Penalties.Of(actor)) && CardPenaltyRules.ChannelFor(Penalties.Of(actor)) == channel)
+                    AddPenalty(mods, actor, def);
             }
             _scratch.Fold(mods, s);
             return _scratch[channel];
@@ -179,6 +183,7 @@ namespace CampfireCards.Cards
             if (!list.Remove(cardId)) return;
             var def = CardSettings.Current.Card(cardId);
             if (actor == NetSend.LocalActor && def != null) LocalCards.OnRemoved(def);
+            if (def != null && def.Ability == "DoubleDeal" && !HasAbility(actor, "DoubleDeal")) Penalties.Forget(actor);
             Hud.RefreshMyCards();
         }
 
@@ -203,6 +208,7 @@ namespace CampfireCards.Cards
             LocalCards.Reset();
             CardsByActor.Clear();
             PickFlags.Clear();
+            Penalties.Reset();
             Local.Reset();
             SharedBurdenOwner = int.MinValue;
             var me = Character.localCharacter;
@@ -264,6 +270,7 @@ namespace CampfireCards.Cards
                         }
                         _mods.Add(new ActiveMod { CardId = def.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = s.ModValue(def, i), Rarity = def.Rarity });
                     }
+                    if (isMe) AddPenalty(_mods, localActor, def);
                 }
             }
             Local.Fold(_mods, s);
@@ -284,6 +291,9 @@ namespace CampfireCards.Cards
                 case Generated.Condition.poisonOrSpores20:
                     return aff.GetCurrentStatus(CharacterAfflictions.STATUSTYPE.Poison) >= 0.2f - 0.0001f
                         || aff.GetCurrentStatus(CharacterAfflictions.STATUSTYPE.Spores) >= 0.2f - 0.0001f;
+                case Generated.Condition.poisonAbove20: return aff.GetCurrentStatus(CharacterAfflictions.STATUSTYPE.Poison) > 0.2f;
+                case Generated.Condition.climbingColdSurface:
+                    return d.isClimbing && d.climbMod != null && d.climbMod.applyStatus && d.climbMod.statusType == CharacterAfflictions.STATUSTYPE.Cold;
                 case Generated.Condition.climbingWithItem: return d.isClimbingAnything && d.currentItem != null;
                 case Generated.Condition.noBackpack: return !WearingBackpack(me);
                 case Generated.Condition.wearingBackpack: return WearingBackpack(me);
@@ -345,6 +355,7 @@ namespace CampfireCards.Cards
             // multiplier change needs no nudge: it only applies to thorns that arrive later, Core.ThornsLedger)
             int key = (int)(Local[Channel.itemWeight] * 1000) * 31 + (int)(Local[Channel.heldItemWeight] * 1000) * 17
                       + (int)(Local[Channel.carryScoutWeight] * 1000) * 7;
+            key = unchecked(key * 31 + (int)(Local[Channel.totalWeight] * 1000) * 13 + (int)(Local[Channel.backpackItemWeight] * 1000));
             if (key != bl.LastWeightKey && me.refs.afflictions != null)
             {
                 bl.LastWeightKey = key;
@@ -377,6 +388,7 @@ namespace CampfireCards.Cards
         {
             switch (type)
             {
+                case CharacterAfflictions.STATUSTYPE.Cold: return Local[Channel.coldDecay];
                 case CharacterAfflictions.STATUSTYPE.Hot: return Local[Channel.heatDecay];
                 case CharacterAfflictions.STATUSTYPE.Poison: return Local[Channel.poisonDecay];
                 case CharacterAfflictions.STATUSTYPE.Spores: return Local[Channel.sporesDecay];
@@ -387,15 +399,16 @@ namespace CampfireCards.Cards
         // ------------------------------------------------------------------ state sync
         public static StateSync BuildStateSync(int sessionId)
         {
-            var actors = new List<int>(); var counts = new List<byte>(); var cards = new List<byte>(); var flags = new List<byte>();
+            var actors = new List<int>(); var counts = new List<byte>(); var cards = new List<byte>(); var flags = new List<byte>(); var penalties = new List<byte>();
             foreach (var kv in CardsByActor)
             {
                 actors.Add(kv.Key);
                 counts.Add((byte)Math.Min(255, kv.Value.Count));
                 cards.AddRange(kv.Value.Take(255));
                 flags.Add(Flags(kv.Key));
+                penalties.Add(Penalties.Of(kv.Key));
             }
-            return new StateSync { actors = actors.ToArray(), counts = counts.ToArray(), cards = cards.ToArray(), pickFlags = flags.ToArray(), sessionId = sessionId };
+            return new StateSync { actors = actors.ToArray(), counts = counts.ToArray(), cards = cards.ToArray(), pickFlags = flags.ToArray(), sessionId = sessionId, penaltyVariants = penalties.ToArray() };
         }
 
         public static void ApplyStateSync(StateSync m)
@@ -407,7 +420,16 @@ namespace CampfireCards.Cards
                 var list = new List<byte>();
                 for (int k = 0; k < n && pos < m.cards.Length; k++) list.Add(m.cards[pos++]);
                 SetAll(m.actors[i], list, i < m.pickFlags.Length ? m.pickFlags[i] : (byte)0);
+                Penalties.Restore(m.actors[i], HasAbility(m.actors[i], "DoubleDeal") && m.penaltyVariants != null && i < m.penaltyVariants.Length ? m.penaltyVariants[i] : (byte)0);
             }
+        }
+
+        private static void AddPenalty(List<ActiveMod> mods, int actor, CardDef def)
+        {
+            byte variant = Penalties.Of(actor);
+            if (def.Ability != "DoubleDeal" || !PenaltyLedger.Valid(variant)) return;
+            mods.Add(new ActiveMod { CardId = def.Id, ModIndex = -1, Channel = CardPenaltyRules.ChannelFor(variant), Op = ModOp.mul,
+                Value = CardSettings.Current.Param(def, CardPenaltyRules.Parameter(variant), variant <= 2 ? 1.15f : 1.2f), Rarity = def.Rarity });
         }
     }
 }

@@ -1,0 +1,883 @@
+{
+  "inspectedAtUtc": "2026-10-10T23:55:05.9669977Z",
+  "gameAssembly": "/workspace/research/PEAKGameLibs-2.5/package/lib/Assembly-CSharp.dll",
+  "assemblySha256": "1606cb3741e39e0f7abeb919440d0ae7b573fad64d0e6ca771e02ce700137e8a",
+  "assemblyVersion": "0.0.0.0",
+  "validationLevel": "Metadata only. Neither PEAK nor Unity physics was run. Stripped/publicized references may differ from your installed 2.6.b files.",
+  "capabilities": [
+    {
+      "name": "Living / ghost card eligibility",
+      "membersPresent": true,
+      "caveat": "Member presence; multiplayer timing is covered by session regression tests, not this probe.",
+      "checks": [
+        {
+          "type": "Character",
+          "member": "data",
+          "present": true
+        },
+        {
+          "type": "CharacterData",
+          "member": "dead",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Resize scout and inspect physics bodies",
+      "membersPresent": true,
+      "caveat": "Transform scale is a Unity API; camera, collider sizes, joints, climbing reach and remote rendering still need playtesting.",
+      "checks": [
+        {
+          "type": "Character",
+          "member": "refs",
+          "present": true
+        },
+        {
+          "type": "CharacterRagdoll",
+          "member": "colliderList",
+          "present": true
+        },
+        {
+          "type": "CharacterRagdoll",
+          "member": "rigidbodies",
+          "present": true
+        },
+        {
+          "type": "Bodypart",
+          "member": "Rig",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Increase maximum stamina",
+      "membersPresent": true,
+      "caveat": "Existing maxStamina is a flat addition. \u002B1 doubles a clean 100-unit bar; it does not double the remaining capacity after afflictions.",
+      "checks": [
+        {
+          "type": "Character",
+          "member": "GetMaxStamina",
+          "present": true
+        },
+        {
+          "type": "CharacterData",
+          "member": "currentStamina",
+          "present": true
+        },
+        {
+          "type": "CharacterAfflictions",
+          "member": "statusSum",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Identify physical impact source",
+      "membersPresent": true,
+      "caveat": "Requires a new hook and explicit object/direction/speed criteria. Generic Injury scaling cannot distinguish a falling object.",
+      "checks": [
+        {
+          "type": "CollisionModifier",
+          "member": "Collide",
+          "present": true
+        },
+        {
+          "type": "CollisionModifier",
+          "member": "onCollide",
+          "present": true
+        },
+        {
+          "type": "CollisionModifier",
+          "member": "damage",
+          "present": true
+        },
+        {
+          "type": "CharacterRagdoll",
+          "member": "TryGetCharacterFromCollider",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Immediate death / very large Injury",
+      "membersPresent": true,
+      "caveat": "These are different outcomes: Injury can cause a pass-out; ghost death must use PEAK\u0027s owner/network death flow. Not invoked by this probe.",
+      "checks": [
+        {
+          "type": "Character",
+          "member": "DieInstantlyLocal",
+          "present": true
+        },
+        {
+          "type": "Character",
+          "member": "RPCA_Die",
+          "present": true
+        },
+        {
+          "type": "CharacterAfflictions",
+          "member": "AddStatus",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Custom gravity / fall control",
+      "membersPresent": true,
+      "caveat": "Rigid-body changes require live climbing, rope, carry and network checks; no gravity card is installed.",
+      "checks": [
+        {
+          "type": "CharacterRagdoll",
+          "member": "rigidbodies",
+          "present": true
+        },
+        {
+          "type": "Bodypart",
+          "member": "Rig",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Event-driven tradeoffs",
+      "membersPresent": true,
+      "caveat": "Existing ability handlers can combine these callbacks; every new trigger still needs logic and balancing.",
+      "checks": [
+        {
+          "type": "Campfire",
+          "member": "Light_Rpc",
+          "present": true
+        },
+        {
+          "type": "Character",
+          "member": "AddExtraStamina",
+          "present": true
+        },
+        {
+          "type": "Character",
+          "member": "AddStamina",
+          "present": true
+        },
+        {
+          "type": "CharacterAfflictions",
+          "member": "SubtractStatus",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Cold-applying climbing surfaces",
+      "membersPresent": true,
+      "caveat": "The surface status flag identifies cold-emitting walls; visual blue-ice asset coverage requires a 2.6.b playtest.",
+      "checks": [
+        {
+          "type": "CharacterData",
+          "member": "climbMod",
+          "present": true
+        },
+        {
+          "type": "ClimbModifierSurface",
+          "member": "applyStatus",
+          "present": true
+        },
+        {
+          "type": "ClimbModifierSurface",
+          "member": "statusType",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Thorn extraction duration",
+      "membersPresent": true,
+      "caveat": "Both native interaction time methods are hooked; live UI timing and teammate extraction need testing.",
+      "checks": [
+        {
+          "type": "ThornOnMe",
+          "member": "isThorn",
+          "present": true
+        },
+        {
+          "type": "ThornOnMe",
+          "member": "character",
+          "present": true
+        },
+        {
+          "type": "ThornOnMe",
+          "member": "GetInteractTime",
+          "present": true
+        },
+        {
+          "type": "ThornOnMe",
+          "member": "GetPopOutTime",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Dynamite damage provenance",
+      "membersPresent": true,
+      "caveat": "Original code tags AOEs created by a dynamite RPC and scopes Injury scaling during their explosions. Chain reactions need runtime checks.",
+      "checks": [
+        {
+          "type": "Dynamite",
+          "member": "RPC_Explode",
+          "present": true
+        },
+        {
+          "type": "AOE",
+          "member": "Explode",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Revive-only Curse prevention",
+      "membersPresent": true,
+      "caveat": "Scales only new Curse from ApplyPostReviveStatus; revival routes and other Curse sources need live coverage.",
+      "checks": [
+        {
+          "type": "Character",
+          "member": "ApplyPostReviveStatus",
+          "present": true
+        },
+        {
+          "type": "CharacterAfflictions",
+          "member": "SetStatus",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Carried scout death progress",
+      "membersPresent": true,
+      "caveat": "Scales observed positive native timer progress, preserving resets and pauses. The carrier is inspected on the victim\u0027s client.",
+      "checks": [
+        {
+          "type": "CharacterData",
+          "member": "carrier",
+          "present": true
+        },
+        {
+          "type": "CharacterData",
+          "member": "deathTimer",
+          "present": true
+        },
+        {
+          "type": "Character",
+          "member": "HandleDeath",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Timed native mushroom powers",
+      "membersPresent": true,
+      "caveat": "Native add/remove and serialization remain responsible for buff lifetime and sync; overlap with consumed buffs needs a playtest.",
+      "checks": [
+        {
+          "type": "CharacterAfflictions",
+          "member": "AddAffliction",
+          "present": true
+        },
+        {
+          "type": "CharacterAfflictions",
+          "member": "HasAfflictionType",
+          "present": true
+        },
+        {
+          "type": "Affliction_InfiniteStamina",
+          "member": "climbDelay",
+          "present": true
+        },
+        {
+          "type": "Affliction_Invincibility",
+          "member": "totalTime",
+          "present": true
+        },
+        {
+          "type": "Affliction_LowGravity",
+          "member": "lowGravAmount",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Cooked food rejection",
+      "membersPresent": true,
+      "caveat": "Owner cast and recipient RPC paths are checked. Food classification and feeding consumption order still need a live test.",
+      "checks": [
+        {
+          "type": "Item",
+          "member": "CanUsePrimary",
+          "present": true
+        },
+        {
+          "type": "Item",
+          "member": "CanUseSecondary",
+          "present": true
+        },
+        {
+          "type": "Item",
+          "member": "FinishCastPrimary",
+          "present": true
+        },
+        {
+          "type": "Item",
+          "member": "FinishCastSecondary",
+          "present": true
+        },
+        {
+          "type": "Character",
+          "member": "GetFedItemRPC",
+          "present": true
+        }
+      ]
+    },
+    {
+      "name": "Native Balloon Bunch reward",
+      "membersPresent": true,
+      "caveat": "TryGetItem metadata does not prove the prefab exists. Published item catalogs list BalloonBunch; spawn placement is still untested.",
+      "checks": [
+        {
+          "type": "ItemDatabase",
+          "member": "TryGetItem",
+          "present": true
+        }
+      ]
+    }
+  ],
+  "missingHooks": 0,
+  "hookChecks": [
+    {
+      "id": "runStart",
+      "type": "RunManager",
+      "member": "StartRun",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "campfireLit",
+      "type": "Campfire",
+      "member": "Light_Rpc",
+      "expected": "bool,float",
+      "matches": true,
+      "available": [
+        "bool,float"
+      ]
+    },
+    {
+      "id": "addStatus",
+      "type": "CharacterAfflictions",
+      "member": "AddStatus",
+      "expected": "STATUSTYPE,float,bool,bool,bool,bool,bool",
+      "matches": true,
+      "available": [
+        "STATUSTYPE,float,bool,bool,bool,bool,bool"
+      ]
+    },
+    {
+      "id": "subtractStatus",
+      "type": "CharacterAfflictions",
+      "member": "SubtractStatus",
+      "expected": "STATUSTYPE,float,bool,bool",
+      "matches": true,
+      "available": [
+        "STATUSTYPE,float,bool,bool"
+      ]
+    },
+    {
+      "id": "addPetrify",
+      "type": "CharacterAfflictions",
+      "member": "AddPetrify",
+      "expected": "int",
+      "matches": true,
+      "available": [
+        "int",
+        ""
+      ]
+    },
+    {
+      "id": "fallDamage",
+      "type": "CharacterMovement",
+      "member": "CheckFallDamage",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "climbFallDamage",
+      "type": "CharacterClimbing",
+      "member": "CheckFallDamage",
+      "expected": "RaycastHit",
+      "matches": true,
+      "available": [
+        "RaycastHit"
+      ]
+    },
+    {
+      "id": "wallClimbCost",
+      "type": "CharacterClimbing",
+      "member": "Update",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "climbJumpCost",
+      "type": "CharacterClimbing",
+      "member": "RPCA_ClimbJump",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "startClimb",
+      "type": "CharacterClimbing",
+      "member": "StartClimbRpc",
+      "expected": "Vector3,Vector3",
+      "matches": true,
+      "available": [
+        "Vector3,Vector3"
+      ]
+    },
+    {
+      "id": "ropeClimbCost",
+      "type": "CharacterRopeHandling",
+      "member": "Update",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "vineClimbCost",
+      "type": "CharacterVineClimbing",
+      "member": "Update",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "vineGrabCost",
+      "type": "CharacterVineClimbing",
+      "member": "GrabVineRpc",
+      "expected": "PhotonView,int",
+      "matches": true,
+      "available": [
+        "PhotonView,int"
+      ]
+    },
+    {
+      "id": "useStamina",
+      "type": "Character",
+      "member": "UseStamina",
+      "expected": "float,bool,bool",
+      "matches": true,
+      "available": [
+        "float,bool,bool"
+      ]
+    },
+    {
+      "id": "regenContext",
+      "type": "Character",
+      "member": "UpdateVariablesFixed",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "addStamina",
+      "type": "Character",
+      "member": "AddStamina",
+      "expected": "float",
+      "matches": true,
+      "available": [
+        "float"
+      ]
+    },
+    {
+      "id": "canRegen",
+      "type": "Character",
+      "member": "CanRegenStamina",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "maxStamina",
+      "type": "Character",
+      "member": "GetMaxStamina",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "staminaBarFrame",
+      "type": "StaminaBar",
+      "member": "Update",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "bonusStamina",
+      "type": "Character",
+      "member": "AddExtraStamina",
+      "expected": "float",
+      "matches": true,
+      "available": [
+        "float"
+      ]
+    },
+    {
+      "id": "wallReach",
+      "type": "CharacterClimbing",
+      "member": "TryToStartWallClimb",
+      "expected": "bool,Vector3,bool,float",
+      "matches": true,
+      "available": [
+        "bool,Vector3,bool,float"
+      ]
+    },
+    {
+      "id": "helpReach",
+      "type": "CharacterGrabbing",
+      "member": "Reach",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "wallSlide",
+      "type": "CharacterClimbing",
+      "member": "Climbing",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "windSlip",
+      "type": "CharacterClimbing",
+      "member": "GetRequestedPostition",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "updateWeight",
+      "type": "CharacterAfflictions",
+      "member": "UpdateWeight",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "jumped",
+      "type": "GlobalEvents",
+      "member": "TriggerCharacterJumped",
+      "expected": "Character,bool",
+      "matches": true,
+      "available": [
+        "Character,bool"
+      ]
+    },
+    {
+      "id": "passOut",
+      "type": "Character",
+      "member": "RPCA_PassOut",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "died",
+      "type": "Character",
+      "member": "RPCA_Die",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "unPassOut",
+      "type": "Character",
+      "member": "RPCA_UnPassOut",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "fedItem",
+      "type": "Character",
+      "member": "GetFedItemRPC",
+      "expected": "int",
+      "matches": true,
+      "available": [
+        "int"
+      ]
+    },
+    {
+      "id": "statueRevive",
+      "type": "RespawnChest",
+      "member": "Interact_CastFinished",
+      "expected": "Character",
+      "matches": true,
+      "available": [
+        "Character"
+      ]
+    },
+    {
+      "id": "killPlane",
+      "type": "Peak.KillPlane",
+      "member": "OnCollisionStay",
+      "expected": "Collision",
+      "matches": true,
+      "available": [
+        "Collision"
+      ]
+    },
+    {
+      "id": "restoreHunger",
+      "type": "Action_RestoreHunger",
+      "member": "RunAction",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "modifyStatus",
+      "type": "Action_ModifyStatus",
+      "member": "RunAction",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "clearAllStatus",
+      "type": "Action_ClearAllStatus",
+      "member": "RunAction",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "consumeDelayed",
+      "type": "Item",
+      "member": "ConsumeDelayed",
+      "expected": "bool",
+      "matches": true,
+      "available": [
+        "bool"
+      ]
+    },
+    {
+      "id": "reduceUses",
+      "type": "Action_ReduceUses",
+      "member": "RunAction",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "consumeAndSpawn",
+      "type": "Action_ConsumeAndSpawn",
+      "member": "RunAction",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "addItem",
+      "type": "Player",
+      "member": "AddItem",
+      "expected": "",
+      "matches": true,
+      "available": [
+        "ushort,ItemInstanceData,ItemSlot"
+      ]
+    },
+    {
+      "id": "hasEmptySlot",
+      "type": "Player",
+      "member": "HasEmptySlot",
+      "expected": "ushort",
+      "matches": true,
+      "available": [
+        "ushort"
+      ]
+    },
+    {
+      "id": "heatEmission",
+      "type": "CharacterHeatEmission",
+      "member": "Update",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "lobbyCreated",
+      "type": "SteamLobbyHandler",
+      "member": "OnLobbyCreated",
+      "expected": "LobbyCreated_t",
+      "matches": true,
+      "available": [
+        "LobbyCreated_t"
+      ]
+    },
+    {
+      "id": "endGame",
+      "type": "Character",
+      "member": "RPCEndGame",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "thornInteractTime",
+      "type": "ThornOnMe",
+      "member": "GetInteractTime",
+      "expected": "Character",
+      "matches": true,
+      "available": [
+        "Character"
+      ]
+    },
+    {
+      "id": "thornPopOutTime",
+      "type": "ThornOnMe",
+      "member": "GetPopOutTime",
+      "expected": "bool",
+      "matches": true,
+      "available": [
+        "bool"
+      ]
+    },
+    {
+      "id": "reviveCurse",
+      "type": "Character",
+      "member": "ApplyPostReviveStatus",
+      "expected": "CharacterAfflictions",
+      "matches": true,
+      "available": [
+        "CharacterAfflictions"
+      ]
+    },
+    {
+      "id": "carriedDeath",
+      "type": "Character",
+      "member": "HandleDeath",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "dynamiteSource",
+      "type": "Dynamite",
+      "member": "RPC_Explode",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "blastContext",
+      "type": "AOE",
+      "member": "Explode",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "canEatPrimary",
+      "type": "Item",
+      "member": "CanUsePrimary",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "canEatSecondary",
+      "type": "Item",
+      "member": "CanUseSecondary",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "eatPrimary",
+      "type": "Item",
+      "member": "FinishCastPrimary",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    },
+    {
+      "id": "eatSecondary",
+      "type": "Item",
+      "member": "FinishCastSecondary",
+      "expected": "",
+      "matches": true,
+      "available": [
+        ""
+      ]
+    }
+  ]
+}

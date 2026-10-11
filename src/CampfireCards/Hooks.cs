@@ -83,6 +83,7 @@ namespace CampfireCards
             _batches.Clear();
             _thorns.Reset();
             _lunch.Reset();
+            _dynamiteSpawnDepth = 0; _dynamiteBlast = false;
             ResetCampfireSpawns();
         }
 
@@ -108,9 +109,11 @@ namespace CampfireCards
         }
 
         /// <summary>hooks.json campfireLit prefix: remember the state before the RPC.</summary>
-        public static void OnCampfireLitPrefix(Campfire __instance, out Campfire.FireState __state)
+        public static void OnCampfireLitPrefix(Campfire __instance, bool updateSegment, out Campfire.FireState __state)
         {
             __state = __instance.state;
+            if (__state != Campfire.FireState.Lit && updateSegment && RunState.RunStarted)
+                PickSession.SnapshotCampfireEligibility((byte)__instance.advanceToSegment);
         }
 
         /// <summary>hooks.json campfireLit postfix: Off -> Lit with updateSegment is a real lighting.</summary>
@@ -259,27 +262,34 @@ namespace CampfireCards
             if (seg != LocalCards.Biome) LocalCards.OnBiomeStarted(local, seg);
         }
 
-        /// <summary>Blood Battery, Safety Net and Current Build buttons (config Keys, keyboard or controller). Ignored while a menu or the card picker has focus.</summary>
+        /// <summary>
+        /// The manual ability and Current Build buttons (config Keys, keyboard or controller), one activation per press.
+        /// Overlapping bindings ask the player to assign separate keys. Ignored while a menu or the card picker has focus.
+        /// </summary>
         private static void AbilityKeys(Character local)
         {
             bool blocked = false;
             try { blocked = GUIManager.instance != null && (GUIManager.instance.windowBlockingInput || GUIManager.instance.wheelActive); } catch { }
             if (blocked) return;
-            TryKey(Controls.Act.BloodBattery, "BloodBattery", local);
-            TryKey(Controls.Act.SafetyNet, "SafetyNet", local);
-            if (Controls.WasPressed(Controls.Act.BuildScreen)) BuildScreen.Toggle(local);
-        }
-
-        private static void TryKey(Controls.Act act, string ability, Character local)
-        {
-            if (!Controls.WasPressed(act)) return;
-            foreach (var a in LocalCards.Manual)
+            if (!local.data.dead && !local.data.passedOut && !local.data.fullyPassedOut)
             {
-                if (a.Card.Ability != ability) continue;
-                try { a.Activate(local); }
-                catch (Exception e) { Plugin.Log.LogError($"{a.Card.Name} Activate: {e}"); }
-                return;
+                var handled = new HashSet<Controls.Act>();
+                foreach (var a in LocalCards.Manual)
+                {
+                    var act = Controls.ActOf(a.Card.Ability);
+                    if (act == null || !handled.Add(act.Value) || !Controls.WasPressed(act.Value)) continue;
+                    var choices = new List<Ability>();
+                    foreach (var other in LocalCards.Manual)
+                    {
+                        var otherAct = Controls.ActOf(other.Card.Ability);
+                        if (otherAct != null && Controls.SharesButton(act.Value, otherAct.Value)) choices.Add(other);
+                    }
+                    if (choices.Count > 1) { Hud.Toast(Ui_Toast.SharedKeyText, warning: true); break; }
+                    try { a.Activate(local); }
+                    catch (Exception e) { Plugin.Log.LogError($"{a.Card.Name} Activate: {e}"); }
+                }
             }
+            if (Controls.WasPressed(Controls.Act.BuildScreen)) BuildScreen.Toggle(local);
         }
 
         private static void CheckArrivals(Character local)

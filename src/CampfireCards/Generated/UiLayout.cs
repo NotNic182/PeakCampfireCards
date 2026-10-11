@@ -6,7 +6,7 @@ namespace CampfireCards.Generated
 {
     public static class UiTiming
     {
-        public const float PickTimeoutSeconds = 30.0f;
+        public const float PickTimeoutSeconds = 60.0f;
         public const float FanSlideInSeconds = 0.35f;
         public const float CardStaggerSeconds = 0.08f;
         public const float HoverScale = 1.08f;
@@ -77,7 +77,7 @@ namespace CampfireCards.Generated
         public const float Y = -70.0f;
     }
 
-    /// <summary>TMP light grey. counts down pickTimeoutSeconds; at 0 a random card of the hand is taken. After a click it shows PendingTemplate until the host confirms; with no answer after pickPendingRetrySeconds the cards can be chosen again and RetryTemplate counts down</summary>
+    /// <summary>TMP light grey. With a positive host timeout, counts down (Text, SacrificeTemplate) and the host takes a random card at 0; with timeoutSeconds = 0 there is no countdown or automatic pick (UntimedText, SacrificeUntimedText). After a click it shows PendingTemplate until the host confirms; with no answer after pickPendingRetrySeconds the cards can be chosen again (RetryTemplate, RetryUntimedText)</summary>
     public static class Ui_Subtitle
     {
         public const string Parent = "PickerWindow";
@@ -93,6 +93,9 @@ namespace CampfireCards.Generated
         public const string RevealPadText = "Added to your cards. Press confirm or back to continue.";
         public const string SacrificeTemplate = "Pick one to lose for the rest of the run. Random pick in {0}s.";
         public const float Y = -150.0f;
+        public const string UntimedText = "Keep one for the whole run. Take your time.";
+        public const string RetryUntimedText = "No answer from the host. Pick again.";
+        public const string SacrificeUntimedText = "Pick one to lose for the rest of the run. Take your time.";
     }
 
     /// <summary>HorizontalLayoutGroup, middle center. holds handSize Card elements in rows of up to 6; scaled down to fit the canvas (less safeMargin, below TitleBand); slides up over fanSlideInSeconds with cardStaggerSeconds between cards</summary>
@@ -169,7 +172,7 @@ namespace CampfireCards.Generated
         public const float LineHeight = 1.05f;
     }
 
-    /// <summary>the card's benefit line in green and its drawback line in red, each with its + / - marker; Mythics show 'No drawback' in the theme accent. auto-size between MinFontSize and FontSize inside the room the name and flavour leave</summary>
+    /// <summary>named Benefit and Drawback lines (bold label) in green and red; a blank drawback shows No drawback in the theme accent. auto-size between MinFontSize and FontSize inside the room the name and flavour leave; manual key placeholders in the card text show the live binding (CardPresentation)</summary>
     public static class Ui_CardEffects
     {
         public const string Parent = "Card";
@@ -182,8 +185,8 @@ namespace CampfireCards.Generated
         public static readonly Color GoodColor = new Color(0.62f, 0.92f, 0.45f, 1f);
         public static readonly Color BadColor = new Color(0.98f, 0.52f, 0.47f, 1f);
         public const string NoDrawback = "No drawback";
-        public const string GoodPrefix = "+ ";
-        public const string BadPrefix = "- ";
+        public const string GoodPrefix = "Benefit: ";
+        public const string BadPrefix = "Drawback: ";
         public const float LineHeight = 1.15f;
         public const float Gap = 10.0f;
         public const float BottomPad = 14.0f;
@@ -274,9 +277,10 @@ namespace CampfireCards.Generated
         public const string SettingsTemplate = "{0} has different Campfire Cards settings ({1}). Everyone should use the same version and config.";
         public const string UnreadableTemplate = "Can't read Campfire Cards data from {0}. Everyone needs the same mod version.";
         public const string You = "You";
+        public const string SharedKeyText = "These abilities share a key. Assign separate keys in the config.";
     }
 
-    /// <summary>one line per owned ability card: name, key (or controller button) and state (ready, cooldown seconds, used this biome, anchor placed), green when ready; on a dark rounded panel fitted to the text. visible on the island when the player owns an activated or limited ability; an ability's line is StatusTemplate (KeyedTemplate when it has a key) with Ready, UsedThisBiome or UsedThisRun for charges</summary>
+    /// <summary>one line per owned ability card: name, key (or controller button), trigger, readable cooldown or remaining use, green when ready; on a dark rounded panel fitted to the text. visible on the island for owned activated or limited abilities; grows to MaxHeight before the text shrinks (to MinFontSize); an ability's line is StatusTemplate (KeyedTemplate when it has a key) with Ready, UsedThisBiome or UsedThisRun for charges</summary>
     public static class Ui_AbilityBar
     {
         public const string Parent = "root";
@@ -290,7 +294,7 @@ namespace CampfireCards.Generated
         public static readonly Color WaitColor = new Color(0.8f, 0.74f, 0.68f, 1f);
         public static readonly Color Panel = new Color(0.06f, 0.036f, 0.024f, 0.75f);
         public const float Padding = 12.0f;
-        public const float MinFontSize = 15.0f;
+        public const float MinFontSize = 14.0f;
         public const float LineHeight = 1.2f;
         public const float X = -24.0f;
         public const float Y = 150.0f;
@@ -300,6 +304,7 @@ namespace CampfireCards.Generated
         public const string AlreadyUsedThisBiome = "{0}: already used this biome";
         public const string StatusTemplate = "{0}: {1}";
         public const string KeyedTemplate = "{0} [{1}]: {2}";
+        public const float MaxHeight = 300.0f;
     }
 
     /// <summary>bold label in the marker's colour with a black outline (they float over snow and sky), a square, the label and the distance. Scavenger's Instinct: one pooled label per marker, placed every frame; hidden behind the camera or off the island</summary>

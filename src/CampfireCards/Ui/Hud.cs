@@ -189,6 +189,9 @@ namespace CampfireCards.Ui
             bool show = text.Length > 0 && RunState.OnIsland;
             if (text == _abilityBar.text && show == _abilityBar.gameObject.activeSelf) return;   // unchanged: no re-layout
             _abilityBar.text = text;
+            // grows with its lines (up to MaxHeight) before the text shrinks, then the panel is fitted around it
+            float height = Mathf.Clamp(_abilityBar.GetPreferredValues(text, Ui_AbilityBar.Size.x, Mathf.Infinity).y + 8f, Ui_AbilityBar.Size.y, Ui_AbilityBar.MaxHeight);
+            _abilityBar.rectTransform.sizeDelta = new Vector2(Ui_AbilityBar.Size.x, height);
             ShowCorner(_abilityBar, _abilityPanel, show);
         }
 

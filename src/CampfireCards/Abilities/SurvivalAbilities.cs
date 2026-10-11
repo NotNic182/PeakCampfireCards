@@ -9,38 +9,9 @@ using UnityEngine;
 
 namespace CampfireCards.Abilities
 {
-    /// <summary>Emergency Purge: once per biome, when Poison, Spores or Drowsy reaches 35, remove 25 of that one status.</summary>
-    public sealed class Ability_EmergencyPurge : Ability
-    {
-        private readonly Charge _charge = new Charge(perBiome: true);
-        private readonly Dictionary<CharacterAfflictions.STATUSTYPE, AboveLatch> _latches = new Dictionary<CharacterAfflictions.STATUSTYPE, AboveLatch>
-        {
-            { CharacterAfflictions.STATUSTYPE.Poison, new AboveLatch() },
-            { CharacterAfflictions.STATUSTYPE.Spores, new AboveLatch() },
-            { CharacterAfflictions.STATUSTYPE.Drowsy, new AboveLatch() },
-        };
-
-        public override void Tick(Character me, float dt)
-        {
-            if (me.data.dead) return;
-            float threshold = P("threshold", 0.35f);
-            foreach (var kv in _latches)
-            {
-                if (!kv.Value.Update(CardStatus.Get(me, kv.Key), threshold - 0.0001f)) continue;
-                if (!_charge.TryUse(LocalCards.Biome)) continue;
-                float amount = P("remove", 0.2f);
-                CardStatus.Remove(me, kv.Key, amount);
-                Ui.Hud.Toast($"{Card.Name}: -{Points(amount)} {StatusName(kv.Key)}");
-                return;   // only the status that triggered
-            }
-        }
-
-        public override AbilityStatus Status(Character me) => BiomeCharge(_charge.Available(LocalCards.Biome));
-    }
-
     /// <summary>
     /// Phoenix Clause: once per run, a fall that would knock you out (or a kill plane) is cancelled; you are moved to a
-    /// recent safe foothold with 40 Injury and skip your next campfire pick.
+    /// recent safe foothold without extra Injury and skip your next campfire pick.
     /// </summary>
     public sealed class Ability_PhoenixClause : Ability
     {
@@ -82,7 +53,7 @@ namespace CampfireCards.Abilities
             }
             _charge.TryUse(0);
             _shieldUntil = Time.time + 4f;
-            Revival.TeleportTo(me, pos, P("injury", 0.4f));
+            Revival.TeleportTo(me, pos, -1f); // prevents this fall; does not add or clear unrelated Injury
             NetSend.Raise(new SkipNextPick { actor = NetSend.LocalActor }, Photon.Realtime.ReceiverGroup.All);
             Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! Back on safe ground. You skip your next card pick.");
             return true;
@@ -170,8 +141,8 @@ namespace CampfireCards.Abilities
         public override AbilityStatus Status(Character me)
         {
             string key = Plugin.SafetyNetKeyLabel;
-            if (_hasAnchor) return AbilityStatus.Wait(Line(key, "anchor placed"));
-            return BiomeCharge(_charge.Available(LocalCards.Biome), key, "place anchor");
+            if (_hasAnchor) return AbilityStatus.Wait(Line(key, "revive anchor placed"));
+            return BiomeCharge(_charge.Available(LocalCards.Biome), key, "place anchor on flat ground");
         }
     }
 
@@ -272,7 +243,7 @@ namespace CampfireCards.Abilities
             var me = Character.localCharacter;
             if (a == null || me == null || victimActor == NetSend.LocalActor) return;
             if (!a._charge.TryUse(LocalCards.Biome)) return;
-            float bonus = a.P("bonus", 0.2f);
+            float bonus = a.P("bonus", 1f);
             me.AddExtraStamina(bonus);
             NetSend.RaiseTo(new BonusStamina { amount = bonus, reason = 1 }, victimActor);
             Ui.Hud.Toast($"{a.Card.Name.ToUpperInvariant()}! You and {NetSend.NameOf(victimActor)} get +{Points(bonus)} extra stamina");

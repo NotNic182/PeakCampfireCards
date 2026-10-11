@@ -32,20 +32,22 @@ namespace CampfireCards
         }
 
         /// <summary>hooks.json fedItem: remember who fed the downed local scout.</summary>
-        public static void OnFedItemPrefix(Character __instance, int itemPhotonID)
+        public static bool OnFedItemPrefix(Character __instance, int itemPhotonID)
         {
-            if (!Mine(__instance)) return;
-            if (!(__instance.data.passedOut || __instance.data.fullyPassedOut)) return;
+            if (!RunState.RunStarted) return true;
             try
             {
                 var view = PhotonView.Find(itemPhotonID);
                 var item = view != null ? view.GetComponent<Item>() : null;
+                if (CannotEatCooked(item, __instance)) return false;
+                if (!Mine(__instance) || !(__instance.data.passedOut || __instance.data.fullyPassedOut)) return true;
                 var feeder = item != null ? item.trueHolderCharacter : null;
-                if (feeder == null || feeder == __instance) return;
+                if (feeder == null || feeder == __instance) return true;
                 _lastFeederActor = NetSend.ActorOf(feeder);
                 _lastFedTime = Time.time;
             }
             catch { }
+            return true;
         }
 
         /// <summary>hooks.json unPassOut: the local scout woke up; if a teammate's feeding did it, tell that teammate.</summary>

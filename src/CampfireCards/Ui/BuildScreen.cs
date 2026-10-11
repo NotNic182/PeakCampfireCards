@@ -161,11 +161,13 @@ namespace CampfireCards.Ui
                 sb.Append(UiKit.ColorTag(rarity)).Append("■ <b>").Append(def.Name).Append("</b></color>  ").Append(Meta)
                   .Append(UiKit.ColorTag(rarity)).Append("<cspace=0.08em><uppercase>").Append(Deck.RarityName(def.Rarity))
                   .Append("</uppercase></cspace></color></size>\n");
-                sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(Indent).Append("+ ").Append(def.Positive).Append(EndIndent).Append("</color>\n");
+                sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(Indent).Append("<b>").Append(Ui_CardEffects.GoodPrefix).Append("</b>")
+                  .Append(CardPresentation.Text(def, def.Positive)).Append(EndIndent).Append("</color>\n");
                 if (string.IsNullOrEmpty(def.Negative))
                     sb.Append(UiKit.ColorTag(Ui_CardFlavor.Color)).Append(Indent).Append(Ui_CardEffects.NoDrawback).Append(EndIndent).Append("</color>\n");
                 else
-                    sb.Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent).Append("- ").Append(def.Negative).Append(EndIndent).Append("</color>\n");
+                    sb.Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent).Append("<b>").Append(Ui_CardEffects.BadPrefix).Append("</b>")
+                      .Append(CardPresentation.Text(def, def.Negative)).Append(EndIndent).Append("</color>\n");
                 AppendConditional(sb, def);
                 foreach (var a in abilities)
                 {

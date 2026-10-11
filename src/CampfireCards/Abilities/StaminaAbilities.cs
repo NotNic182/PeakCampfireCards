@@ -5,25 +5,6 @@ using UnityEngine;
 
 namespace CampfireCards.Abilities
 {
-    /// <summary>Second Wind: once per biome, when usable stamina drops below 20, restore 25 (up to the current ceiling).</summary>
-    public sealed class Ability_SecondWind : Ability
-    {
-        private readonly Charge _charge = new Charge(perBiome: true);
-        private readonly BelowLatch _latch = new BelowLatch();
-
-        public override void Tick(Character me, float dt)
-        {
-            if (me.data.passedOut || me.data.dead) return;
-            if (!_latch.Update(me.data.currentStamina, P("threshold", 0.2f))) return;
-            if (!_charge.TryUse(LocalCards.Biome)) return;
-            float restore = P("restore", 0.25f);
-            me.AddStamina(restore);   // AddStamina clamps to the current maximum
-            Ui.Hud.Toast($"{Card.Name.ToUpperInvariant()}! +{Points(restore)} stamina");
-        }
-
-        public override AbilityStatus Status(Character me) => BiomeCharge(_charge.Available(LocalCards.Biome));
-    }
-
     /// <summary>Half Tank: bonus stamina whenever a new campfire is lit (on top of the vanilla campfire boost).</summary>
     public sealed class Ability_CampfireBonus : Ability
     {
@@ -92,7 +73,7 @@ namespace CampfireCards.Abilities
         {
             if (me.data.dead || me.data.passedOut) return false;
             if (!_charge.TryUse(LocalCards.Biome)) { Ui.Hud.Toast(AlreadyUsedThisBiome); return false; }
-            float bonus = P("bonus", 0.6f), injury = P("injury", 0.25f);
+            float bonus = P("bonus", 0.6f), injury = P("injury", 0.15f);
             me.AddExtraStamina(bonus);
             CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, injury);
             Ui.Hud.Toast($"{Card.Name.ToUpperInvariant()}! +{Points(bonus)} extra stamina, +{Points(injury)} Injury");

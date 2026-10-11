@@ -117,6 +117,7 @@ namespace CampfireCards.Ui
         private readonly List<GameObject> _cards = new List<GameObject>();
         private readonly List<Button> _buttons = new List<Button>();
         private float _deadline;
+        private bool _hasTimer;
         private bool _picked;
         /// <summary>Pick mode: when a sent pick with no answer yet makes the cards choosable again.</summary>
         private float _pendingUntil;
@@ -213,7 +214,7 @@ namespace CampfireCards.Ui
             }
             _onSacrifice = onChosen;
             _title.text = string.Format(Ui_Title.SacrificeTitle, Deck.NameOfAbility("MountainsBargain"));
-            float timeout = Plugin.PickTimeoutSeconds != null ? Plugin.PickTimeoutSeconds.Value : UiTiming.PickTimeoutSeconds;
+            float timeout = PickSession.TimeoutSeconds;
             Open(cards, timeout, Mode.Sacrifice);
             Hud.HidePrompt();
         }
@@ -233,6 +234,7 @@ namespace CampfireCards.Ui
             _hand = hand;
             _picked = false;
             _retry = false;
+            _hasTimer = timeoutSeconds > 0f;
             _title.rectTransform.sizeDelta = new Vector2(UiKit.FitWidth(Ui_Title.Size.x), Ui_Title.Size.y);
             _subtitle.rectTransform.sizeDelta = new Vector2(UiKit.FitWidth(Ui_Subtitle.Size.x), Ui_Subtitle.Size.y);
             _deadline = Time.unscaledTime + timeoutSeconds;
@@ -411,8 +413,8 @@ namespace CampfireCards.Ui
             switch (Current)
             {
                 case Mode.Sacrifice:
-                    _subtitle.text = string.Format(Ui_Subtitle.SacrificeTemplate, seconds);
-                    if (left <= 0f && _hand != null && _hand.Length > 0) Choose(_hand[Random.Range(0, _hand.Length)]);
+                    _subtitle.text = _hasTimer ? string.Format(Ui_Subtitle.SacrificeTemplate, seconds) : Ui_Subtitle.SacrificeUntimedText;
+                    if (_hasTimer && left <= 0f && _hand != null && _hand.Length > 0) Choose(_hand[Random.Range(0, _hand.Length)]);
                     break;
                 case Mode.Reveal:
                     _subtitle.text = Controls.UsingGamepad ? Ui_Subtitle.RevealPadText : Ui_Subtitle.RevealText;
@@ -423,7 +425,9 @@ namespace CampfireCards.Ui
                     if (CancelPressed()) HideNow();
                     break;
                 default:
-                    _subtitle.text = _retry ? string.Format(Ui_Subtitle.RetryTemplate, seconds) : Ui_Subtitle.Text.Replace("{timeLeft}", seconds);
+                    _subtitle.text = _hasTimer
+                        ? (_retry ? string.Format(Ui_Subtitle.RetryTemplate, seconds) : Ui_Subtitle.Text.Replace("{timeLeft}", seconds))
+                        : (_retry ? Ui_Subtitle.RetryUntimedText : Ui_Subtitle.UntimedText);
                     break;
             }
         }
@@ -466,7 +470,7 @@ namespace CampfireCards.Ui
             window.gameObject.AddComponent<Mask>().showMaskGraphic = true;
             var glow = UiKit.Panel(window.transform, "Glow", Vector2.one * Ui_CardArt.GlowSize, new Color(accent.r, accent.g, accent.b, Ui_CardArt.GlowAlpha), Shapes.Get(ArtShape.circle));
             UiKit.Place(glow.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
-            CardArt.Build(window.rectTransform, def.Art, theme);
+            CardArt.Build(window.rectTransform, def.Art, theme, def.Key);
 
             // rarity name in the rarity colour: a spaced uppercase label, not a second name (ui.json CardRarity)
             var rarityText = UiKit.Text(inner.transform, "RarityName", Ui_CardRarity.Size, Ui_CardRarity.FontSize, rarity, TextAlignmentOptions.Center, FontStyles.UpperCase);
@@ -516,24 +520,17 @@ namespace CampfireCards.Ui
         /// <summary>Secondary text on a card face: the theme's accent, slightly softened, so it belongs to the card's own hue.</summary>
         private static Color Soft(Color accent) => new Color(accent.r, accent.g, accent.b, Ui_CardFlavor.AccentAlpha);
 
-        /// <summary>The card's benefit and drawback lines exactly as written in cards.json. noDrawback colours "No drawback".</summary>
+        /// <summary>The card's named benefit and drawback lines, with live key bindings filled in. noDrawback colours "No drawback".</summary>
         public static string EffectText(CardDef def, Color noDrawback)
         {
             var sb = new StringBuilder();
             sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor))
-              .Append(Prefixed(Ui_CardEffects.GoodPrefix, def.Positive)).Append("</color>\n");
+              .Append("<b>").Append(Ui_CardEffects.GoodPrefix).Append("</b>").Append(CardPresentation.Text(def, def.Positive)).Append("</color>\n");
             bool none = string.IsNullOrEmpty(def.Negative);
-            string bad = none ? Ui_CardEffects.NoDrawback : Prefixed(Ui_CardEffects.BadPrefix, def.Negative);
+            string bad = none ? Ui_CardEffects.NoDrawback : "<b>" + Ui_CardEffects.BadPrefix + "</b>" + CardPresentation.Text(def, def.Negative);
             sb.Append(UiKit.ColorTag(none ? noDrawback : Ui_CardEffects.BadColor)).Append(bad).Append("</color>");
             return sb.ToString();
         }
 
-        /// <summary>The +/- marker, unless the text already starts with a sign ("+20 bonus stamina", "+10 Curse").</summary>
-        private static string Prefixed(string prefix, string text)
-        {
-            if (string.IsNullOrEmpty(text)) return text;
-            char c = text[0];
-            return c == '+' || c == '-' ? text : prefix + text;
-        }
     }
 }

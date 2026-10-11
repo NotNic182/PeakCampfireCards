@@ -12,12 +12,14 @@
     "handler": "base name of the static methods in CampfireCards.Hooks",
     "runsOn": "owner | all | host | local",
     "purpose": "one line",
-    "verified": "how it was confirmed against the decompiled game"
+    "verified": "how it was confirmed against the decompiled game",
+    "finalizerArgs": "Optional exception-safe cleanup; calls handler + Finalizer and returns the original exception."
   },
   "_optionalEmpty": [
     "signature",
     "prefixArgs",
-    "postfixArgs"
+    "postfixArgs",
+    "finalizerArgs"
   ],
   "rows": [
     {
@@ -32,7 +34,8 @@
       "handler": "OnRunStarted",
       "runsOn": "all",
       "purpose": "a climb started on this client: reset per-run card state, read the starting biome, schedule the opening pick",
-      "verified": "RunManager.cs:152 public void StartRun(); notes_world 1.4"
+      "verified": "RunManager.cs:152 public void StartRun(); notes_world 1.4",
+      "finalizerArgs": ""
     },
     {
       "id": "campfireLit",
@@ -40,13 +43,14 @@
       "targetType": "Campfire",
       "targetMember": "Light_Rpc",
       "signature": "bool, float",
-      "prefixArgs": "Campfire __instance, out Campfire.FireState __state",
+      "prefixArgs": "Campfire __instance, bool updateSegment, out Campfire.FireState __state",
       "prefixBool": false,
       "postfixArgs": "Campfire __instance, bool updateSegment, float burningFor, Campfire.FireState __state",
       "handler": "OnCampfireLit",
       "runsOn": "all",
-      "purpose": "fire goes Off -> Lit with updateSegment: campfire card effects, then the host starts a pick session",
-      "verified": "Campfire.cs:461 [PunRPC] private void Light_Rpc(bool updateSegment, float burningFor); notes_world 2"
+      "purpose": "snapshot living scouts before Light_Rpc; Off -> Lit with updateSegment applies campfire effects and queues a pick for those scouts",
+      "verified": "Campfire.cs:461 [PunRPC] private void Light_Rpc(bool updateSegment, float burningFor); notes_world 2",
+      "finalizerArgs": ""
     },
     {
       "id": "addStatus",
@@ -60,7 +64,8 @@
       "handler": "OnAddStatus",
       "runsOn": "owner",
       "purpose": "status build-up multipliers, fall/non-fall Injury, Shared Burden split, Delayed Consequences, Phoenix Clause; pushes statuses when a fromRPC add was rescaled",
-      "verified": "CharacterAfflictions.cs:712 public bool AddStatus(STATUSTYPE statusType, float amount, bool fromRPC, bool playEffects, bool notify, bool ignoreInvincibility, bool ignoreSkeleton); notes_status 1"
+      "verified": "CharacterAfflictions.cs:712 public bool AddStatus(STATUSTYPE statusType, float amount, bool fromRPC, bool playEffects, bool notify, bool ignoreInvincibility, bool ignoreSkeleton); notes_status 1",
+      "finalizerArgs": ""
     },
     {
       "id": "subtractStatus",
@@ -74,7 +79,8 @@
       "handler": "OnSubtractStatus",
       "runsOn": "owner",
       "purpose": "natural decay multipliers (Drowsy, Poison, Hot, Spores) and body-heat Cold removal (coldDecay, huddleStrength)",
-      "verified": "CharacterAfflictions.cs:884 public void SubtractStatus(STATUSTYPE statusType, float amount, bool fromRPC, bool decreasedNaturally); notes_status 2"
+      "verified": "CharacterAfflictions.cs:884 public void SubtractStatus(STATUSTYPE statusType, float amount, bool fromRPC, bool decreasedNaturally); notes_status 2",
+      "finalizerArgs": ""
     },
     {
       "id": "addPetrify",
@@ -88,7 +94,8 @@
       "handler": "OnAddPetrify",
       "runsOn": "owner",
       "purpose": "petrifyRate and negativeStatusRate on Petrify build-up (Petrify is stored outside the status array)",
-      "verified": "CharacterAfflictions.cs:1381 public void AddPetrify(int petrify); notes_status 5"
+      "verified": "CharacterAfflictions.cs:1381 public void AddPetrify(int petrify); notes_status 5",
+      "finalizerArgs": ""
     },
     {
       "id": "fallDamage",
@@ -102,7 +109,8 @@
       "handler": "OnFallDamage",
       "runsOn": "owner",
       "purpose": "marks the Injury added during a landing as fall damage",
-      "verified": "CharacterMovement.cs:831 private void CheckFallDamage(); notes_status 4"
+      "verified": "CharacterMovement.cs:831 private void CheckFallDamage(); notes_status 4",
+      "finalizerArgs": ""
     },
     {
       "id": "climbFallDamage",
@@ -116,7 +124,8 @@
       "handler": "OnClimbFallDamage",
       "runsOn": "owner",
       "purpose": "marks the Injury added when a wall slide hits an unclimbable angle as fall damage",
-      "verified": "CharacterClimbing.cs:487 private void CheckFallDamage(RaycastHit hit); notes_status 4"
+      "verified": "CharacterClimbing.cs:487 private void CheckFallDamage(RaycastHit hit); notes_status 4",
+      "finalizerArgs": ""
     },
     {
       "id": "wallClimbCost",
@@ -130,7 +139,8 @@
       "handler": "OnWallClimbContext",
       "runsOn": "owner",
       "purpose": "climbing context for UseStamina: wall climbing cost",
-      "verified": "CharacterClimbing.cs:100 private void Update(), cost at :132-144; notes_movement 1a"
+      "verified": "CharacterClimbing.cs:100 private void Update(), cost at :132-144; notes_movement 1a",
+      "finalizerArgs": ""
     },
     {
       "id": "climbJumpCost",
@@ -144,7 +154,8 @@
       "handler": "OnWallClimbContext",
       "runsOn": "owner",
       "purpose": "climbing context for UseStamina: the climbing lunge (0.2)",
-      "verified": "CharacterClimbing.cs:237 [PunRPC] public void RPCA_ClimbJump(); notes_movement 1a"
+      "verified": "CharacterClimbing.cs:237 [PunRPC] public void RPCA_ClimbJump(); notes_movement 1a",
+      "finalizerArgs": ""
     },
     {
       "id": "startClimb",
@@ -158,7 +169,8 @@
       "handler": "OnStartClimb",
       "runsOn": "owner",
       "purpose": "climbing context for the regrab cost; afterwards scales the grab slide (slipForce)",
-      "verified": "CharacterClimbing.cs:348 [PunRPC] private void StartClimbRpc(Vector3 climbPos, Vector3 climbNormal); notes_movement 1a, 5"
+      "verified": "CharacterClimbing.cs:348 [PunRPC] private void StartClimbRpc(Vector3 climbPos, Vector3 climbNormal); notes_movement 1a, 5",
+      "finalizerArgs": ""
     },
     {
       "id": "ropeClimbCost",
@@ -172,7 +184,8 @@
       "handler": "OnRopeClimbContext",
       "runsOn": "owner",
       "purpose": "climbing context for UseStamina: rope climbing cost (a zero cost returns success, never UseStamina(0))",
-      "verified": "CharacterRopeHandling.cs:43 private void Update(); notes_movement 1b"
+      "verified": "CharacterRopeHandling.cs:43 private void Update(); notes_movement 1b",
+      "finalizerArgs": ""
     },
     {
       "id": "vineClimbCost",
@@ -186,7 +199,8 @@
       "handler": "OnVineClimbContext",
       "runsOn": "owner",
       "purpose": "climbing context for UseStamina: vine climbing cost including the literal 0.005 idle cost",
-      "verified": "CharacterVineClimbing.cs:56 private void Update(); notes_movement 1c"
+      "verified": "CharacterVineClimbing.cs:56 private void Update(); notes_movement 1c",
+      "finalizerArgs": ""
     },
     {
       "id": "vineGrabCost",
@@ -200,7 +214,8 @@
       "handler": "OnVineClimbContext",
       "runsOn": "owner",
       "purpose": "climbing context for UseStamina: vine grab cost",
-      "verified": "CharacterVineClimbing.cs:155 [PunRPC] public void GrabVineRpc(PhotonView ropeView, int segmentIndex)"
+      "verified": "CharacterVineClimbing.cs:155 [PunRPC] public void GrabVineRpc(PhotonView ropeView, int segmentIndex)",
+      "finalizerArgs": ""
     },
     {
       "id": "useStamina",
@@ -214,7 +229,8 @@
       "handler": "OnUseStamina",
       "runsOn": "owner",
       "purpose": "scales climbing stamina costs (climbStamina) inside a climbing context; a cost scaled to 0 returns success without spending",
-      "verified": "Character.cs:1549 internal bool UseStamina(float usage, bool useBonusStamina, bool ignoreAscents)"
+      "verified": "Character.cs:1549 internal bool UseStamina(float usage, bool useBonusStamina, bool ignoreAscents)",
+      "finalizerArgs": ""
     },
     {
       "id": "regenContext",
@@ -228,7 +244,8 @@
       "handler": "OnRegenContext",
       "runsOn": "owner",
       "purpose": "marks the AddStamina call made by natural regeneration",
-      "verified": "Character.cs:1090 private void UpdateVariablesFixed(), regen AddStamina at :1245-1248; notes_movement 3"
+      "verified": "Character.cs:1090 private void UpdateVariablesFixed(), regen AddStamina at :1245-1248; notes_movement 3",
+      "finalizerArgs": ""
     },
     {
       "id": "addStamina",
@@ -242,7 +259,8 @@
       "handler": "OnAddStamina",
       "runsOn": "owner",
       "purpose": "regenRate on natural regeneration only",
-      "verified": "Character.cs:1601 public void AddStamina(float add)"
+      "verified": "Character.cs:1601 public void AddStamina(float add)",
+      "finalizerArgs": ""
     },
     {
       "id": "canRegen",
@@ -256,7 +274,8 @@
       "handler": "OnCanRegenStamina",
       "runsOn": "owner",
       "purpose": "regenDelay: regeneration starts sooner (or later) than the 1 s / 2 s vanilla delay",
-      "verified": "Character.cs:1278 private bool CanRegenStamina(); notes_movement 3"
+      "verified": "Character.cs:1278 private bool CanRegenStamina(); notes_movement 3",
+      "finalizerArgs": ""
     },
     {
       "id": "maxStamina",
@@ -270,7 +289,8 @@
       "handler": "OnGetMaxStamina",
       "runsOn": "owner",
       "purpose": "maxStamina: flat additions to the maximum (normal cards floored at 50, Mythics past it)",
-      "verified": "Character.cs:1616 public float GetMaxStamina(); notes_status 9"
+      "verified": "Character.cs:1616 public float GetMaxStamina(); notes_status 9",
+      "finalizerArgs": ""
     },
     {
       "id": "staminaBarFrame",
@@ -284,7 +304,8 @@
       "handler": "OnStaminaBarUpdate",
       "runsOn": "local",
       "purpose": "maxStamina on the HUD: the frame and the right edge of the status-segment row follow the card-adjusted maximum, so a max-stamina penalty visibly shortens the bar with Hunger and the other statuses right after the stamina, and a bonus lengthens it (vanilla assumes max stamina + statuses = 100%)",
-      "verified": "StaminaBar.cs:83-137 (Start fills afflictions; Update sizes MaxStamina to GetMaxStamina() and the frame to max(1, statusSum)); HUD prefab read from data.unity3d: Bar/LayoutGroup is a HorizontalLayoutGroup aligned MiddleRight, stretched across the bar, holding the BarAffliction segments, and MaxStamina is its child with LayoutElement.ignoreLayout, anchored left"
+      "verified": "StaminaBar.cs:83-137 (Start fills afflictions; Update sizes MaxStamina to GetMaxStamina() and the frame to max(1, statusSum)); HUD prefab read from data.unity3d: Bar/LayoutGroup is a HorizontalLayoutGroup aligned MiddleRight, stretched across the bar, holding the BarAffliction segments, and MaxStamina is its child with LayoutElement.ignoreLayout, anchored left",
+      "finalizerArgs": ""
     },
     {
       "id": "bonusStamina",
@@ -298,7 +319,8 @@
       "handler": "OnAddExtraStamina",
       "runsOn": "owner",
       "purpose": "bonusStaminaGain on every bonus stamina grant (campfire, food, cards); cards grant through this same method",
-      "verified": "Character.cs:1630 public void AddExtraStamina(float add); notes_status 6"
+      "verified": "Character.cs:1630 public void AddExtraStamina(float add); notes_status 6",
+      "finalizerArgs": ""
     },
     {
       "id": "wallReach",
@@ -312,7 +334,8 @@
       "handler": "OnTryWallClimb",
       "runsOn": "owner",
       "purpose": "grabReach: wall attach ray length (default 1.25 m)",
-      "verified": "CharacterClimbing.cs:534 private void TryToStartWallClimb(bool forceAttempt, Vector3 overide, bool botGrab, float raycastDistance); notes_movement 6"
+      "verified": "CharacterClimbing.cs:534 private void TryToStartWallClimb(bool forceAttempt, Vector3 overide, bool botGrab, float raycastDistance); notes_movement 6",
+      "finalizerArgs": ""
     },
     {
       "id": "helpReach",
@@ -320,13 +343,14 @@
       "targetType": "CharacterGrabbing",
       "targetMember": "Reach",
       "signature": "",
-      "prefixArgs": "",
+      "prefixArgs": "CharacterGrabbing __instance",
       "prefixBool": false,
       "postfixArgs": "CharacterGrabbing __instance",
       "handler": "OnReach",
       "runsOn": "all",
       "purpose": "helpReach: a helper with Long Arm also pulls the local scout from past the vanilla 4 m (evaluated on the pulled scout's client)",
-      "verified": "CharacterGrabbing.cs:247 private void Reach(); notes_movement 7"
+      "verified": "CharacterGrabbing.cs:247 private void Reach(); notes_movement 7",
+      "finalizerArgs": ""
     },
     {
       "id": "wallSlide",
@@ -340,7 +364,8 @@
       "handler": "OnClimbingSlide",
       "runsOn": "owner",
       "purpose": "slipForce: scales the out-of-stamina wall slide added this physics step",
-      "verified": "CharacterClimbing.cs:255 private void Climbing(); notes_movement 5"
+      "verified": "CharacterClimbing.cs:255 private void Climbing(); notes_movement 5",
+      "finalizerArgs": ""
     },
     {
       "id": "windSlip",
@@ -354,7 +379,8 @@
       "handler": "OnRequestedPosition",
       "runsOn": "owner",
       "purpose": "slipForce: scales the wind slipperiness pull while climbing (data.slippy), restored afterwards",
-      "verified": "CharacterClimbing.cs:286 private Vector3 GetRequestedPostition(); notes_movement 5"
+      "verified": "CharacterClimbing.cs:286 private Vector3 GetRequestedPostition(); notes_movement 5",
+      "finalizerArgs": ""
     },
     {
       "id": "updateWeight",
@@ -368,7 +394,8 @@
       "handler": "OnUpdateWeight",
       "runsOn": "owner",
       "purpose": "itemWeight, heldItemWeight, carryScoutWeight and thornsRate: the prefix puts back the unscaled Thorns so the game only plays its thorn effects for new thorns; the postfix recomputes Weight with the card multipliers and scales only newly stuck thorns (Core.ThornsLedger); the game clamps stamina to the unscaled values on the way, so the stamina from before the update is carried in __state and given back up to the final maximum",
-      "verified": "CharacterAfflictions.cs:411 internal void UpdateWeight(): Thorns = 0.025 x stuck thorns via SetStatus, never AddStatus; it compares the new value with currentStatuses[Thorns] for its sound and particles; notes_status 1, notes_movement 8, notes_items 7"
+      "verified": "CharacterAfflictions.cs:411 internal void UpdateWeight(): Thorns = 0.025 x stuck thorns via SetStatus, never AddStatus; it compares the new value with currentStatuses[Thorns] for its sound and particles; notes_status 1, notes_movement 8, notes_items 7",
+      "finalizerArgs": ""
     },
     {
       "id": "jumped",
@@ -382,7 +409,8 @@
       "handler": "OnCharacterJumped",
       "runsOn": "all",
       "purpose": "Second Spring: notices when the local scout used an extra (midair) jump",
-      "verified": "GlobalEvents.cs:208 public static void TriggerCharacterJumped(Character character, bool doubleJump); notes_movement 4"
+      "verified": "GlobalEvents.cs:208 public static void TriggerCharacterJumped(Character character, bool doubleJump); notes_movement 4",
+      "finalizerArgs": ""
     },
     {
       "id": "passOut",
@@ -396,7 +424,8 @@
       "handler": "OnPassedOut",
       "runsOn": "all",
       "purpose": "the local scout went down: revival cards (Safety Net, Eternal Campfire) get one chance",
-      "verified": "Character.cs:993 [PunRPC] public void RPCA_PassOut(); notes_status 7"
+      "verified": "Character.cs:993 [PunRPC] public void RPCA_PassOut(); notes_status 7",
+      "finalizerArgs": ""
     },
     {
       "id": "died",
@@ -410,7 +439,8 @@
       "handler": "OnDied",
       "runsOn": "all",
       "purpose": "the local scout died without passing out first (kill plane, instant death): the same single revival chance",
-      "verified": "Character.cs:735 [PunRPC] public void RPCA_Die(); notes_status 7"
+      "verified": "Character.cs:735 [PunRPC] public void RPCA_Die(); notes_status 7",
+      "finalizerArgs": ""
     },
     {
       "id": "unPassOut",
@@ -424,7 +454,8 @@
       "handler": "OnUnPassedOut",
       "runsOn": "all",
       "purpose": "the local scout woke up after being fed: tell the feeder (Hero's Arrival)",
-      "verified": "Character.cs:964 [PunRPC] private void RPCA_UnPassOut(); notes_status 7"
+      "verified": "Character.cs:964 [PunRPC] private void RPCA_UnPassOut(); notes_status 7",
+      "finalizerArgs": ""
     },
     {
       "id": "fedItem",
@@ -433,12 +464,13 @@
       "targetMember": "GetFedItemRPC",
       "signature": "int",
       "prefixArgs": "Character __instance, int itemPhotonID",
-      "prefixBool": false,
+      "prefixBool": true,
       "postfixArgs": "",
       "handler": "OnFedItem",
       "runsOn": "owner",
-      "purpose": "remember who fed the local scout (reviver attribution)",
-      "verified": "Character.cs:1646 [PunRPC] public void GetFedItemRPC(int itemPhotonID); notes_items 3.3"
+      "purpose": "Refuse cooked food fed to a CampfireMeal holder before item actions or consumption; otherwise attribute teammate revives.",
+      "verified": "Character.cs:1646 [PunRPC] public void GetFedItemRPC(int itemPhotonID); notes_items 3.3",
+      "finalizerArgs": ""
     },
     {
       "id": "statueRevive",
@@ -452,7 +484,8 @@
       "handler": "OnRespawnChestUsed",
       "runsOn": "local",
       "purpose": "the local scout activated a revive statue with teammates down (Hero's Arrival)",
-      "verified": "RespawnChest.cs:36 public override void Interact_CastFinished(Character interactor); notes_status 7"
+      "verified": "RespawnChest.cs:36 public override void Interact_CastFinished(Character interactor); notes_status 7",
+      "finalizerArgs": ""
     },
     {
       "id": "killPlane",
@@ -466,7 +499,8 @@
       "handler": "OnKillPlane",
       "runsOn": "local",
       "purpose": "Phoenix Clause: a kill plane under the local scout is cancelled once per run",
-      "verified": "Peak/KillPlane.cs:10 private void OnCollisionStay(Collision other); notes_status 8"
+      "verified": "Peak/KillPlane.cs:10 private void OnCollisionStay(Collision other); notes_status 8",
+      "finalizerArgs": ""
     },
     {
       "id": "restoreHunger",
@@ -480,7 +514,8 @@
       "handler": "OnRestoreHunger",
       "runsOn": "owner",
       "purpose": "food hunger multipliers (foodHunger, cookedFoodHunger) for the eater, and the food event for food cards",
-      "verified": "Action_RestoreHunger.cs RunAction(); notes_items 1.6"
+      "verified": "Action_RestoreHunger.cs RunAction(); notes_items 1.6",
+      "finalizerArgs": ""
     },
     {
       "id": "modifyStatus",
@@ -494,7 +529,8 @@
       "handler": "OnModifyStatusAction",
       "runsOn": "owner",
       "purpose": "healing multipliers (healReceived, healGiven, healSelfUse) on Injury removed by items, and the curative event",
-      "verified": "Action_ModifyStatus.cs RunAction(); notes_items 3.2"
+      "verified": "Action_ModifyStatus.cs RunAction(); notes_items 3.2",
+      "finalizerArgs": ""
     },
     {
       "id": "clearAllStatus",
@@ -508,7 +544,8 @@
       "handler": "OnClearAllStatusAction",
       "runsOn": "owner",
       "purpose": "curative event for items that clear every status",
-      "verified": "Action_ClearAllStatus.cs:5 RunAction(); notes_items 1.3"
+      "verified": "Action_ClearAllStatus.cs:5 RunAction(); notes_items 1.3",
+      "finalizerArgs": ""
     },
     {
       "id": "consumeDelayed",
@@ -522,7 +559,8 @@
       "handler": "OnConsumeDelayed",
       "runsOn": "owner",
       "purpose": "Lucky Lunch: the first cooked food of a biome runs its effects but is not used up (no Consume RPC)",
-      "verified": "Item.cs:1079 public IEnumerator ConsumeDelayed(bool ignoreActions); notes_items 4.2"
+      "verified": "Item.cs:1079 public IEnumerator ConsumeDelayed(bool ignoreActions); notes_items 4.2",
+      "finalizerArgs": ""
     },
     {
       "id": "reduceUses",
@@ -536,7 +574,8 @@
       "handler": "OnReduceUses",
       "runsOn": "owner",
       "purpose": "Lucky Lunch on multi-use cooked food: the use is not spent",
-      "verified": "Action_ReduceUses.cs RunAction(); notes_items 4.2"
+      "verified": "Action_ReduceUses.cs RunAction(); notes_items 4.2",
+      "finalizerArgs": ""
     },
     {
       "id": "consumeAndSpawn",
@@ -550,7 +589,8 @@
       "handler": "OnConsumeAndSpawn",
       "runsOn": "owner",
       "purpose": "Lucky Lunch on food that leaves a peel: keep the food and spawn no peel",
-      "verified": "Action_ConsumeAndSpawn.cs RunAction()"
+      "verified": "Action_ConsumeAndSpawn.cs RunAction()",
+      "finalizerArgs": ""
     },
     {
       "id": "addItem",
@@ -564,7 +604,8 @@
       "handler": "OnAddItem",
       "runsOn": "host",
       "purpose": "Double Deal: the master never fills the locked third pocket (the item goes to the hands slot or stays on the ground; nothing is deleted)",
-      "verified": "Player.cs:87 public bool AddItem(ushort itemID, ItemInstanceData instanceData, out ItemSlot slot); notes_items 5.4"
+      "verified": "Player.cs:87 public bool AddItem(ushort itemID, ItemInstanceData instanceData, out ItemSlot slot); notes_items 5.4",
+      "finalizerArgs": ""
     },
     {
       "id": "hasEmptySlot",
@@ -578,7 +619,8 @@
       "handler": "OnHasEmptySlot",
       "runsOn": "all",
       "purpose": "Double Deal: the client pickup check agrees with the master (no pickup flicker)",
-      "verified": "Player.cs:268 public bool HasEmptySlot(ushort itemID); notes_items 5.4"
+      "verified": "Player.cs:268 public bool HasEmptySlot(ushort itemID); notes_items 5.4",
+      "finalizerArgs": ""
     },
     {
       "id": "heatEmission",
@@ -592,7 +634,8 @@
       "handler": "OnHeatEmission",
       "runsOn": "all",
       "purpose": "body-heat context for the Cold subtract; Heat Huddle also warms the local scout from teammates up to 1.5x the 1 m radius",
-      "verified": "CharacterHeatEmission.cs:20 public void Update(); notes_status 3"
+      "verified": "CharacterHeatEmission.cs:20 public void Update(); notes_status 3",
+      "finalizerArgs": ""
     },
     {
       "id": "lobbyCreated",
@@ -606,7 +649,8 @@
       "handler": "OnLobbyCreated",
       "runsOn": "host",
       "purpose": "write the steam lobby id to the mod's net.log for launchers",
-      "verified": "SteamLobbyHandler.cs:396 private void OnLobbyCreated(LobbyCreated_t)"
+      "verified": "SteamLobbyHandler.cs:396 private void OnLobbyCreated(LobbyCreated_t)",
+      "finalizerArgs": ""
     },
     {
       "id": "endGame",
@@ -620,7 +664,8 @@
       "handler": "OnRunEnded",
       "runsOn": "all",
       "purpose": "run over: close the picker, clear every card, timer and stat change",
-      "verified": "Character.cs [PunRPC] private void RPCEndGame()"
+      "verified": "Character.cs [PunRPC] private void RPCEndGame()",
+      "finalizerArgs": ""
     },
     {
       "id": "characterRegistered",
@@ -634,7 +679,8 @@
       "handler": "OnCharacterRegistered",
       "runsOn": "all",
       "purpose": "a Character appeared (local or remote, incl. reconnect): the host resends full card state to a late joiner",
-      "verified": "PEAK_API_NOTES 1 (fires in Character.Awake)"
+      "verified": "PEAK_API_NOTES 1 (fires in Character.Awake)",
+      "finalizerArgs": ""
     },
     {
       "id": "sceneLoaded",
@@ -648,7 +694,8 @@
       "handler": "OnSceneLoaded",
       "runsOn": "all",
       "purpose": "leaving the island (Airport/Title): clear run state and UI",
-      "verified": "GameHandler.OnSceneLoaded pattern, PEAK_API_NOTES 1"
+      "verified": "GameHandler.OnSceneLoaded pattern, PEAK_API_NOTES 1",
+      "finalizerArgs": ""
     },
     {
       "id": "photonEvent",
@@ -662,7 +709,158 @@
       "handler": "OnPhotonEvent",
       "runsOn": "all",
       "purpose": "receive the mod's RaiseEvent codes (see net.json)",
-      "verified": "PEAK_API_NOTES 3; PUN 2.49"
+      "verified": "PEAK_API_NOTES 3; PUN 2.49",
+      "finalizerArgs": ""
+    },
+    {
+      "id": "thornInteractTime",
+      "kind": "harmony",
+      "targetType": "ThornOnMe",
+      "targetMember": "GetInteractTime",
+      "signature": "Character",
+      "prefixArgs": "",
+      "prefixBool": false,
+      "postfixArgs": "ThornOnMe __instance, ref float __result",
+      "handler": "OnThornInteractTime",
+      "runsOn": "owner",
+      "purpose": "Scale removal cast time by the thorned scout's card, even when a teammate removes it.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": ""
+    },
+    {
+      "id": "thornPopOutTime",
+      "kind": "harmony",
+      "targetType": "ThornOnMe",
+      "targetMember": "GetPopOutTime",
+      "signature": "bool",
+      "prefixArgs": "",
+      "prefixBool": false,
+      "postfixArgs": "ThornOnMe __instance, ref float __result",
+      "handler": "OnThornPopOutTime",
+      "runsOn": "owner",
+      "purpose": "Scale natural thorn removal time; arrows retain vanilla timing.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": ""
+    },
+    {
+      "id": "reviveCurse",
+      "kind": "harmony",
+      "targetType": "Character",
+      "targetMember": "ApplyPostReviveStatus",
+      "signature": "CharacterAfflictions",
+      "prefixArgs": "CharacterAfflictions afflictions, out float __state",
+      "prefixBool": false,
+      "postfixArgs": "CharacterAfflictions afflictions, float __state",
+      "handler": "OnPostReviveStatus",
+      "runsOn": "owner",
+      "purpose": "Suppress only the new Curse applied by revival, retaining unrelated Curse.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": ""
+    },
+    {
+      "id": "carriedDeath",
+      "kind": "harmony",
+      "targetType": "Character",
+      "targetMember": "HandleDeath",
+      "signature": "",
+      "prefixArgs": "Character __instance, out float __state",
+      "prefixBool": false,
+      "postfixArgs": "Character __instance, float __state",
+      "handler": "OnCarriedDeath",
+      "runsOn": "owner",
+      "purpose": "Scale measured death timer progression on the victim owner while carried by a Human Carry-On holder.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": ""
+    },
+    {
+      "id": "dynamiteSource",
+      "kind": "harmony",
+      "targetType": "Dynamite",
+      "targetMember": "RPC_Explode",
+      "signature": "",
+      "prefixArgs": "out CampfireCards.DynamiteSpawnState __state",
+      "prefixBool": false,
+      "postfixArgs": "",
+      "handler": "OnDynamiteSource",
+      "runsOn": "owner",
+      "purpose": "Tag AOE instances created by this dynamite RPC and retain a synchronous creation context.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": "Exception __exception, CampfireCards.DynamiteSpawnState __state"
+    },
+    {
+      "id": "blastContext",
+      "kind": "harmony",
+      "targetType": "AOE",
+      "targetMember": "Explode",
+      "signature": "",
+      "prefixArgs": "AOE __instance, out bool __state",
+      "prefixBool": false,
+      "postfixArgs": "",
+      "handler": "OnBlastContext",
+      "runsOn": "owner",
+      "purpose": "Use source-specific Injury scaling only inside tagged dynamite blasts.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": "Exception __exception, bool __state"
+    },
+    {
+      "id": "canEatPrimary",
+      "kind": "harmony",
+      "targetType": "Item",
+      "targetMember": "CanUsePrimary",
+      "signature": "",
+      "prefixArgs": "",
+      "prefixBool": false,
+      "postfixArgs": "Item __instance, ref bool __result",
+      "handler": "OnCanEat",
+      "runsOn": "owner",
+      "purpose": "Block cooked food casts for CampfireMeal, including food fed by teammates.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": ""
+    },
+    {
+      "id": "canEatSecondary",
+      "kind": "harmony",
+      "targetType": "Item",
+      "targetMember": "CanUseSecondary",
+      "signature": "",
+      "prefixArgs": "",
+      "prefixBool": false,
+      "postfixArgs": "Item __instance, ref bool __result",
+      "handler": "OnCanFeedCooked",
+      "runsOn": "owner",
+      "purpose": "Block cooked food casts for CampfireMeal, including food fed by teammates.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": ""
+    },
+    {
+      "id": "eatPrimary",
+      "kind": "harmony",
+      "targetType": "Item",
+      "targetMember": "FinishCastPrimary",
+      "signature": "",
+      "prefixArgs": "Item __instance",
+      "prefixBool": true,
+      "postfixArgs": "",
+      "handler": "OnFinishFoodCast",
+      "runsOn": "owner",
+      "purpose": "Recheck cooked food eligibility before any nutrition, buff, curse or consumption actions run.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": ""
+    },
+    {
+      "id": "eatSecondary",
+      "kind": "harmony",
+      "targetType": "Item",
+      "targetMember": "FinishCastSecondary",
+      "signature": "",
+      "prefixArgs": "Item __instance",
+      "prefixBool": true,
+      "postfixArgs": "",
+      "handler": "OnFinishFoodFeed",
+      "runsOn": "owner",
+      "purpose": "Recheck cooked food eligibility before any nutrition, buff, curse or consumption actions run.",
+      "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": ""
     }
   ]
 }

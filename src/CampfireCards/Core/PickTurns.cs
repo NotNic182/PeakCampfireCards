@@ -118,6 +118,13 @@ namespace CampfireCards.Core
 
         public bool IsClaimed(int actor) => _claimed.Contains(actor);
 
+        /// <summary>A host-approved skip (death before choosing). Replays and skips from an older session do nothing.</summary>
+        public bool Skip(int sessionId, int actor)
+        {
+            if (!Active || sessionId != SessionId || !IsPending(actor) || IsClaimed(actor)) return false;
+            return RemoveActor(actor);
+        }
+
         /// <summary>The accepted pick arrived: the player is done.</summary>
         public void Apply(int actor)
         {

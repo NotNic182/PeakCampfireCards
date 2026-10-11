@@ -13,7 +13,30 @@ namespace CampfireCards
     /// </summary>
     public static class Controls
     {
-        public enum Act { BloodBattery, SafetyNet, BuildScreen }
+        public enum Act { BloodBattery, SecondWind, EmergencyPurge, SafetyNet, BuildScreen }
+
+        /// <summary>The action a manual card's ability is pressed with (cards.json ability), or null for a passive card.</summary>
+        public static Act? ActOf(string ability)
+        {
+            switch (ability)
+            {
+                case "BloodBattery": return Act.BloodBattery;
+                case "SecondWind": return Act.SecondWind;
+                case "EmergencyPurge": return Act.EmergencyPurge;
+                case "SafetyNet": return Act.SafetyNet;
+                default: return null;
+            }
+        }
+
+        /// <summary>Two actions answer to the same key or controller button, so one press would be ambiguous.</summary>
+        public static bool SharesButton(Act a, Act b)
+        {
+            if (a == b) return true;
+            var ka = KeyOf(a); var kb = KeyOf(b);
+            if (ka != null && kb != null && ka.Value != Key.None && ka.Value == kb.Value) return true;
+            var pa = PadAction(a); var pb = PadAction(b);
+            return pa != null && pb != null && Control(pa.bindings[0].effectivePath) == Control(pb.bindings[0].effectivePath);
+        }
 
         public const string Auto = "auto";
         public const string None = "none";
@@ -70,6 +93,8 @@ namespace CampfireCards
             switch (act)
             {
                 case Act.BloodBattery: return Plugin.BloodBatteryKey;
+                case Act.SecondWind: return Plugin.SecondWindKey;
+                case Act.EmergencyPurge: return Plugin.EmergencyPurgeKey;
                 case Act.SafetyNet: return Plugin.SafetyNetKey;
                 default: return Plugin.BuildScreenKey;
             }
@@ -80,6 +105,8 @@ namespace CampfireCards
             switch (act)
             {
                 case Act.BloodBattery: return Plugin.BloodBatteryPad;
+                case Act.SecondWind: return Plugin.SecondWindPad;
+                case Act.EmergencyPurge: return Plugin.EmergencyPurgePad;
                 case Act.SafetyNet: return Plugin.SafetyNetPad;
                 default: return Plugin.BuildScreenPad;
             }
