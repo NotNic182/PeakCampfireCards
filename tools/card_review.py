@@ -15,6 +15,13 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     report = json.loads((ROOT / 'docs/research/card-edit-review.json').read_text())
     current = {c['id']: c for c in json.loads((ROOT / 'design/cards.json').read_text())['rows']}
+    # Read literal submitted text for every field, including fields the user left unchanged.
+    # Falling back to shipped copy would misrepresent the request after a later wording pass.
+    original = load_workbook(ROOT / 'design/reviews/card-editing-submitted.xlsx', read_only=True)
+    values = iter(original['Cards'].values)
+    headers = next(values)
+    submitted = {int(row[0]): dict(zip(headers, row)) for row in values if row[0] is not None}
+    original.close()
     wb = load_workbook(ROOT / 'design/editable/card-editing.xlsx')
     ws = wb.create_sheet('Review', 1)
     fields = ['id', 'key', 'status', 'requested_name', 'requested_benefit', 'requested_drawback', 'requested_flavor',
@@ -27,7 +34,7 @@ def main():
             raise ValueError('Review data is stale for ' + card['key'])
         requested = {}
         for field, target in [('name', 'name'), ('benefit', 'positive'), ('drawback', 'negative'), ('flavor', 'flavor')]:
-            requested[field] = row['changes'].get(field, {}).get('requested', card.get(target, ''))
+            requested[field] = submitted[row['id']].get(field) or ''
         status = 'Pending paired replacement' if row['status'] == 'pending' else 'Implemented — candidate'
         ws.append([row['id'], row['key'], status, requested['name'], requested['benefit'], requested['drawback'], requested['flavor'],
                    card['name'], card['positive'], card['negative'], card.get('flavor', ''), row['implementationNote']])

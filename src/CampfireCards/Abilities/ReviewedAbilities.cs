@@ -85,8 +85,8 @@ namespace CampfireCards.Abilities
         public override string Status(Character me)
         {
             if (_granted != null && me.refs.afflictions.afflictionList.Contains(_granted))
-                return Card.Name + ": " + _power + $" ({Mathf.CeilToInt(Mathf.Max(0f, _granted.totalTime + _granted.bonusTime - _granted.timeElapsed))}s)";
-            return Card.Name + $": next power in {Mathf.CeilToInt(_clock.Remaining(P("interval", 600f)))}s";
+                return Card.Name + ": " + _power + " active (" + CardCopy.Countdown(_granted.totalTime + _granted.bonusTime - _granted.timeElapsed) + ")";
+            return Card.Name + ": next power in " + CardCopy.Countdown(_clock.Remaining(P("interval", 600f)));
         }
     }
 }

@@ -26,7 +26,18 @@ FILES = [
     (os.path.join(ROOT, 'docs', 'card-edit-review.md'), 'docs/card-edit-review.md'),
     (os.path.join(ROOT, 'design', 'editable', 'card-edit-review.xlsx'), 'design/editable/card-edit-review.xlsx'),
     (os.path.join(ROOT, 'design', 'reviews', 'card-editing-submitted.xlsx'), 'design/reviews/card-editing-submitted.xlsx'),
+    (os.path.join(ROOT, 'docs', 'card-images.md'), 'docs/card-images.md'),
+    (os.path.join(ROOT, 'docs', 'card-text-and-playtest.md'), 'docs/card-text-and-playtest.md'),
+    (os.path.join(ROOT, 'docs', 'research', 'card-copy-review.json'), 'docs/research/card-copy-review.json'),
+    (os.path.join(ROOT, 'assets', 'card-images', 'README.md'), 'art/cards/README.md'),
+    (os.path.join(ROOT, 'design', 'editable', 'card-image-map.csv'), 'art/cards/card-image-map.csv'),
+    (os.path.join(ROOT, 'design', 'editable', 'card-image-map.csv'), 'design/editable/card-image-map.csv'),
 ]
+
+# Optional artwork stays beside the DLL; files are named with stable card keys.
+for name in sorted(os.listdir(os.path.join(ROOT, 'assets', 'card-images'))):
+    if name.endswith('.png'):
+        FILES.append((os.path.join(ROOT, 'assets', 'card-images', name), 'art/cards/' + name))
 
 
 def main():

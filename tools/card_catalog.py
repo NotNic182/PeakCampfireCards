@@ -8,10 +8,12 @@ import argparse
 import copy
 import csv
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'design' / 'cards.json'
+VERSION = re.search(r'<Version>([^<]+)</Version>', (ROOT / 'src/CampfireCards/CampfireCards.csproj').read_text()).group(1)
 FIELDS = ['id', 'key', 'rarity', 'category', 'enabled_by_default', 'name', 'benefit',
           'drawback', 'flavor', 'requested_effects', 'notes', 'current_modifiers',
           'current_ability', 'current_parameters']
@@ -65,11 +67,13 @@ def write_workbook(rows, path):
     wb = Workbook()
     guide = wb.active; guide.title = 'Read me'
     instructions = [
-        ('Campfire Cards — edit and send back', 'PEAK target: 2.6.b. Source: design/cards.json, mod 0.6.0. All 64 cards are included. See card-edit-review.xlsx for your submitted requests and their implementation status.'),
+        ('Campfire Cards — edit and send back', f'PEAK target: 2.6.b. Source: design/cards.json, mod {VERSION}. All 64 cards are included. See card-edit-review.xlsx for your submitted requests and their implementation status.'),
         ('Edit the blue columns on Cards', 'Name, Benefit, Drawback, Flavor, Requested effects. Existing text is copied exactly from the mod.'),
         ('Changing gameplay', 'Write mechanics in plain English in Requested effects, including numbers, trigger, duration, and drawback. Text edits alone do not change gameplay.'),
         ('Keep these unchanged', 'ID and Key identify the card for reimport. Rarity, Category and Enabled by default are reference fields.'),
         ('No drawback', 'Leave Drawback blank; the game shows its standard no-drawback message.'),
+        ('Ability key placeholder', 'Keep {key} in manual card text: the game replaces it with your configured binding. Defaults: Nic of Time V, Discount Cure-All K, Bootleg Scoutmaster Bugle B, Budget Checkpoint Flag N.'),
+        ('Your own images', 'Save <Key>.png in art/cards beside CampfireCards.dll. See card-image-map.csv and docs/card-images.md. Restart PEAK after changing images.'),
         ('Current implementation', 'Notes flag known limitations. Current code shows the actual modifiers, ability handler and parameters. Existing Enabled settings are preserved during upgrade.'),
         ('Numbers in the code', 'Multiplier 0.8 = 20% less, 1.3 = 30% more. Stamina/status amounts 0.1 = 10 game units; cooldowns/delays are seconds, radii metres, chance 0.65 = 65%.'),
         ('New ideas', 'Use New ideas for new card concepts. See docs/effect-feasibility.md for supported effects and what still needs a playtest.'),
@@ -159,6 +163,10 @@ def main():
     sheet = json.loads(SOURCE.read_text(encoding='utf-8'))
     if args.action == 'export':
         rows = catalog(sheet); write_csv(rows, args.output_dir / 'card-editing.csv')
+        with (args.output_dir / 'card-image-map.csv').open('w', encoding='utf-8-sig', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['id', 'key', 'filename', 'name'])
+            writer.writerows([c['id'], c['key'], c['key'] + '.png', c['name']] for c in sheet['rows'])
         if args.xlsx: write_workbook(rows, args.output_dir / 'card-editing.xlsx')
         print('Exported %d cards to %s' % (len(rows), args.output_dir))
     else:

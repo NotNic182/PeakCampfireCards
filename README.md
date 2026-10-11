@@ -39,11 +39,16 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
 - Card-draw cards (Clown Luggage Special, Scout's Dishonor) give their bonus cards right away. Bonus cards are never card-draw cards.
 
 ## Controls
+
+The picker labels Benefit and Drawback. Numbers without a percent sign use points on the normal 100-point
+bar; yellow stamina is temporary extra stamina. [Wording and playtest notes](docs/card-text-and-playtest.md)
+explain the status terms and the supplied log.
+
 | Key | What it does |
 |---|---|
 | V | Nic of Time: recover 25 stamina below 20 (five-minute cooldown) |
-| K | Discount Cure-All: clear 20 from the worst eligible status at 35+ (once per biome) |
-| B | Bootleg Scoutmaster Bugle: spend it for bonus stamina (once per biome) |
+| K | Discount Cure-All: remove 20 from the highest Poison, Spores or Drowsy at 35+ (once per biome) |
+| B | Bootleg Scoutmaster Bugle: gain 60 yellow stamina for 15 Injury (once per biome) |
 | N | Budget Checkpoint Flag: place your anchor on flat ground (once per biome) |
 | J | Current Build: every card you own, its benefit and drawback, which conditional effects are active right now, charges and cooldowns, and the combined result (sprint speed, jump height, stamina costs, regeneration, maximum stamina, Injury, item weight and more) |
 
@@ -51,118 +56,126 @@ All keys can be changed in the config. Cards with charges or cooldowns show thei
 the Current Build screen, a value that depends on a condition or a teammate's aura shows what applies right now and,
 next to it, the value that always applies.
 
+## Your own card art
+
+In 0.6.1, save a PNG as `art/cards/<Key>.png` beside `CampfireCards.dll`, then restart PEAK.
+Example: `art/cards/GeckoGrip.png` changes Piton Fingers. Use the stable Key, not the display name.
+[All 64 filenames](design/editable/card-image-map.csv) and [image instructions](docs/card-images.md) are included.
+Recommended: 1024 × 576; maximum: 2048 pixels per dimension and 8 MiB per PNG.
+Missing or rejected images use the original animated art. Images are local cosmetics.
+
 ## The cards
 
-The deck includes the reviewed 0.6.0 edits. [Card review](docs/card-edit-review.md) explains new mechanics and the pending ROOTS Survivor replacement.
+The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Card review](docs/card-edit-review.md) explains new mechanics and the pending ROOTS Survivor replacement.
 
 ### Climbing
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Piton Fingers | Common | Lose stamina 12% slower when climbing. | Sprinting stamina drains 12% faster |
-| Mini Scout Cannon | Uncommon | Jump 30% higher. | 30% more fall damage. |
-| To The Bone | Common | You take 35% less cold when climbing on blue ice. | Takes 10% longer to warm back up. |
-| Pitonless Pit Stop | Rare | Hang still on a wall to get 4 stamina back every second. | Climbing speed is reduced by 30% |
-| Bing BOING | Rare | Double jump: one extra jump in mid-air. (35 second cooldown) | Each double jump makes you a bit drowsy (+7.5 Drowsy). |
-| Energy Drink Overdose | Uncommon | You climb 30% faster. | Climbing tires you 20% more. |
-| Tenderfoot Insurance | Uncommon | Falls hurt 25% less. | Dynamite explosions deal 3 times as much Injury. |
-| Daddy | Common | Grab walls from 20% farther away. | Stamina drains 10% faster. |
+| Piton Fingers | Common | Climbing uses 12% less stamina. | Sprinting uses 12% more stamina. |
+| Mini Scout Cannon | Uncommon | Jump 30% higher. | Take 30% more fall Injury. |
+| To The Bone | Common | Cold builds 35% slower while climbing blue ice. | Warming up takes 10% longer. |
+| Pitonless Pit Stop | Rare | Hang still on a wall to recover 4 stamina per second. | Climb 30% slower. |
+| Bing BOING | Rare | Jump again in mid-air for a double jump. Cooldown: 35s. | Each double jump adds 7.5 Drowsy. |
+| Energy Drink Overdose | Uncommon | Climb 30% faster. | Climbing uses 20% more stamina. |
+| Tenderfoot Insurance | Uncommon | Take 25% less fall Injury. | Dynamite deals 3 times as much Injury. |
+| Daddy | Common | Grab walls from 20% farther away. | All stamina costs are 10% higher. |
 
 ### Environment
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Cool, Calm, and Collected. | Common | You burn 50% slower. | You freeze 30% faster. |
-| Just hot. | Common | You freeze 50% slower. | You burn 30% faster. |
-| Antidote Enthusiast | Uncommon | Poison builds up 35% slower. | You burn and freeze 25% faster. |
-| ROOTS Survivor | Uncommon | Spores build up 35% slower. | None |
-| Cactus? What Cactus? | Common | New thorns count 40% less. | Takes twice as long to remove the thorns. |
-| Aloe | Uncommon | Once you're out of the heat, it wears off 60% faster. | You burn 15% faster. |
-| Heat Pack | Uncommon | Once you're out of the cold, it wears off 60% faster. | You freeze 15% faster. |
+| Cool, Calm, and Collected. | Common | Heat builds 50% slower. | Cold builds 30% faster. |
+| Just hot. | Common | Cold builds 50% slower. | Heat builds 30% faster. |
+| Antidote Enthusiast | Uncommon | Poison builds 35% slower. | Heat and Cold build 25% faster. |
+| ROOTS Survivor | Uncommon | Spores build 35% slower. | No drawback |
+| Cactus? What Cactus? | Common | New Thorns add 40% less status, rounded up to whole thorns. | Removing Thorns takes twice as long. |
+| Aloe | Uncommon | Heat wears off 60% faster. | Heat builds 15% faster. |
+| Heat Pack | Uncommon | Cold wears off 60% faster. | Cold builds 15% faster. |
 | Fartberry Fitness | Rare | Above 20 Poison, climbing uses 40% less stamina. | Poison wears off 30% slower. |
 
 ### Inventory
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Bing Bong's Baggage | Rare | All carried weight is cut in half, including your backpack and a carried scout. | Your third pocket is locked for the rest of the run. |
-| Carry-On Only | Uncommon | Items in your hands weigh 25% less. | Items inside your backpack weigh 10% more. |
-| Idol Hands | Common | The item in your hands weighs 35% less. | None |
-| Cook It, Keep It | Uncommon | Once per biome, the first cooked food you eat isn't used up. | Uncooked food cures hunger 50% less. |
-| Cooking Badge Deluxe | Uncommon | Cooked food fills you up 50% more. | Eating uncooked food poisons you a little (+7.5 Poison). |
-| Balright | Rare | A Balloon Bunch appears for you at the next campfire (once per run). | Every stamina use costs 10% more. |
-| Scoutmaster's Care Package | Uncommon | A free bandage appears for you at each new campfire. | None |
-| Clown Luggage Special | Legendary | Get 2 more random cards right now. | Gain one random, permanent drawback: +15% climbing cost, +15% sprint cost, +20% Injury or +20% Hunger. |
+| Bing Bong's Baggage | Rare | All carried weight is 50% lighter, including backpacks and scouts. | Your third pocket cannot hold new items. |
+| Carry-On Only | Uncommon | Held items weigh 25% less. | Backpack contents weigh 10% more. |
+| Idol Hands | Common | Held items weigh 35% less. | No drawback |
+| Cook It, Keep It | Uncommon | Once per biome, your first cooked meal is not consumed. | Uncooked food removes 50% less Hunger. |
+| Cooking Badge Deluxe | Uncommon | Cooked food removes 50% more Hunger. | Eating cookable food raw adds 7.5 Poison. |
+| Balright | Rare | Get one Balloon Bunch at the next campfire. Once per run. | All stamina costs are 10% higher. |
+| Scoutmaster's Care Package | Uncommon | Get a Bandage at each new campfire after picking this card. | No drawback |
+| Clown Luggage Special | Legendary | Immediately gain 2 random bonus cards. | One permanent random penalty: climbing or sprinting cost +15%, Injury +20%, or Hunger buildup +20%. |
 
 ### Mutation
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Scout Cannon Legs | Rare | Sprint 35% faster and jump 25% higher. | Falls hurt 40% more. |
-| Crown of Bad Decisions | Rare | Get 30 extra stamina now, and 20 more at every campfire after. | Get 10 Curse now, and 2 more at every campfire after. |
-| Pandora's Pocket Gamble | Uncommon | Everything you carry is 10% lighter. In each biome, a 65% chance of 25 extra stamina. | Otherwise, you take 20 Injury. |
-| Bootleg Scoutmaster Bugle | Legendary | Once per biome, press B for 60 extra stamina. | Using it costs you 15 Injury. |
-| Big Lollipop Crash | Uncommon | Sprint for 2 seconds and you speed up 30% until you stop. | Stopping after the speed-up makes you a bit drowsy (+7.5 Drowsy, at most every 30 seconds). |
-| Piton Payment Plan | Rare | Falls hurt 15% less, and most of the injury only arrives 20 seconds later. | None |
-| Glass Scout Cannon | Legendary | Your stamina bar is 40 longer. | Every injury hurts 50% more. |
-| Baggage Claim Escapee | Uncommon | Without a backpack, sprint 30% faster and jump 20% higher. | With a backpack, you sprint 15% slower. |
+| Scout Cannon Legs | Rare | Sprint 35% faster and jump 25% higher. | Take 40% more fall Injury. |
+| Crown of Bad Decisions | Rare | Gain 30 yellow stamina now, then 20 at each later campfire. | Gain 10 Curse now, then 2 at each later campfire. |
+| Pandora's Pocket Gamble | Uncommon | Inventory items weigh 10% less. Each biome: 65% chance of 25 yellow stamina. | A failed roll adds 20 Injury instead. |
+| Bootleg Scoutmaster Bugle | Legendary | Press B to gain 60 yellow stamina. Once per biome. | Each use adds 15 Injury. |
+| Big Lollipop Crash | Uncommon | Sprint for 2s to move 30% faster until you stop. | Stopping after a boost adds 7.5 Drowsy, at most once every 30s. |
+| Piton Payment Plan | Rare | Take 25% of a fall's Injury now and 60% after 20s: 15% less in total. | No drawback |
+| Glass Scout Cannon | Legendary | Gain 40 maximum stamina. | Take 50% more Injury. |
+| Baggage Claim Escapee | Uncommon | Without a backpack: sprint 30% faster and jump 20% higher. | With a backpack: sprint 15% slower. |
 
 ### Mythic
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Scoutmaster | Mythic | Climbing never tires you, falls never hurt, and you sprint 25% faster. | None |
-| The Eternal Campfire | Mythic | Everyone within 15 m of you (you too) gets a stamina bar 35 longer and takes 60% less injury and statuses. Once per biome, the first scout nearby who passes out is revived. | None |
+| Scoutmaster | Mythic | Climbing costs no stamina and falls cause no Injury. Sprint 25% faster. | No drawback |
+| The Eternal Campfire | Mythic | You and scouts within 15 m: maximum stamina +35; Injury and status buildup -60%. Share 1 auto-revive per biome. | No drawback |
 
 ### Stamina
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Cookie Addiction | Uncommon | Your stamina bar is 25 longer. | You get hungry 35% faster. |
-| Nic of Time | Rare | Below 20 stamina, press V to restore 25 stamina (5-minute cooldown). | None |
-| Hasty Badge Training | Common | Sprinting tires you 15% less. | Climbing uses 15% more stamina. |
-| HOLD | Common | Stamina starts coming back 0.3 seconds sooner. | Stamina bar shrinks 15% |
-| Meditation | Uncommon | Crouch and stay still to get stamina back 35% faster. | Nothing. You're already crouched down staying still |
-| I'm getting Scoutmastered | Uncommon | You sprint 25% faster. | Your stamina bar is 12.5 shorter. |
-| Endurance Badge | Rare | Climb for 3 seconds straight, and the next second of climbing costs 35% less stamina. | None |
-| Marshmallow Morale | Common | Every time a campfire is lit, all your Hunger clears. | You can't eat cooked food, even when a teammate feeds you. |
+| Cookie Addiction | Uncommon | Gain 25 maximum stamina. | Hunger builds 35% faster. |
+| Nic of Time | Rare | Press V below 20 stamina to recover 25. Cooldown: 5 min. | No drawback |
+| Hasty Badge Training | Common | Sprinting uses 15% less stamina. | Climbing uses 15% more stamina. |
+| HOLD | Common | Stamina regeneration starts 0.3s sooner. | Lose 15 maximum stamina. |
+| Meditation | Uncommon | Crouch and stay still to recover stamina 35% faster. | No drawback |
+| I'm getting Scoutmastered | Uncommon | Sprint 25% faster. | Lose 12.5 maximum stamina. |
+| Endurance Badge | Rare | Climb for 3s straight: climbing uses 35% less stamina for the next 1s. | No drawback |
+| Marshmallow Morale | Common | Each new campfire clears your Hunger. | You cannot eat cooked food, including food fed to you. |
 
 ### Survival
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| BingBong | Common | Every 10 minutes while alive, gain Infinite Stamina, Invincibility or Low Gravity for 20 seconds. | None |
-| Tara | Uncommon | Bandages and medkits heal you 25% more. | None |
-| Walk It Off | Uncommon | While you have 20+ Injury, climbing and sprinting use 25% less stamina . | Every injury hurts 10% more. |
-| Discount Cure-All | Rare | Once per biome, press K when Poison, Spores or Drowsy reaches 35 to clear 20 of the worst one. | None |
-| BingBong Parachute | Legendary | Once per run, a fall that would knock you out puts you back on safe ground instead. | If used, prevents the next card pick. |
-| Gourmand's Gut | Common | Food fills you up 20% more. | None |
-| Book of Broken Bones | Rare | Reviving does not add Curse. | Every injury hurts 25% more. |
-| Mini  Tenacity | Uncommon | Medical items also clear 7.5 of your worst other status. | None |
+| BingBong | Common | Every 10 min alive: a random 20s burst of Infinite Stamina, Invincibility or Low Gravity. | No drawback |
+| Tara | Uncommon | Healing items remove 25% more Injury from you. | No drawback |
+| Walk It Off | Uncommon | At 20+ Injury, climbing and sprinting use 25% less stamina. | Take 10% more Injury. |
+| Discount Cure-All | Rare | Press K at 35+ Poison, Spores or Drowsy to remove 20 from the highest. Once per biome. | No drawback |
+| BingBong Parachute | Legendary | Once per run, cancel a fatal fall and return to safe ground. | Using it skips your next card pick. |
+| Gourmand's Gut | Common | Food removes 20% more Hunger. | No drawback |
+| Book of Broken Bones | Rare | Reviving does not add Curse. | Take 25% more Injury. |
+| Mini Tenacity | Uncommon | Medical items also remove 7.5 from your highest other status. | No drawback |
 
 ### Team
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Rule Zero (team) | Uncommon | Climbing near a teammate uses 15% less stamina for you both. | Climbing alone tires you 15% more. |
-| First Aid Badge (team) | Uncommon | Healing items you use on teammates heal 60% more. | Healing items you use on yourself heal 35% less. |
-| Human Carry-On (team) | Common | Carrying a scout feels 35% lighter. | While you carry a passed-out scout, their paused death timer drains at 15% of normal speed (or 15% faster if already draining). |
-| Happy Camper Huddle (team) | Common | Huddling warms you 35% more, from 35% farther away. | With no teammate within 6 m, you get cold 20% faster. |
-| Otto-Matic Clutch (team) | Rare | The first time you revive a teammate in each biome, you both get full extra stamina bar. | None |
-| You're alright, you're alright (team) | Common | Pull teammates up from 30% farther away. | Starting a teammate pull costs you 10 stamina (once per reach). |
-| Take One for the Troop (team) | Rare | Teammates near you (6 m) take 30% less injury. | You take half of what you saved them (at most 10 per hit). |
-| Friendship Bugle Choir (team) | Uncommon | Teammates near you (6 m) get stamina back 12% faster. | With no teammate within 6 m, every stamina use costs you 10% more. |
+| Rule Zero | Uncommon | You and teammates within 6 m use 15% less climbing stamina. | With no teammate within 6 m, climbing uses 15% more stamina. |
+| First Aid Badge | Uncommon | Healing items used on teammates remove 60% more Injury. | Healing items used on yourself remove 35% less Injury. |
+| Human Carry-On | Common | Carried scouts weigh 35% less. | Their paused death timer drains at 15% of normal speed. Already-active timers drain 15% faster. |
+| Happy Camper Huddle | Common | Huddling warms you 35% more, from 35% farther away. | With no teammate within 6 m, Cold builds 20% faster. |
+| Otto-Matic Clutch | Rare | First teammate revive by feeding or statue each biome: both gain 100 yellow stamina. | No drawback |
+| You're alright, you're alright | Common | Pull teammates up from 30% farther away. | Starting a pull costs 10 stamina, once per continuous reach. |
+| Take One for the Troop | Rare | Teammates within 6 m take 30% less Injury. | You take half the prevented Injury, up to 10 per hit. |
+| Friendship Bugle Choir | Uncommon | Teammates within 6 m recover stamina 12% faster. | With no teammate within 6 m, all stamina costs are 10% higher. |
 
 ### Wildcard
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| Scout's Dishonor | Legendary | Get 1 more random card right now (Common to Rare). | Get 10 Curse now, and the next campfire offers you only 1 card. |
-| BingBong Baggage Scanner | Rare | See food, items and luggage within 12 m, even through rock. | None |
-| Medicinal Munchies | Uncommon | Eating while you have 20+ Injury heals 7.5 Injury. | None |
-| Budget Checkpoint Flag | Legendary | Once per biome, press N to set an anchor. If you pass out, you wake up there. | Your stamina bar is 15 shorter. |
-| Petrify Procrastination | Rare | You turn to stone 35% slower. | Fall damage hurts 15% more |
-| Fine Print | Legendary | Give up one of your cards: your stamina bar becomes 35 longer. | Get 5 Curse at every campfire after. |
+| Scout's Dishonor | Legendary | Immediately gain 1 random bonus card, Common to Rare. | Gain 10 Curse. Your next campfire offers only 1 card. |
+| BingBong Baggage Scanner | Rare | Mark food, items and luggage within 12 m, even through terrain. | No drawback |
+| Medicinal Munchies | Uncommon | At 20+ Injury, eating food removes 7.5 Injury. | No drawback |
+| Budget Checkpoint Flag | Legendary | Press N on flat ground: your next pass-out revives you here. Once per biome. | Lose 15 maximum stamina. The revival leaves 40 Injury. |
+| Petrify Procrastination | Rare | Petrification builds 35% slower. | Take 15% more fall Injury. |
+| Fine Print | Legendary | Sacrifice one of your cards to gain 35 maximum stamina. | Gain 5 Curse at each later campfire. |
 
 ## Playing together
 Co-op for up to 4, exactly like PEAK: host a game and invite friends through Steam. Every player needs the same

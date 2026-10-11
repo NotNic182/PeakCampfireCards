@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.6.0";
+        public const string Version = "0.6.1";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -165,6 +165,8 @@ namespace CampfireCards
                 if (Time.frameCount % 300 == 0) Log.LogError("Tick: " + e);
             }
         }
+
+        private void OnDestroy() => Art.CustomCardImages.Clear();
 
         public static Coroutine Run(IEnumerator routine) => Instance.StartCoroutine(routine);
 
