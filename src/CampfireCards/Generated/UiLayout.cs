@@ -144,17 +144,20 @@ namespace CampfireCards.Generated
         public const float GlowSize = 150.0f;
     }
 
-    /// <summary>rarity name in the rarity colour, uppercase and letter-spaced so it reads as a label, not a second name. none</summary>
+    /// <summary>rarity name (COMMON ... MYTHIC) in dark bold letter-spaced capitals on a rounded badge filled with the rarity colour, sized to the word, so the rarity reads as text and never rests on colour alone. none</summary>
     public static class Ui_CardRarity
     {
         public const string Parent = "Card";
-        public static readonly Vector2 Size = new Vector2(280f, 20f);
-        public const string Anchor = "top, y=-184: 10 below the art, tucked up against the name it labels";
+        public static readonly Vector2 Size = new Vector2(280f, 24f);
+        public const string Anchor = "top, y=-166: a badge straddling the bottom edge of the art window, 12 above the name";
         public const string Text = "{rarity}";
         public const string SoundOn = "none";
-        public const float FontSize = 16.0f;
-        public const float Y = -184.0f;
-        public const float CharacterSpacing = 8.0f;
+        public const float FontSize = 15.0f;
+        public const float Y = -166.0f;
+        public const float CharacterSpacing = 6.0f;
+        public const float BadgeHeight = 24.0f;
+        public const float PadX = 12.0f;
+        public static readonly Color TextColor = new Color(0.07f, 0.045f, 0.03f, 1f);
     }
 
     /// <summary>uppercase white, up to two lines at full size (shrinks only below that, to MinFontSize), top-aligned. none</summary>
@@ -233,7 +236,7 @@ namespace CampfireCards.Generated
         public const string Separator = "  ·  ";
     }
 
-    /// <summary>one line per card: a square in the card's rarity colour plus its name; a last line names the Current Build key (or controller button); on a dark rounded panel fitted to the text so it stays readable over snow and sky. visible on the island when the player holds any card; hidden in menus</summary>
+    /// <summary>one line per card: a square in the card's rarity colour, its name, and its rarity name in small letter-spaced capitals in that colour; a last line names the Current Build key (or controller button); on a dark rounded panel fitted to the text so it stays readable over snow and sky. visible on the island when the player holds any card; hidden in menus</summary>
     public static class Ui_MyCardsHud
     {
         public const string Parent = "root";
@@ -252,6 +255,7 @@ namespace CampfireCards.Generated
         public const float LineHeight = 1.2f;
         public const float X = 20.0f;
         public const float Y = 200.0f;
+        public const float RaritySizePercent = 70.0f;
     }
 
     /// <summary>dark panel, white text. toastSeconds notices; warnings that ask the players to act (settings or version mismatch) stay warningToastSeconds</summary>
@@ -336,7 +340,7 @@ namespace CampfireCards.Generated
         public const string GiveUpLaterTemplate = "{0}: after this pick, you give up one of your cards.";
     }
 
-    /// <summary>dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you; both columns open with a header (YOUR CARDS, COMBINED EFFECTS) on the same line; a card's detail lines hang DetailIndent in, so wrapped lines stay under their marker; every combined-effect line carries the same + / - marker as the cards. toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; text that does not fit is split into pages at FontSize (no shrinking), the key steps through the pages and closes after the last; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI</summary>
+    /// <summary>dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you; both columns open with a header (YOUR CARDS, COMBINED EFFECTS) on the same line; a card's detail lines hang DetailIndent in, so wrapped lines stay under their marker; every combined-effect line carries the same + / - marker as the cards; Team view (after your build's last page, only with teammates): every other player's name, card count and state (passed out / ghost), then each card they picked in pick order (rarity square, name, rarity, green benefit, red drawback) and any Clown Luggage penalties; teammates are spread over both columns. toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; text that does not fit is split into pages at FontSize (no shrinking), the key steps through the pages, then (with teammates) through the Team view's pages, and closes after the last; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI</summary>
     public static class Ui_BuildScreen
     {
         public const string Parent = "root";
@@ -380,6 +384,16 @@ namespace CampfireCards.Generated
         public const float HintY = 14.0f;
         public const float HintHeight = 36.0f;
         public const float DetailSizePercent = 88.0f;
+        public const string TeamTitle = "TEAM CARDS";
+        public const string TeamHint = "Your teammates' cards in the order they picked them: benefit in green, drawback in red.";
+        public const string ToTeamHint = "Press {0} for your teammates' cards.";
+        public const string ToTeamPageHint = "Page {1} of {2}. Press {0} for your teammates' cards.";
+        public const string TeamNoCards = "No cards yet.";
+        public const string CardCountOne = "1 card";
+        public const string CardCountMany = "{0} cards";
+        public const string Ghost = "ghost";
+        public const string Down = "passed out";
+        public const string PenaltyLabel = "Clown Luggage penalty: ";
     }
 
 }

@@ -58,7 +58,9 @@ namespace CampfireCards
         public static bool OnUseStaminaPrefix(Character __instance, ref float usage, ref bool __result)
         {
             if (usage <= 0f || !Mine(__instance)) return true;
-            usage *= Core.StatComposites.StaminaCost(Effects.Local, _climbCtx == __instance && _climbDepth > 0);
+            bool climbing = _climbCtx == __instance && _climbDepth > 0;
+            usage *= Core.StatComposites.StaminaCost(Effects.Local, climbing);
+            if (climbing) Ability_OverhangRegen.NoteClimbCost(usage);
             if (usage <= 0f)
             {
                 __result = true;

@@ -1,4 +1,5 @@
 using System;
+using CampfireCards.Cards;
 using CampfireCards.Core;
 using CampfireCards.Generated;
 using UnityEngine;
@@ -8,14 +9,24 @@ namespace CampfireCards.Abilities
     /// <summary>Overhang Artist: regenerate stamina while gripping a wall (not a rope or vine) without moving.</summary>
     public sealed class Ability_OverhangRegen : Ability
     {
+        /// <summary>Climbing stamina the game charged since the last tick (Hooks.Movement): hanging still is refunded.</summary>
+        private static float _climbSpent;
+        public static void NoteClimbCost(float usage) { if (usage > 0f && LocalCards.Get<Ability_OverhangRegen>() != null) _climbSpent += usage; }
+
         public override void Tick(Character me, float dt)
         {
+            float spent = _climbSpent;
+            _climbSpent = 0f;
             var d = me.data;
             if (!d.isClimbing || d.isRopeClimbing || d.isVineClimbing) return;   // wall only
             if (me.input.movementInput.magnitude >= 0.1f) return;
             if (me.refs.climbing.playerSlide.sqrMagnitude > 0.01f) return;      // sliding is not hanging still
-            me.AddStamina(P("regenPerSecond", 0.04f) * dt);
+            // The game still charges a small grip cost while hanging (up to 2/s on steep walls) and that blocks normal
+            // regeneration; give it back so hanging still really recovers the card's full 4 per second.
+            me.AddStamina(P("regenPerSecond", 0.04f) * dt + spent);
         }
+
+        public override void OnRemoved(Character me) => _climbSpent = 0f;
     }
 
     /// <summary>
@@ -32,7 +43,7 @@ namespace CampfireCards.Abilities
 
         private void Ensure()
         {
-            if (_cd == null) _cd = new Cooldown(P("cooldown", 35f));
+            if (_cd == null) _cd = new Cooldown(P("cooldown", 15f));
             Active = this;
         }
 

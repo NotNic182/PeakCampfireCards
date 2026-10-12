@@ -313,7 +313,7 @@ namespace CampfireCards.Tests
             var q = new DelayedInjuryQueue();
             Assert.Equal(25f, q.Add(100f, 0f), 3);
             Assert.Equal(0f, q.Tick(19.9f));
-            Assert.Equal(52.5f, q.Tick(20f), 3);
+            Assert.Equal(60f, q.Tick(20f), 3);   // card text: 25% now, 60% after 20 s
             Assert.Equal(0, q.Pending);
         }
 
@@ -323,8 +323,8 @@ namespace CampfireCards.Tests
             var q = new DelayedInjuryQueue();
             q.Add(100f, 0f);
             q.Add(40f, 10f);
-            Assert.Equal(52.5f, q.Tick(20f), 3);
-            Assert.Equal(21f, q.Tick(30f), 3);
+            Assert.Equal(60f, q.Tick(20f), 3);
+            Assert.Equal(24f, q.Tick(30f), 3);
         }
 
         [Fact]

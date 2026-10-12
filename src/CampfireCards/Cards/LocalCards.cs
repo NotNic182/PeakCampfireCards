@@ -71,13 +71,21 @@ namespace CampfireCards.Cards
             catch (System.Exception e) { Plugin.Log.LogError($"{def.Name} OnRemoved: {e}"); }
         }
 
+        /// <summary>True while the run's cards are being cleared: OnRemoved is cleanup, not a mid-run removal (sacrifice).</summary>
+        public static bool Resetting { get; private set; }
+
         public static void Reset()
         {
             var me = Character.localCharacter;
-            foreach (var a in _abilities.Values.ToList())
+            Resetting = true;
+            try
             {
-                try { if (me != null) a.OnRemoved(me); } catch { }
+                foreach (var a in _abilities.Values.ToList())
+                {
+                    try { if (me != null) a.OnRemoved(me); } catch { }
+                }
             }
+            finally { Resetting = false; }
             _abilities.Clear();
             _retired.Clear();
             Biome = -1;

@@ -23,6 +23,31 @@ namespace CampfireCards
             AccessTools.FieldRefAccess<CharacterAfflictions, bool>("m_inAirport");
         private static readonly AccessTools.FieldRef<CharacterData, bool> NativeInvincible =
             AccessTools.FieldRefAccess<CharacterData, bool>("isInvincible");
+        private static readonly AccessTools.FieldRef<CharacterAfflictions, float[]> IncrementalStatuses =
+            AccessTools.FieldRefAccess<CharacterAfflictions, float[]>("currentIncrementalStatuses");
+        private static readonly AccessTools.FieldRef<CharacterAfflictions, float[]> DecrementalStatuses =
+            AccessTools.FieldRefAccess<CharacterAfflictions, float[]>("currentDecrementalStatuses");
+
+        private static readonly int StatusCount = Enum.GetValues(typeof(CharacterAfflictions.STATUSTYPE)).Length;
+        /// <summary>Leftovers of card-scaled status changes that PEAK's 0.025 steps would discard (Core.StatusCarry).</summary>
+        private static readonly StatusCarry AddCarry = new StatusCarry(StatusCount), SubCarry = new StatusCarry(StatusCount);
+        private static float _petrifyCarry;
+        /// <summary>Injury held back from the game's step, so Phoenix Clause can count it when it predicts a knockout.</summary>
+        public static float PendingInjuryCarry => AddCarry.Of((int)CharacterAfflictions.STATUSTYPE.Injury);
+
+        /// <summary>Inside an item's own healing / food action: the item hook already scaled the amount (Hooks.Items).</summary>
+        [ThreadStatic] internal static int _itemActionDepth;
+        /// <summary>Inside an item action whose amount a card changed: keep the leftover of the game's step.</summary>
+        [ThreadStatic] internal static bool _itemScaled;
+
+        /// <summary>Run start and end: no leftover from one run reaches the next.</summary>
+        public static void ResetStatusCarries()
+        {
+            AddCarry.Reset();
+            SubCarry.Reset();
+            _petrifyCarry = 0f;
+            _shareOwed.Clear();
+        }
 
         /// <summary>Inside CharacterMovement/CharacterClimbing.CheckFallDamage: the Injury being added is fall damage.</summary>
         [ThreadStatic] private static int _fallDepth;
@@ -42,39 +67,85 @@ namespace CampfireCards
         // ------------------------------------------------------------------ AddStatus
         /// <summary>
         /// hooks.json addStatus. Order: card multipliers (fall or non-fall Injury, build-up rates), Shared Burden split,
-        /// Phoenix Clause (fall only), Delayed Consequences (fall only). Card-applied penalties (CardStatus.Raw) pass untouched.
+        /// Phoenix Clause (fall only), Delayed Consequences (fall only), then the step leftover (StatusCarry).
+        /// Card-applied penalties (CardStatus.Raw) are not scaled, but their leftover is kept too (2 Curse per fire).
         /// </summary>
         public static bool OnAddStatusPrefix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE statusType, ref float amount, bool fromRPC, bool ignoreInvincibility, bool ignoreSkeleton, ref bool __result, out bool __state)
         {
             __state = false;
-            if (amount <= 0f || CardStatus.Raw) return true;
+            if (amount <= 0f) return true;
             var ch = __instance.character;
             if (!Mine(ch)) return true;
             if (statusType == CharacterAfflictions.STATUSTYPE.Petrify) return true;   // scaled once, in AddPetrify
-            // Let vanilla reject blocked Injury and produce its normal Milk feedback. A blocked hit must not spend
-            // Parachute, charge a Shared Burden helper, or become a delayed payment.
-            if (statusType == CharacterAfflictions.STATUSTYPE.Injury &&
-                NativeInjuryRules.Blocks(ch.isZombie, ch.statusesLocked, ch.isScoutmaster, AfflictionsInAirport(__instance),
-                    NativeInvincible(ch.data), ignoreInvincibility)) return true;
-
+            bool raw = CardStatus.Raw;
             float before = amount;
-            bool fall = statusType == CharacterAfflictions.STATUSTYPE.Injury && _fallDepth > 0;
-            amount *= Effects.StatusGainMultiplier(statusType, fall);
-            if (statusType == CharacterAfflictions.STATUSTYPE.Injury && _dynamiteBlast)
-                amount *= Effects.Local[Channel.dynamiteInjury];
-
-            if (statusType == CharacterAfflictions.STATUSTYPE.Injury && amount > 0f)
+            if (!raw)
             {
-                amount = ResolveInjury(ch, amount, fall, ignoreInvincibility, ignoreSkeleton, out bool prevented);
-                if (prevented) { __result = false; return false; }
+                // Let vanilla reject blocked Injury and produce its normal Milk feedback. A blocked hit must not spend
+                // Parachute, charge a Shared Burden helper, or become a delayed payment.
+                if (statusType == CharacterAfflictions.STATUSTYPE.Injury &&
+                    NativeInjuryRules.Blocks(ch.isZombie, ch.statusesLocked, ch.isScoutmaster, AfflictionsInAirport(__instance),
+                        NativeInvincible(ch.data), ignoreInvincibility)) return true;
+
+                bool fall = statusType == CharacterAfflictions.STATUSTYPE.Injury && _fallDepth > 0;
+                amount *= Effects.StatusGainMultiplier(statusType, fall);
+                if (statusType == CharacterAfflictions.STATUSTYPE.Injury && _dynamiteBlast)
+                    amount *= Effects.Local[Channel.dynamiteInjury];
+
+                if (statusType == CharacterAfflictions.STATUSTYPE.Injury && amount > 0f)
+                {
+                    amount = ResolveInjury(ch, amount, fall, ignoreInvincibility, ignoreSkeleton, out bool prevented);
+                    if (prevented) { __result = false; return false; }
+                }
+
+                // only a status scaled to nothing is cancelled (The Mountain's Heir: no fall Injury)
+                if (StatComposites.CancelsStatus(amount)) { __result = false; return false; }
             }
 
-            // only a status scaled to nothing is cancelled (The Mountain's Heir: no fall Injury); tiny per-frame Hunger and
-            // night Cold must reach the game, which accumulates them in 0.025 steps itself
-            if (StatComposites.CancelsStatus(amount)) { __result = false; return false; }
+            int i = (int)statusType;
+            if (raw || Mathf.Abs(amount - before) > 0.000001f || AddCarry.Of(i) > 0f)
+                amount = CarryAdd(__instance, ch, statusType, amount, ignoreInvincibility, ignoreSkeleton);
             __state = fromRPC && Mathf.Abs(amount - before) > 0.00001f;
             return true;
         }
+
+        /// <summary>
+        /// Hand the game an amount that lands whole 0.025 steps and keep the remainder (StatusCarry). Mirrors the game's
+        /// own multipliers (skeleton Injury x8, difficulty) so the steps it commits are exact; does nothing when the game
+        /// is going to refuse the status anyway, so its own accumulator is never cleared for a change that won't land.
+        /// </summary>
+        private static float CarryAdd(CharacterAfflictions aff, Character ch, CharacterAfflictions.STATUSTYPE t, float amount, bool ignoreInvincibility, bool ignoreSkeleton)
+        {
+            if (!NativeAccepts(aff, ch, t, ignoreInvincibility)) return amount;
+            float k = 1f;
+            if (ch.data.isSkeleton && t == CharacterAfflictions.STATUSTYPE.Injury && !ignoreSkeleton) k *= 8f;
+            if (NativeDifficultyScaled(t)) k *= Ascents.etcDamageMultiplier;
+            if (k <= 0f) return amount;
+            var pending = IncrementalStatuses(aff);
+            int i = (int)t;
+            if (pending == null || i >= pending.Length) return amount;
+            float toGame = AddCarry.Route(i, pending[i], amount * k, out bool reset);
+            if (reset) pending[i] = 0f;
+            return toGame / k;
+        }
+
+        /// <summary>CharacterAfflictions.AddStatus's own refusals (zombie, locked, skeleton, Scoutmaster, airport, invincible, not hungry).</summary>
+        private static bool NativeAccepts(CharacterAfflictions aff, Character ch, CharacterAfflictions.STATUSTYPE t, bool ignoreInvincibility)
+        {
+            if (ch.isZombie && t != CharacterAfflictions.STATUSTYPE.Drowsy && t != CharacterAfflictions.STATUSTYPE.Web) return false;
+            if (ch.statusesLocked || ch.isScoutmaster || AfflictionsInAirport(aff)) return false;
+            if (ch.data.isSkeleton && t != CharacterAfflictions.STATUSTYPE.Injury && t != CharacterAfflictions.STATUSTYPE.Curse
+                && t != CharacterAfflictions.STATUSTYPE.FlyTrap && t != CharacterAfflictions.STATUSTYPE.Web) return false;
+            if (!ignoreInvincibility && NativeInvincible(ch.data) && t != CharacterAfflictions.STATUSTYPE.Curse) return false;
+            if (t == CharacterAfflictions.STATUSTYPE.Hunger && !aff.canGetHungry) return false;
+            return true;
+        }
+
+        /// <summary>CharacterAfflictions.StatusAffectedByDifficultyMod (private in the game).</summary>
+        private static bool NativeDifficultyScaled(CharacterAfflictions.STATUSTYPE t) =>
+            t == CharacterAfflictions.STATUSTYPE.Injury || t == CharacterAfflictions.STATUSTYPE.Curse || t == CharacterAfflictions.STATUSTYPE.Poison
+            || t == CharacterAfflictions.STATUSTYPE.Spores || t == CharacterAfflictions.STATUSTYPE.Cold || t == CharacterAfflictions.STATUSTYPE.Hot
+            || t == CharacterAfflictions.STATUSTYPE.Drowsy;
 
         /// <summary>A rescaled fromRPC add is not pushed by the game; push so other clients see the owner's value promptly.</summary>
         public static void OnAddStatus(CharacterAfflictions __instance, bool __state)
@@ -102,35 +173,72 @@ namespace CampfireCards
                     return phoenix.TryPreventFatalFall(ch, immediate, later, ignoreSkeleton);
                 };
             Func<float, float> defer = delayed != null ? injury => delayed.Defer(injury, ignoreInvincibility, ignoreSkeleton) : (Func<float, float>)null;
-            return InjuryResolution.Resolve(amount, factor, absorb, cap, fall, rescue, defer,
-                share => NetSend.RaiseTo(new InjuryShare { amount = share }, owner), out prevented);
+            return InjuryResolution.Resolve(amount, factor, absorb, cap, fall, rescue, defer, share => OweShare(owner, share), out prevented);
+        }
+
+        /// <summary>Shared Burden shares owed to each owner but not sent yet: small hits add up instead of being dropped.</summary>
+        private static readonly System.Collections.Generic.Dictionary<int, float> _shareOwed = new System.Collections.Generic.Dictionary<int, float>();
+
+        /// <summary>Send the owner's share once it adds up to at least one 2.5-point step (one message per real hit at most).</summary>
+        private static void OweShare(int owner, float share)
+        {
+            float owed;
+            _shareOwed.TryGetValue(owner, out owed);
+            owed += share;
+            if (owed < StatusCarry.Step - 0.00001f) { _shareOwed[owner] = owed; return; }
+            _shareOwed[owner] = 0f;
+            NetSend.RaiseTo(new InjuryShare { amount = owed }, owner);
         }
 
         // ------------------------------------------------------------------ SubtractStatus / Petrify
-        /// <summary>hooks.json subtractStatus: natural decay rates, and body-heat Cold removal.</summary>
+        /// <summary>
+        /// hooks.json subtractStatus:
+        /// - natural decay rates (heatDecay, poisonDecay...);
+        /// - Cold removed by any warming (body heat, a Heat Pack, warm zones, Heat cancelling Cold) uses coldDecay, and a
+        ///   teammate's body heat also huddleStrength; medical items stay exact;
+        /// - Injury healed outside an item's own action (Healing Amulet, Remedy Fungus puff, mushroom) uses healReceived;
+        ///   item heals are scaled in Hooks.Items;
+        /// then the step leftover is kept (StatusCarry). Card effects (CardStatus.Raw) remove exactly what they say.
+        /// </summary>
         public static void OnSubtractStatusPrefix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE statusType, ref float amount, bool decreasedNaturally)
         {
-            if (amount <= 0f) return;
+            if (amount <= 0f || CardStatus.Raw || statusType == CharacterAfflictions.STATUSTYPE.Petrify) return;
             var ch = __instance.character;
             if (!Mine(ch)) return;
+            float before = amount;
             if (decreasedNaturally)
             {
                 amount *= Effects.NaturalDecayMultiplier(statusType);
             }
-            else if (statusType == CharacterAfflictions.STATUSTYPE.Cold && _heatEmitter != null)
+            else if (statusType == CharacterAfflictions.STATUSTYPE.Cold && _itemActionDepth == 0)
             {
                 float k = Effects.Local[Channel.coldDecay];
-                if (_heatEmitter != ch) k *= Effects.Local[Channel.huddleStrength];   // huddling = a teammate's body heat
+                if (_heatEmitter != null && _heatEmitter != ch) k *= Effects.Local[Channel.huddleStrength];   // a teammate's body heat
                 amount *= k;
             }
+            else if (statusType == CharacterAfflictions.STATUSTYPE.Injury && _itemActionDepth == 0)
+            {
+                amount *= Effects.Local[Channel.healReceived];
+            }
+
+            int i = (int)statusType;
+            if (!_itemScaled && Mathf.Abs(amount - before) <= 0.000001f && SubCarry.Of(i) <= 0f) return;
+            if (ch.statusesLocked || (ch.isZombie && statusType != CharacterAfflictions.STATUSTYPE.Drowsy && statusType != CharacterAfflictions.STATUSTYPE.Web)) return;
+            if (__instance.GetCurrentStatus(statusType) <= 0f) { SubCarry.Clear(i); return; }   // the game drops its own leftover at 0 too
+            var pending = DecrementalStatuses(__instance);
+            if (pending == null || i >= pending.Length) return;
+            amount = SubCarry.Route(i, pending[i], amount, out bool reset);
+            if (reset) pending[i] = 0f;
         }
 
-        /// <summary>hooks.json addPetrify: Petrify is stored as 0..100 outside the status array.</summary>
+        /// <summary>hooks.json addPetrify: Petrify is stored as 0..100 outside the status array; fractions carry to the next gain.</summary>
         public static void OnAddPetrifyPrefix(CharacterAfflictions __instance, ref int petrify)
         {
             if (petrify <= 0 || CardStatus.Raw) return;
             if (!Mine(__instance.character)) return;
-            petrify = Mathf.RoundToInt(petrify * StatComposites.StatusGain(Effects.Local, Channel.petrifyRate));
+            float k = StatComposites.StatusGain(Effects.Local, Channel.petrifyRate);
+            if (Mathf.Abs(k - 1f) <= 0.0001f && _petrifyCarry <= 0f) return;
+            petrify = StatusCarry.Whole(ref _petrifyCarry, petrify * k);
         }
 
         // ------------------------------------------------------------------ body heat (Heat Huddle, Frostwalker)
@@ -349,7 +457,16 @@ namespace CampfireCards
                     if (s != null && s.stuckToCharacter == ch) sticky += s.addWeightToStuckPlayer;
 
                 float units = StatComposites.CarriedWeight(Effects.Local, carried, held, contents, scout, sticky, lift);
-                __instance.SetStatus(CharacterAfflictions.STATUSTYPE.Weight, 0.025f * units);
+                __instance.SetStatus(CharacterAfflictions.STATUSTYPE.Weight, 0.025f * units, pushStatus: false);
+                // SetStatus snaps to whole weight units, which would erase a 10-35% cut on light loads: store the exact
+                // value. Weight is recomputed from scratch on every inventory change, so nothing accumulates. The stamina
+                // clamp and the push below run against it.
+                int weightIndex = (int)CharacterAfflictions.STATUSTYPE.Weight;
+                if (__instance.currentStatuses != null && weightIndex < __instance.currentStatuses.Length)
+                    __instance.currentStatuses[weightIndex] = Mathf.Clamp(0.025f * units, 0f, __instance.GetStatusCap(CharacterAfflictions.STATUSTYPE.Weight));
+                ch.ClampStamina();
+                GUIManager.instance.bar.ChangeBar();
+                __instance.PushStatuses();
             }
 
             // the game just stored the unscaled count (0.025 per thorn)

@@ -77,7 +77,11 @@ namespace CampfireCards.Abilities
     {
         [ThreadStatic] public static bool Raw;
 
-        public static void Add(Character me, CharacterAfflictions.STATUSTYPE type, float amount, bool ignoreInvincibility = false, bool ignoreSkeleton = false)
+        /// <summary>
+        /// A card's own penalty or cost lands exactly as written: not scaled by other cards, not dodged by being invincible
+        /// (Milk, mushroom) and not multiplied x8 as a skeleton. Piton Payment Plan passes its fall's original flags.
+        /// </summary>
+        public static void Add(Character me, CharacterAfflictions.STATUSTYPE type, float amount, bool ignoreInvincibility = true, bool ignoreSkeleton = true)
         {
             if (me == null || amount <= 0f) return;
             Raw = true;
@@ -85,10 +89,13 @@ namespace CampfireCards.Abilities
             finally { Raw = false; }
         }
 
+        /// <summary>A card's own removal (Mini Tenacity, Medicinal Munchies...) removes exactly what it says.</summary>
         public static void Remove(Character me, CharacterAfflictions.STATUSTYPE type, float amount)
         {
             if (me == null || amount <= 0f) return;
-            me.refs.afflictions.SubtractStatus(type, amount);
+            Raw = true;
+            try { me.refs.afflictions.SubtractStatus(type, amount); }
+            finally { Raw = false; }
         }
 
         public static float Get(Character me, CharacterAfflictions.STATUSTYPE type) => me.refs.afflictions.GetCurrentStatus(type);

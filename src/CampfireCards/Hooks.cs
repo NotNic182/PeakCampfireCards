@@ -30,6 +30,7 @@ namespace CampfireCards
             GroundedSince = -1f;
             ArrivedSegments.Clear();
             Effects.Reset();
+            Hooks.ResetStatusCarries();
             PickSession.Reset();
             Ability_EternalCampfire.Arbiter.Reset();
             NetHandlers.Reset();
@@ -224,6 +225,7 @@ namespace CampfireCards
         {
             // contexts are set and cleared inside game methods; nothing legitimately spans frames
             _fallDepth = 0; _climbDepth = 0; _climbCtx = null;
+            _itemActionDepth = 0; _itemScaled = false;
 
             if (!RunState.OnIsland) return;
             var local = Character.localCharacter;

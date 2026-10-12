@@ -548,6 +548,36 @@
       "finalizerArgs": ""
     },
     {
+      "id": "applyAffliction",
+      "kind": "harmony",
+      "targetType": "Action_ApplyAffliction",
+      "targetMember": "RunAction",
+      "signature": "",
+      "prefixArgs": "Action_ApplyAffliction __instance",
+      "prefixBool": false,
+      "postfixArgs": "",
+      "handler": "OnApplyAfflictionAction",
+      "runsOn": "owner",
+      "purpose": "Mini Tenacity: a medical item that works through an affliction (Heat Pack: Affliction_AdjustColdOverTime) counts as a curative use.",
+      "verified": "Action_ApplyAffliction.cs:12 public override void RunAction(): AddAffliction(affliction) and each extraAfflictions entry on base.character.",
+      "finalizerArgs": ""
+    },
+    {
+      "id": "healingGem",
+      "kind": "harmony",
+      "targetType": "Peak.Action_HealingGem",
+      "targetMember": "RunAction",
+      "signature": "",
+      "prefixArgs": "Peak.Action_HealingGem __instance, out float[] __state",
+      "prefixBool": false,
+      "postfixArgs": "Peak.Action_HealingGem __instance, float[] __state",
+      "handler": "OnHealingGemAction",
+      "runsOn": "owner",
+      "purpose": "Mini Tenacity: the Healing Amulet counts as a curative use; the statuses it lowered count as treated.",
+      "verified": "Peak/Action_HealingGem.cs:21 public override void RunAction(): AddAffliction(Affliction_HealAll), whose OnApplied subtracts Injury/Spores/Poison/Cold/Hot/Drowsy synchronously (Affliction_HealAll.cs:59-71).",
+      "finalizerArgs": ""
+    },
+    {
       "id": "consumeDelayed",
       "kind": "harmony",
       "targetType": "Item",
@@ -633,7 +663,7 @@
       "postfixArgs": "CharacterHeatEmission __instance, bool __state",
       "handler": "OnHeatEmission",
       "runsOn": "all",
-      "purpose": "body-heat context for the Cold subtract; Heat Huddle also warms the local scout from teammates up to 1.5x the 1 m radius",
+      "purpose": "body-heat context for the Cold subtract; Heat Huddle also warms the local scout from teammates up to 1.35x the 1 m radius",
       "verified": "CharacterHeatEmission.cs:20 public void Update(); notes_status 3",
       "finalizerArgs": ""
     },
@@ -800,6 +830,21 @@
       "runsOn": "owner",
       "purpose": "Use source-specific Injury scaling only inside tagged dynamite blasts.",
       "verified": "Member/signature checked in PEAK 2.5.a publicized references; PEAK 2.6.b runtime playtest pending.",
+      "finalizerArgs": "Exception __exception, bool __state"
+    },
+    {
+      "id": "dynamiteFuse",
+      "kind": "harmony",
+      "targetType": "Dynamite",
+      "targetMember": "Update",
+      "signature": "",
+      "prefixArgs": "out bool __state",
+      "prefixBool": false,
+      "postfixArgs": "",
+      "handler": "OnDynamiteFuse",
+      "runsOn": "owner",
+      "purpose": "Tenderfoot Insurance: the 25 Injury a fuse deals when it runs out in the local scout's hand counts as dynamite.",
+      "verified": "Dynamite.cs:56 private void Update(); on IsMine, fuseTime <= 0 with the item in hand: AddStatus(Injury, 0.25) at :87 before RPC_Explode.",
       "finalizerArgs": "Exception __exception, bool __state"
     }
   ]

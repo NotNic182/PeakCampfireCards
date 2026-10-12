@@ -134,7 +134,7 @@ namespace CampfireCards.Core
             public bool IgnoreInvincibility, IgnoreSkeleton;
         }
         private readonly List<Entry> _entries = new List<Entry>();
-        public float DeferShare = 0.75f, Delay = 20f, Keep = 0.70f;
+        public float DeferShare = 0.75f, Delay = 20f, Keep = 0.8f;
 
         public int Pending => _entries.Count;
 

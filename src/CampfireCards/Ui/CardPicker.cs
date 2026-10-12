@@ -472,11 +472,23 @@ namespace CampfireCards.Ui
             UiKit.Place(glow.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
             CardArt.Build(window.rectTransform, def.Art, theme, def.Key);
 
-            // rarity name in the rarity colour: a spaced uppercase label, not a second name (ui.json CardRarity)
-            var rarityText = UiKit.Text(inner.transform, "RarityName", Ui_CardRarity.Size, Ui_CardRarity.FontSize, rarity, TextAlignmentOptions.Center, FontStyles.UpperCase);
-            UiKit.Place(rarityText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, Ui_CardRarity.Y));
+            // rarity badge: the rarity name in dark capitals on a chip filled with the rarity colour, straddling the art
+            // window's bottom edge, so the rarity reads as a word and never rests on colour alone (ui.json CardRarity)
+            string rarityName = Deck.RarityName(def.Rarity);
+            var badge = UiKit.Panel(inner.transform, "RarityBadge", new Vector2(Ui_CardRarity.Size.x, Ui_CardRarity.BadgeHeight), rarity, Shapes.Panel);
+            badge.type = Image.Type.Sliced;
+            badge.pixelsPerUnitMultiplier = 2f;   // halve the panel sprite's corners for a chip this small
+            badge.raycastTarget = false;
+            UiKit.Place(badge.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, Ui_CardRarity.Y));
+            var rarityText = UiKit.Text(badge.transform, "RarityName", new Vector2(Ui_CardRarity.Size.x, Ui_CardRarity.BadgeHeight), Ui_CardRarity.FontSize,
+                Ui_CardRarity.TextColor, TextAlignmentOptions.Center, FontStyles.Bold | FontStyles.UpperCase);
+            UiKit.Place(rarityText.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
             rarityText.characterSpacing = Ui_CardRarity.CharacterSpacing;
-            rarityText.text = Deck.RarityName(def.Rarity);
+            rarityText.raycastTarget = false;
+            rarityText.text = rarityName;
+            float badgeWidth = Mathf.Min(Ui_CardRarity.Size.x, rarityText.GetPreferredValues(rarityName).x + 2f * Ui_CardRarity.PadX);
+            badge.rectTransform.sizeDelta = new Vector2(badgeWidth, Ui_CardRarity.BadgeHeight);
+            rarityText.rectTransform.sizeDelta = new Vector2(badgeWidth, Ui_CardRarity.BadgeHeight);
 
             // name: up to two lines at full size so every card's name carries the same weight (ui.json CardName)
             var name = UiKit.Text(inner.transform, "Name", Ui_CardName.Size, Ui_CardName.FontSize, Ui_CardName.Color, TextAlignmentOptions.Top, FontStyles.Bold | FontStyles.UpperCase);

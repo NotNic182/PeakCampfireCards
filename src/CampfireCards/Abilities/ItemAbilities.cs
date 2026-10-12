@@ -142,7 +142,8 @@ namespace CampfireCards.Abilities
                 }
                 foreach (var l in Luggage.ALL_LUGGAGE)
                 {
-                    if (l == null || !l.gameObject.activeInHierarchy) continue;
+                    // the game only drops opened luggage from this list on the host, and scout statues are luggage too
+                    if (l == null || !l.gameObject.activeInHierarchy || l.IsOpen || l is RespawnChest) continue;
                     Vector3 p = l.transform.position;
                     if (Vector3.Distance(p, c) > radius) continue;
                     _markers.Add(new Hud.Marker { World = p + Vector3.up * 0.5f, Label = "Luggage", Color = LuggageColor });

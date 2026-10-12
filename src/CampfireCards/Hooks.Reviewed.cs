@@ -41,6 +41,21 @@ namespace CampfireCards
             return __exception;
         }
 
+        /// <summary>
+        /// hooks.json dynamiteFuse: when a fuse runs out in the local scout's hand, Dynamite.Update adds its 25 Injury
+        /// directly, before RPC_Explode. Inside Update every Injury is the dynamite's, so it counts as a dynamite blast.
+        /// </summary>
+        public static void OnDynamiteFusePrefix(out bool __state)
+        {
+            __state = _dynamiteBlast;
+            _dynamiteBlast = true;
+        }
+        public static Exception OnDynamiteFuseFinalizer(Exception __exception, bool __state)
+        {
+            _dynamiteBlast = __state;
+            return __exception;
+        }
+
         public static void OnBlastContextPrefix(AOE __instance, out bool __state)
         {
             __state = _dynamiteBlast;

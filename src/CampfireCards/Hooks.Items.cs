@@ -75,27 +75,53 @@ namespace CampfireCards
 
         public static bool IsFood(Item item) => item != null && item.GetComponent<Action_RestoreHunger>() != null;
 
-        /// <summary>Medical items (bandages, first aid, antidote, cure-all, roots, aloe): not berries and not packaged snacks.</summary>
+        /// <summary>
+        /// Medical items, by prefab name (research notes_items.md): bandages, first aid kit, antidote, cure-all, medicinal
+        /// root, aloe, heat pack, healing amulet, blowgun dart. Berries, snacks, mushrooms and coconut are food, not medicine.
+        /// </summary>
+        private static readonly string[] MedicalItemNames =
+        {
+            "Bandages", "FirstAidKit", "Antidote", "Cure-All", "MedicinalRoot", "Mandrake_Hidden", "AloeVera", "Heat Pack",
+            "Amulet_Healing", "HealingDart Variant"
+        };
+        private static HashSet<ushort> _medicalIds;
+
         public static bool IsCurativeItem(Item item)
         {
             if (item == null) return false;
-            return (item.itemTags & (Item.ItemTags.Berry | Item.ItemTags.PackagedFood | Item.ItemTags.Mushroom)) == 0;
+            if (_medicalIds == null || _medicalIds.Count == 0)
+            {
+                var ids = new HashSet<ushort>();
+                foreach (var name in MedicalItemNames)
+                {
+                    Item prefab;
+                    if (ItemDatabase.TryGetItem(name, out prefab) && prefab != null) ids.Add(prefab.itemID);
+                }
+                if (ids.Count == 0) return false;   // database not loaded yet: try again next time
+                _medicalIds = ids;
+            }
+            return _medicalIds.Contains(item.itemID);
         }
 
-        /// <summary>Rounded to the game's 0.025 status step (SubtractStatus floors anything finer away).</summary>
-        private static float Round025(float v) => v <= 0f ? 0f : Mathf.Max(0.025f, Mathf.Round(v / 0.025f) * 0.025f);
-
         // ------------------------------------------------------------------ food
-        /// <summary>hooks.json restoreHunger prefix: foodHunger (and cookedFoodHunger for cooked food) for the eater.</summary>
+        /// <summary>
+        /// hooks.json restoreHunger prefix: foodHunger (and cookedFoodHunger for cooked food) for the eater. The exact
+        /// scaled amount goes to the game; Hooks.Status keeps the part its 0.025 step would discard (StatusCarry).
+        /// </summary>
         public static void OnRestoreHungerPrefix(Action_RestoreHunger __instance, out float __state)
         {
             __state = __instance.restorationAmount;
+            _itemActionDepth++;
             var item = ActionItem(__instance);
             var eater = item != null ? item.holderCharacter : null;
             if (!Mine(eater)) return;
             bool cooked = IsCooked(item);
             float k = Core.StatComposites.FoodNutrition(Effects.Local, cooked);
-            if (__state > 0f && Mathf.Abs(k - 1f) > 0.0001f) __instance.restorationAmount = Round025(__state * k);
+            if (__state > 0f && Mathf.Abs(k - 1f) > 0.0001f)
+            {
+                __instance.restorationAmount = __state * k;
+                _itemScaled = true;
+            }
             var b = Batch(item, eater);
             b.Food = true;
             b.Cooked = cooked;
@@ -105,6 +131,8 @@ namespace CampfireCards
         public static void OnRestoreHunger(Action_RestoreHunger __instance, float __state)
         {
             __instance.restorationAmount = __state;   // cooking also edits this field; never leave our value behind
+            if (_itemActionDepth > 0) _itemActionDepth--;
+            _itemScaled = false;
         }
 
         // ------------------------------------------------------------------ healing and curatives
@@ -115,6 +143,7 @@ namespace CampfireCards
         public static void OnModifyStatusActionPrefix(Action_ModifyStatus __instance, out float __state)
         {
             __state = __instance.changeAmount;
+            _itemActionDepth++;
             if (__state >= 0f) return;   // adds a status (e.g. Scorchberry heat): not healing
             var item = ActionItem(__instance);
             var target = item != null ? item.holderCharacter : null;
@@ -130,7 +159,11 @@ namespace CampfireCards
                     k *= Effects.ActorChannel(NetSend.ActorOf(feeder), Channel.healGiven);
                 else
                     k *= Effects.Local[Channel.healSelfUse];
-                if (Mathf.Abs(k - 1f) > 0.0001f) __instance.changeAmount = -Round025(-__state * k);
+                if (Mathf.Abs(k - 1f) > 0.0001f)
+                {
+                    __instance.changeAmount = __state * k;   // exact; Hooks.Status keeps the step leftover
+                    _itemScaled = true;
+                }
             }
             // SubtractStatus(Poison, ..., decreasedNaturally:false) also subtracts Spores on the local scout.
             if (Core.CurativeSelection.RecordMedicalCure(b.Cured, type,
@@ -141,6 +174,50 @@ namespace CampfireCards
         public static void OnModifyStatusAction(Action_ModifyStatus __instance, float __state)
         {
             __instance.changeAmount = __state;
+            if (_itemActionDepth > 0) _itemActionDepth--;
+            _itemScaled = false;
+        }
+
+        /// <summary>hooks.json applyAffliction: a medical item that works through an affliction (Heat Pack warms over time).</summary>
+        public static void OnApplyAfflictionActionPrefix(Action_ApplyAffliction __instance)
+        {
+            var item = ActionItem(__instance);
+            var target = item != null ? item.holderCharacter : null;
+            if (!Mine(target) || !IsCurativeItem(item)) return;
+            var b = Batch(item, target);
+            b.Curative = true;
+            if (WarmsCold(__instance.affliction)) b.Cured.Add(CharacterAfflictions.STATUSTYPE.Cold);
+            if (__instance.extraAfflictions != null)
+                foreach (var a in __instance.extraAfflictions) if (WarmsCold(a)) b.Cured.Add(CharacterAfflictions.STATUSTYPE.Cold);
+        }
+
+        private static bool WarmsCold(Peak.Afflictions.Affliction a) =>
+            a is Peak.Afflictions.Affliction_AdjustColdOverTime;
+
+        /// <summary>hooks.json healingGem prefix: the Healing Amulet heals through an affliction; note what it treats.</summary>
+        public static void OnHealingGemActionPrefix(Peak.Action_HealingGem __instance, out float[] __state)
+        {
+            __state = null;
+            var item = ActionItem(__instance);
+            var target = item != null ? item.holderCharacter : null;
+            if (!Mine(target) || !IsCurativeItem(item)) return;
+            var aff = target.refs.afflictions;
+            __state = new float[StatusCount];
+            for (int i = 0; i < __state.Length; i++) __state[i] = aff.GetCurrentStatus((CharacterAfflictions.STATUSTYPE)i);
+        }
+
+        /// <summary>hooks.json healingGem postfix: every status the amulet lowered counts as treated (Mini Tenacity picks another).</summary>
+        public static void OnHealingGemAction(Peak.Action_HealingGem __instance, float[] __state)
+        {
+            if (__state == null) return;
+            var item = ActionItem(__instance);
+            var target = item != null ? item.holderCharacter : null;
+            if (!Mine(target)) return;
+            var aff = target.refs.afflictions;
+            var b = Batch(item, target);
+            b.Curative = true;
+            for (int i = 0; i < __state.Length; i++)
+                if (aff.GetCurrentStatus((CharacterAfflictions.STATUSTYPE)i) < __state[i] - 0.0001f) b.Cured.Add((CharacterAfflictions.STATUSTYPE)i);
         }
 
         /// <summary>hooks.json clearAllStatus: an item that clears every status counts as one curative use.</summary>

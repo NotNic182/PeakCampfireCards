@@ -18,7 +18,7 @@ namespace CampfireCards.Core
                 prevented = true;
                 return 0f;
             }
-            if (shared >= .0125f) transfer?.Invoke(shared);
+            if (shared > 0f) transfer?.Invoke(shared);   // the caller adds small shares up (Hooks.OweShare)
             return fall && deferFall != null ? deferFall(victim) : victim;
         }
     }

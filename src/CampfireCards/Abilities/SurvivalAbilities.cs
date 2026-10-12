@@ -29,7 +29,9 @@ namespace CampfireCards.Abilities
             var aff = me.refs.afflictions;
             var type = CharacterAfflictions.STATUSTYPE.Injury;
             float nativeMultiplier = NativeInjuryRules.Multiplier(me.data.isSkeleton, ignoreSkeleton, Ascents.etcDamageMultiplier);
-            if (!NativeInjuryRules.WouldPassOut(aff.statusSum, aff.GetCurrentStatus(type), aff.GetIncrementalStatus(type),
+            // the step leftover the mod keeps back (Hooks.Status, StatusCarry) lands with the next Injury, so count it as pending
+            float pending = aff.GetIncrementalStatus(type) + Hooks.PendingInjuryCarry;
+            if (!NativeInjuryRules.WouldPassOut(aff.statusSum, aff.GetCurrentStatus(type), pending,
                 aff.GetStatusCap(type), nativeMultiplier, injury, deferred)) return false;
             return Trigger(me);
         }
@@ -65,7 +67,7 @@ namespace CampfireCards.Abilities
             _charge.Available(0) ? AbilityStatus.Ok(Line(null, Ui_AbilityBar.Ready)) : AbilityStatus.Wait(Line(null, Ui_AbilityBar.UsedThisRun));
     }
 
-    /// <summary>Delayed Consequences: 75% of each fall's Injury waits 20 s, then 70% of it lands (not as a fall, never deferred again).</summary>
+    /// <summary>Delayed Consequences: 75% of each fall's Injury waits 20 s, then 80% of it lands (not as a fall, never deferred again).</summary>
     public sealed class Ability_DelayedConsequences : Ability
     {
         private readonly DelayedInjuryQueue _q = new DelayedInjuryQueue();
@@ -106,7 +108,17 @@ namespace CampfireCards.Abilities
                 CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, due, ignoreInvincibility, ignoreSkeleton));
         }
 
-        public override void OnRemoved(Character me) => _q.Clear();
+        /// <summary>
+        /// Sacrificed (Fine Print) or otherwise removed mid-run: the debt is still owed, so it lands now instead of being
+        /// forgiven. At run end (LocalCards.Resetting) it is simply dropped.
+        /// </summary>
+        public override void OnRemoved(Character me)
+        {
+            if (!LocalCards.Resetting && me != null)
+                _q.CollectDue(float.MaxValue, canApply: !me.data.dead, (due, ignoreInvincibility, ignoreSkeleton) =>
+                    CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, due, ignoreInvincibility, ignoreSkeleton));
+            _q.Clear();
+        }
 
         public override AbilityStatus Status(Character me) =>
             _q.Pending > 0 ? AbilityStatus.Wait($"{Card.Name}: Injury from {_q.Pending} {(_q.Pending == 1 ? "fall" : "falls")} still to land") : AbilityStatus.None;
@@ -195,7 +207,9 @@ namespace CampfireCards.Abilities
                     var def = s.Card(id);
                     if (def == null || def.Ability != "EternalCampfire") continue;
                     Character owner;
-                    if (!PlayerHandler.TryGetCharacter(kv.Key, out owner) || owner == null || owner.data.dead) continue;
+                    // a dead owner's aura is gone, except for the owner itself: its own instant death (petrify, kill
+                    // plane) is the one incapacitation it is always inside
+                    if (!PlayerHandler.TryGetCharacter(kv.Key, out owner) || owner == null || (owner.data.dead && owner != me)) continue;
                     float dist = Vector3.Distance(owner.Center, me.Center);
                     if (dist <= s.Param(def, "radius", 15f) && dist < bestDist) { bestDist = dist; best = kv.Key; }
                 }
@@ -217,7 +231,7 @@ namespace CampfireCards.Abilities
             if (!Effects.HasAbility(m.ownerActor, "EternalCampfire")) return;
             Character owner, victim;
             if (!PlayerHandler.TryGetCharacter(m.ownerActor, out owner) || !PlayerHandler.TryGetCharacter(sender, out victim)) return;
-            if (owner == null || victim == null || owner.data.dead) return;
+            if (owner == null || victim == null || (owner.data.dead && m.ownerActor != sender)) return;
             float radius = 15f;
             foreach (var id in Effects.CardsOf(m.ownerActor)) { var d = s.Card(id); if (d != null && d.Ability == "EternalCampfire") radius = s.Param(d, "radius", 15f); }
             if (sender != m.ownerActor && Vector3.Distance(owner.Center, victim.Center) > radius + 2f) return;
@@ -230,15 +244,26 @@ namespace CampfireCards.Abilities
             NetSend.RaiseTo(new ReviveGranted { ownerActor = m.ownerActor, incapEvent = m.incapEvent }, sender);
         }
 
-        /// <summary>Victim side: the host approved; revive at a safe spot nearby.</summary>
+        /// <summary>
+        /// Victim side: the host approved; revive at a safe spot nearby. Like Budget Checkpoint Flag, wait 1.5 s first:
+        /// the game finishes its pass-out (fade, fully passed out) about 1 s after going down, and reviving before that
+        /// would be undone by it.
+        /// </summary>
         public static void OnGranted(Character me, ReviveGranted m)
         {
             if (me == null || !(me.data.passedOut || me.data.dead)) return;
+            Plugin.Run(ReviveSoon(me));
+        }
+
+        private static System.Collections.IEnumerator ReviveSoon(Character me)
+        {
+            yield return new WaitForSeconds(1.5f);
+            if (me == null || !(me.data.passedOut || me.data.dead)) yield break;
             var s = CardSettings.Current;
             var def = System.Linq.Enumerable.FirstOrDefault(Generated.CardTable.Cards, c => c.Ability == "EternalCampfire");
             Vector3 origin = me.data.dead ? me.LastLivingPosition : me.Center;
             Vector3 pos;
-            if (!SafeSpot.Near(origin, 0f, 6f, out pos) && !LocalCards.RecentFoothold(0f, out pos)) { Ui.Hud.Toast((def != null ? def.Name : "The Eternal Campfire") + ": no safe ground nearby, so it could not revive you"); return; }
+            if (!SafeSpot.Near(origin, 0f, 6f, out pos) && !LocalCards.RecentFoothold(0f, out pos)) { Ui.Hud.Toast((def != null ? def.Name : "The Eternal Campfire") + ": no safe ground nearby, so it could not revive you"); yield break; }
             Revival.ReviveAt(me, pos, def != null ? s.Param(def, "injury", 0.4f) : 0.4f, def != null ? s.Param(def, "stamina", 0.5f) : 0.5f);
             Ui.Hud.Toast((def != null ? def.Name : "The Eternal Campfire").ToUpperInvariant() + " revived you");
         }

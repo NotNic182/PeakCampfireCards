@@ -192,7 +192,13 @@ namespace CampfireCards.Cards
 
         public static bool WearingBackpack(Character c)
         {
-            try { return c.player != null && c.player.backpackSlot != null && c.player.backpackSlot.backpackType == BackpackSlot.BackpackType.Backpack; }
+            // anything worn in the backpack slot counts (Backpack, Fannypack, Jetpack, Rocketpack): a smaller pack must not
+            // keep Baggage Claim Escapee's bonus and skip its drawback
+            try
+            {
+                var slot = c.player != null ? c.player.backpackSlot : null;
+                return slot != null && !slot.IsEmpty() && slot.backpackType != BackpackSlot.BackpackType.None;
+            }
             catch { return false; }
         }
 

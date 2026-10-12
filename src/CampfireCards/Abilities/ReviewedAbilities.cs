@@ -61,7 +61,7 @@ namespace CampfireCards.Abilities
         public override void Tick(Character me, float dt)
         {
             _clock.Advance(dt, !me.data.dead);
-            if (me.data.dead || me.data.passedOut || me.data.fullyPassedOut || !_clock.Ready(P("interval", 600f))) return;
+            if (me.data.dead || me.data.passedOut || me.data.fullyPassedOut || !_clock.Ready(P("interval", 300f))) return;
             var available = new List<int>();
             for (int i = 0; i < Powers.Length; i++)
                 if (!me.refs.afflictions.HasAfflictionType(Powers[i], out _)) available.Add(i);
@@ -72,10 +72,15 @@ namespace CampfireCards.Abilities
             {
                 case 0: _granted = new Affliction_InfiniteStamina(duration) { climbDelay = 0f }; _power = "Infinite Stamina"; break;
                 case 1: _granted = new Affliction_Invincibility { totalTime = duration }; _power = "Invincibility"; break;
-                default: _granted = new Affliction_LowGravity(Mathf.Max(1, Mathf.RoundToInt(P("lowGravity", 1f))), duration); _power = "Low Gravity"; break;
+                // strength 3 is what the game's own Low Gravity mushroom uses (Action_RandomMushroomEffect); 1 barely floats
+                default: _granted = new Affliction_LowGravity(Mathf.Max(1, Mathf.RoundToInt(P("lowGravity", 3f))), duration); _power = "Low Gravity"; break;
             }
             _originalDuration = duration;
+            var type = Powers[choice];
             me.refs.afflictions.AddAffliction(_granted);
+            // AddAffliction stores a copy: keep the live one, so the status line and OnRemoved see the real buff
+            Affliction live;
+            _granted = me.refs.afflictions.HasAfflictionType(type, out live) ? live : null;
             _clock.Consume();
             Ui.Hud.Toast(Card.Name + ": " + _power + " for " + duration.ToString("0.#") + " seconds");
         }
@@ -92,7 +97,7 @@ namespace CampfireCards.Abilities
         {
             if (_granted != null && me.refs.afflictions.afflictionList.Contains(_granted))
                 return AbilityStatus.Ok(Line(null, _power + " active (" + CardCopy.Countdown(_granted.totalTime + BonusTime(_granted) - _granted.timeElapsed) + ")"));
-            return AbilityStatus.Wait(Line(null, "next power in " + CardCopy.Countdown(_clock.Remaining(P("interval", 600f)))));
+            return AbilityStatus.Wait(Line(null, "next power in " + CardCopy.Countdown(_clock.Remaining(P("interval", 300f)))));
         }
     }
 }

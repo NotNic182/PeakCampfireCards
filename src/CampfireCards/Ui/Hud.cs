@@ -164,8 +164,14 @@ namespace CampfireCards.Ui
             foreach (var id in cards)
             {
                 CardDef def;
-                var color = Deck.TryGet(id, out def) ? Deck.RarityColor(def.Rarity) : Color.white;
-                sb.Append(UiKit.ColorTag(color)).Append("■</color> ").Append(Deck.NameOf(id)).Append('\n');
+                bool known = Deck.TryGet(id, out def);
+                var color = known ? Deck.RarityColor(def.Rarity) : Color.white;
+                sb.Append(UiKit.ColorTag(color)).Append("■</color> ").Append(Deck.NameOf(id));
+                // the rarity as a word too, small and spaced, so it never rests on the square's colour alone
+                if (known)
+                    sb.Append("  <size=").Append(Ui_MyCardsHud.RaritySizePercent.ToString("0")).Append("%>").Append(UiKit.ColorTag(color))
+                      .Append("<cspace=0.06em>").Append(Deck.RarityName(def.Rarity)).Append("</cspace></color></size>");
+                sb.Append('\n');
             }
             sb.Append("<size=80%>").Append(UiKit.ColorTag(Ui_MyCardsHud.HintColor))
               .Append(string.Format(Ui_MyCardsHud.HintTemplate, Plugin.BuildScreenKeyLabel)).Append("</color></size>");

@@ -22,7 +22,7 @@ NOTES = {
     'PackRat': 'Now halves total weight and blocks new items in the third pocket; existing items remain retrievable. Enabled by default on a fresh config; previous Enabled=false is preserved.',
     'DoubleDeal': 'Two bonus cards and one permanent random penalty. The penalty stays if the card is sacrificed to Fine Print; picking the card again rolls another. Shown in Current Build and retained in state sync.',
     'SporeLungs': 'Requested Mandrake/Zombie immunity plus next-biome zombie spawn is pending. The existing spores resistance remains; see docs/card-edit-review.md.',
-    'BonePlating': 'Native timed Infinite Stamina, Invincibility or Low Gravity. Low Gravity is floating, not free flight. Ghost time pauses the ten-minute clock.',
+    'BonePlating': 'Native timed Infinite Stamina, Invincibility or Low Gravity. Low Gravity is floating, not free flight. Ghost time pauses the five-minute clock.',
     'SecondWind': 'Manual V; below 20 stamina, restore 25, five-minute cooldown. Key configurable.',
     'EmergencyPurge': 'Manual K; clear 20 from the worst Poison/Spores/Drowsy status at 35+, once per biome. Key configurable.',
     'BloodBattery': 'Manual B; spend 15 Injury for 60 bonus stamina, once per biome. Key configurable.',

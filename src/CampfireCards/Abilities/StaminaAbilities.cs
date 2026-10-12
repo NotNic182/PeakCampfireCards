@@ -28,7 +28,7 @@ namespace CampfireCards.Abilities
         {
             if (acquiredThisFire || me.data.dead) return;
             me.AddExtraStamina(P("bonusFire", 0.2f));
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Curse, P("curseFire", 0.05f));
+            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Curse, P("curseFire", 0.02f));
         }
     }
 
@@ -41,6 +41,12 @@ namespace CampfireCards.Abilities
         public override void OnAcquired(Character me)
         {
             if (LocalCards.Biome >= 0) OnBiomeStarted(me, LocalCards.Biome);
+        }
+
+        /// <summary>A scout who was a ghost when the biome started rolls once revived, instead of losing that biome's roll.</summary>
+        public override void Tick(Character me, float dt)
+        {
+            if (LocalCards.Biome >= 0 && LocalCards.Biome != _rolledBiome && !me.data.dead) OnBiomeStarted(me, LocalCards.Biome);
         }
 
         public override void OnBiomeStarted(Character me, int biome)

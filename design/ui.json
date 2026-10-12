@@ -245,15 +245,23 @@
       "parent": "Card",
       "size": [
         280,
-        20
+        24
       ],
-      "anchor": "top, y=-184: 10 below the art, tucked up against the name it labels",
-      "visual": "rarity name in the rarity colour, uppercase and letter-spaced so it reads as a label, not a second name",
+      "anchor": "top, y=-166: a badge straddling the bottom edge of the art window, 12 above the name",
+      "visual": "rarity name (COMMON ... MYTHIC) in dark bold letter-spaced capitals on a rounded badge filled with the rarity colour, sized to the word, so the rarity reads as text and never rests on colour alone",
       "text": "{rarity}",
       "consts": {
-        "FontSize": 16,
-        "Y": -184,
-        "CharacterSpacing": 8
+        "FontSize": 15,
+        "Y": -166,
+        "CharacterSpacing": 6,
+        "BadgeHeight": 24,
+        "PadX": 12,
+        "TextColor": [
+          0.07,
+          0.045,
+          0.03,
+          1
+        ]
       },
       "behaviour": "none",
       "soundOn": "none"
@@ -362,7 +370,7 @@
         300
       ],
       "anchor": "bottom left, x=20, y=200 (clear of the status icons above the stamina bar)",
-      "visual": "one line per card: a square in the card's rarity colour plus its name; a last line names the Current Build key (or controller button); on a dark rounded panel fitted to the text so it stays readable over snow and sky",
+      "visual": "one line per card: a square in the card's rarity colour, its name, and its rarity name in small letter-spaced capitals in that colour; a last line names the Current Build key (or controller button); on a dark rounded panel fitted to the text so it stays readable over snow and sky",
       "text": "{myCards}",
       "consts": {
         "FontSize": 20,
@@ -375,7 +383,8 @@
         "MinFontSize": 14,
         "LineHeight": 1.2,
         "X": 20,
-        "Y": 200
+        "Y": 200,
+        "RaritySizePercent": 70
       },
       "behaviour": "visible on the island when the player holds any card; hidden in menus",
       "soundOn": "none"
@@ -490,7 +499,7 @@
         860
       ],
       "anchor": "center; at most Size, and never closer than safeMargin to a screen edge",
-      "visual": "dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you; both columns open with a header (YOUR CARDS, COMBINED EFFECTS) on the same line; a card's detail lines hang DetailIndent in, so wrapped lines stay under their marker; every combined-effect line carries the same + / - marker as the cards",
+      "visual": "dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you; both columns open with a header (YOUR CARDS, COMBINED EFFECTS) on the same line; a card's detail lines hang DetailIndent in, so wrapped lines stay under their marker; every combined-effect line carries the same + / - marker as the cards; Team view (after your build's last page, only with teammates): every other player's name, card count and state (passed out / ghost), then each card they picked in pick order (rarity square, name, rarity, green benefit, red drawback) and any Clown Luggage penalties; teammates are spread over both columns",
       "text": "{cards} | {stats}",
       "consts": {
         "Panel": "@surfaceStrong",
@@ -528,9 +537,19 @@
         "TitleHeight": 50,
         "HintY": 14,
         "HintHeight": 36,
-        "DetailSizePercent": 88
+        "DetailSizePercent": 88,
+        "TeamTitle": "TEAM CARDS",
+        "TeamHint": "Your teammates' cards in the order they picked them: benefit in green, drawback in red.",
+        "ToTeamHint": "Press {0} for your teammates' cards.",
+        "ToTeamPageHint": "Page {1} of {2}. Press {0} for your teammates' cards.",
+        "TeamNoCards": "No cards yet.",
+        "CardCountOne": "1 card",
+        "CardCountMany": "{0} cards",
+        "Ghost": "ghost",
+        "Down": "passed out",
+        "PenaltyLabel": "Clown Luggage penalty: "
       },
-      "behaviour": "toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; text that does not fit is split into pages at FontSize (no shrinking), the key steps through the pages and closes after the last; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI",
+      "behaviour": "toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; text that does not fit is split into pages at FontSize (no shrinking), the key steps through the pages, then (with teammates) through the Team view's pages, and closes after the last; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI",
       "soundOn": "none"
     }
   ]

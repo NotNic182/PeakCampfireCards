@@ -47,6 +47,11 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
 - BingBong Parachute judges a fall by all the Injury it will cost, including the part Piton Payment Plan bills later,
   and cancels all of it.
 - Lighter-load cards scale only positive item weight; a Balloon Bunch's lift is never reduced.
+- PEAK changes statuses in whole 2.5-point steps. When a card changes an amount, the leftover is kept for the next
+  change, so small percentages (a 5-point fall x1.3, body heat x0.909, 2 Curse per fire) hold on average.
+- A card's own penalty (Bugle Injury, a failed Pandora roll, Curse, Drowsy) always lands: Milk or mushroom
+  invincibility doesn't block it and a skeleton doesn't take it x8.
+- Baggage Claim Escapee treats anything worn in the backpack slot (backpack, fannypack, jetpack, rocketpack) as a backpack.
 - Version 0.6.3 fixes interaction and ability-state handling without changing card numbers or rarity weights.
   See [the interaction fixes and playtest checks](docs/card-interactions.md).
 
@@ -104,7 +109,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Mini Scout Cannon | Uncommon | Jump 30% higher. | Take 30% more fall Injury. |
 | To The Bone | Common | Cold builds 35% slower while climbing blue ice. | Warming up takes 10% longer. |
 | Pitonless Pit Stop | Rare | Hang still on a wall to recover 4 stamina per second. | Climb 30% slower. |
-| Bing BOING | Rare | Jump again in mid-air for a double jump. Cooldown: 35s. | Each double jump adds 7.5 Drowsy. |
+| Bing BOING | Rare | Jump again in mid-air for a double jump. Cooldown: 15s. | Each double jump adds 7.5 Drowsy. |
 | Energy Drink Overdose | Uncommon | Climb 30% faster. | Climbing uses 20% more stamina. |
 | Tenderfoot Insurance | Uncommon | Take 25% less fall Injury. | Dynamite deals 3 times as much Injury. |
 | Daddy | Common | Grab walls from 20% farther away. | All stamina costs are 10% higher. |
@@ -172,7 +177,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
-| BingBong | Common | Every 10 min alive: a random 20s burst of Infinite Stamina, Invincibility or Low Gravity. | No drawback |
+| BingBong | Common | Every 5 min alive: a random 20s burst of Infinite Stamina, Invincibility or Low Gravity. | No drawback |
 | Tara | Uncommon | Healing items remove 25% more Injury from you. | No drawback |
 | Walk It Off | Uncommon | At 20+ Injury, climbing and sprinting use 25% less stamina. | Take 10% more Injury. |
 | Discount Cure-All | Rare | Press K at 35+ Poison, Spores or Drowsy to remove 20 from the highest. Once per biome. | No drawback |
@@ -248,10 +253,10 @@ A campfire lit while a pick is still running gets its own pick right after it. L
   to re-enable it after upgrading. Balance version 3 refreshes numerical card defaults once.
 - New source-specific hooks and native buff behavior still need a multiplayer playtest on PEAK 2.6.b.
 - Cook It, Keep It keeps the food in hand. Food that leaves a peel spawns no peel that time.
-- Tara, BingBong Safety Briefing and Medkit Merit Badge scale the Injury that items heal. Healing from the Healing Amulet
-  and dart is not scaled.
-- Mini Tenacity counts medical items (bandages, first aid, antidote, cure-all, roots, aloe) used on you;
-  berries and packaged snacks are not curative.
+- Tara scales the Injury healed by items, the Healing Amulet, the Remedy Fungus puff and mushrooms. First Aid Badge's
+  teammate/self split applies to items used through the item menu. The blowgun dart clears every status and isn't scaled.
+- Mini Tenacity counts medical items used on you: bandages, first aid kit, antidote, cure-all, medicinal root, aloe,
+  heat pack and the Healing Amulet. Berries, snacks, mushrooms and coconut are food, not medicine.
 - BingBong Baggage Scanner marks items with labels drawn over the screen rather than outlines.
 - Other players see your card speed boosts with a small delay (their copy of your scout is corrected by the game).
 - Continuing a quicksaved run starts with no cards.

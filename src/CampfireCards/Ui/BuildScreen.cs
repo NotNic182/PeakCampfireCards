@@ -19,6 +19,8 @@ namespace CampfireCards.Ui
     /// toggled with the BuildScreen key; it never computes a modifier itself (Effects and Core.BuildStats do).
     /// It fits the screen (at most ui.json Size, safeMargin from every edge); what does not fit is split into pages at
     /// full size, and the key steps through them (scrolling would need the wheel or a stick, which the game uses).
+    /// After the build's last page, with teammates in the run, the key opens the Team view: every other player's cards
+    /// (in pick order, benefit and drawback) and Clown Luggage penalties, from the synced collections.
     /// </summary>
     public static class BuildScreen
     {
@@ -28,6 +30,8 @@ namespace CampfireCards.Ui
         private static readonly ModResult _always = new ModResult();
         /// <summary>The page shown (1-based) and how many the longer column needs right now.</summary>
         private static int _page = 1, _pages = 1;
+        /// <summary>Your own build, or the Team view (other players' cards).</summary>
+        private static bool _teamView;
 
         public static bool IsOpen => _panel != null && _panel.gameObject.activeSelf;
 
@@ -36,14 +40,16 @@ namespace CampfireCards.Ui
         {
             if (IsOpen)
             {
-                if (_page >= _pages) { Hide(); return; }
-                _page++;
+                if (_page < _pages) _page++;
+                else if (!_teamView && Teammates().Count > 0) { _teamView = true; _page = 1; }
+                else { Hide(); return; }
                 Refresh(me);
                 return;
             }
             if (!RunState.OnIsland || me == null) return;
             Ensure();
             Layout();
+            _teamView = false;
             _page = 1;
             _panel.gameObject.SetActive(true);
             Refresh(me);
@@ -115,8 +121,20 @@ namespace CampfireCards.Ui
         private static void Refresh(Character me)
         {
             _nextRefresh = Time.unscaledTime + UiTiming.BuildRefreshSeconds;
-            _cards.text = CardsText(me);
-            _stats.text = StatsText();
+            var team = Teammates();
+            if (_teamView && team.Count == 0) { _teamView = false; _page = 1; }   // the last teammate left
+            _title.text = _teamView ? Ui_BuildScreen.TeamTitle : Ui_BuildScreen.Title;
+            if (_teamView)
+            {
+                TeamText(team, out string left, out string right);
+                _cards.text = left;
+                _stats.text = right;
+            }
+            else
+            {
+                _cards.text = CardsText(me);
+                _stats.text = StatsText();
+            }
 
             // pages: the longer column sets the count; a shorter one stays on its last page
             _cards.ForceMeshUpdate(true);
@@ -128,9 +146,12 @@ namespace CampfireCards.Ui
             _stats.pageToDisplay = Mathf.Min(_page, statPages);
 
             string key = Plugin.BuildScreenKeyLabel;
-            string action = _pages <= 1 ? string.Format(Ui_BuildScreen.CloseHint, key)
-                : string.Format(_page < _pages ? Ui_BuildScreen.NextPageHint : Ui_BuildScreen.LastPageHint, key, _page, _pages);
-            _hint.text = Ui_BuildScreen.Hint + " " + action;
+            string action;
+            if (_page < _pages) action = string.Format(Ui_BuildScreen.NextPageHint, key, _page, _pages);
+            else if (!_teamView && team.Count > 0)
+                action = _pages <= 1 ? string.Format(Ui_BuildScreen.ToTeamHint, key) : string.Format(Ui_BuildScreen.ToTeamPageHint, key, _page, _pages);
+            else action = _pages <= 1 ? string.Format(Ui_BuildScreen.CloseHint, key) : string.Format(Ui_BuildScreen.LastPageHint, key, _page, _pages);
+            _hint.text = (_teamView ? Ui_BuildScreen.TeamHint : Ui_BuildScreen.Hint) + " " + action;
         }
 
         /// <summary>Opening size tags for the build screen's type roles (ui.json BuildScreen); each is closed with &lt;/size&gt;.</summary>
@@ -157,16 +178,7 @@ namespace CampfireCards.Ui
             {
                 CardDef def;
                 if (!Deck.TryGet(id, out def)) continue;
-                Color rarity = Deck.RarityColor(def.Rarity);
-                sb.Append(UiKit.ColorTag(rarity)).Append("■ <b>").Append(def.Name).Append("</b></color>  ").Append(Meta)
-                  .Append(UiKit.ColorTag(rarity)).Append("<cspace=0.08em><uppercase>").Append(Deck.RarityName(def.Rarity))
-                  .Append("</uppercase></cspace></color></size>\n");
-                // the card's own benefit and drawback text, unlabelled, as on the card face
-                sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(Indent)
-                  .Append(CardPresentation.Text(def, def.Positive)).Append(EndIndent).Append("</color>\n");
-                if (!string.IsNullOrEmpty(def.Negative))
-                    sb.Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent)
-                      .Append(CardPresentation.Text(def, def.Negative)).Append(EndIndent).Append("</color>\n");
+                AppendCard(sb, def);
                 AppendConditional(sb, def);
                 foreach (var a in abilities)
                 {
@@ -179,6 +191,83 @@ namespace CampfireCards.Ui
                 sb.Append('\n');
             }
             return sb.ToString().TrimEnd();
+        }
+
+        /// <summary>A card's rarity square, name and rarity, then its own benefit and drawback text, unlabelled, as on the card face.</summary>
+        private static void AppendCard(StringBuilder sb, CardDef def)
+        {
+            Color rarity = Deck.RarityColor(def.Rarity);
+            sb.Append(UiKit.ColorTag(rarity)).Append("■ <b>").Append(def.Name).Append("</b></color>  ").Append(Meta)
+              .Append(UiKit.ColorTag(rarity)).Append("<cspace=0.08em><uppercase>").Append(Deck.RarityName(def.Rarity))
+              .Append("</uppercase></cspace></color></size>\n");
+            sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(Indent)
+              .Append(CardPresentation.Text(def, def.Positive)).Append(EndIndent).Append("</color>\n");
+            if (!string.IsNullOrEmpty(def.Negative))
+                sb.Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent)
+                  .Append(CardPresentation.Text(def, def.Negative)).Append(EndIndent).Append("</color>\n");
+        }
+
+        // ------------------------------------------------------------------ Team view: the other players' cards
+        /// <summary>Every other player in the room, in join order (actor number).</summary>
+        private static List<int> Teammates()
+        {
+            var list = new List<int>();
+            int me = NetSend.LocalActor;
+            var players = Photon.Pun.PhotonNetwork.PlayerList;
+            if (players == null) return list;
+            foreach (var p in players)
+                if (p != null && p.ActorNumber != me) list.Add(p.ActorNumber);
+            list.Sort();
+            return list;
+        }
+
+        /// <summary>One block per teammate, spread over the two columns so neither runs far longer than the other.</summary>
+        private static void TeamText(List<int> team, out string left, out string right)
+        {
+            var l = new StringBuilder();
+            var r = new StringBuilder();
+            foreach (int actor in team)
+            {
+                string block = TeammateBlock(actor);
+                var into = l.Length <= r.Length ? l : r;
+                if (into.Length > 0) into.Append('\n');
+                into.Append(block);
+            }
+            left = l.ToString().TrimEnd();
+            right = r.ToString().TrimEnd();
+        }
+
+        /// <summary>A teammate's name, card count and state, their cards in pick order, and their Clown Luggage penalties.</summary>
+        private static string TeammateBlock(int actor)
+        {
+            var sb = new StringBuilder();
+            var cards = Effects.CardsOf(actor);
+            string count = cards.Count == 1 ? Ui_BuildScreen.CardCountOne : string.Format(Ui_BuildScreen.CardCountMany, cards.Count);
+            string state = null;
+            Character ch;
+            if (PlayerHandler.TryGetCharacter(actor, out ch) && ch != null && ch.data != null)
+                state = ch.data.dead ? Ui_BuildScreen.Ghost : (ch.data.passedOut || ch.data.fullyPassedOut) ? Ui_BuildScreen.Down : null;
+            sb.Append(Header).Append("<b>").Append(UiKit.ColorTag(Ui_BuildScreen.HeaderColor)).Append(NetSend.NameOf(actor))
+              .Append("</color></b></size>  ").Append(Meta).Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor)).Append(count);
+            if (state != null) sb.Append(" · ").Append(state);
+            sb.Append("</color></size>\n");
+            if (cards.Count == 0)
+                return sb.Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor)).Append(Ui_BuildScreen.TeamNoCards).Append("</color>\n").ToString();
+            foreach (var id in cards)
+            {
+                CardDef def;
+                if (Deck.TryGet(id, out def)) AppendCard(sb, def);
+            }
+            var clown = Effects.DoubleDealCard();
+            if (clown != null)
+                foreach (var v in Effects.Penalties.Of(actor))
+                {
+                    string said = BuildStats.Say(Effects.PenaltyValue(clown, v), true, null, StatWords.Of(CardPenaltyRules.ChannelFor(v)));
+                    if (said != null)
+                        sb.Append(Detail).Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent).Append(Ui_BuildScreen.PenaltyLabel)
+                          .Append(LowerFirst(said)).Append(EndIndent).Append("</color></size>\n");
+                }
+            return sb.ToString();
         }
 
         /// <summary>Each modifier with a condition or a teammate target, and whether the live fold applies it right now.</summary>

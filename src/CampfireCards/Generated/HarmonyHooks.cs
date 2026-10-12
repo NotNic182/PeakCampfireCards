@@ -233,6 +233,19 @@ namespace CampfireCards.Generated
         [HarmonyPrefix] static void Prefix(Action_ClearAllStatus __instance) { CampfireCards.Hooks.OnClearAllStatusActionPrefix(__instance); }
     }
 
+    [HarmonyPatch(typeof(Action_ApplyAffliction), "RunAction")]
+    internal static class Patch_applyAffliction
+    {
+        [HarmonyPrefix] static void Prefix(Action_ApplyAffliction __instance) { CampfireCards.Hooks.OnApplyAfflictionActionPrefix(__instance); }
+    }
+
+    [HarmonyPatch(typeof(Peak.Action_HealingGem), "RunAction")]
+    internal static class Patch_healingGem
+    {
+        [HarmonyPrefix] static void Prefix(Peak.Action_HealingGem __instance, out float[] __state) { CampfireCards.Hooks.OnHealingGemActionPrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(Peak.Action_HealingGem __instance, float[] __state) { CampfireCards.Hooks.OnHealingGemAction(__instance, __state); }
+    }
+
     [HarmonyPatch(typeof(Item), "ConsumeDelayed", new Type[] { typeof(bool) })]
     internal static class Patch_consumeDelayed
     {
@@ -320,6 +333,13 @@ namespace CampfireCards.Generated
     {
         [HarmonyPrefix] static void Prefix(AOE __instance, out bool __state) { CampfireCards.Hooks.OnBlastContextPrefix(__instance, out __state); }
         [HarmonyFinalizer] static Exception Finalizer(Exception __exception, bool __state) { return CampfireCards.Hooks.OnBlastContextFinalizer(__exception, __state); }
+    }
+
+    [HarmonyPatch(typeof(Dynamite), "Update")]
+    internal static class Patch_dynamiteFuse
+    {
+        [HarmonyPrefix] static void Prefix(out bool __state) { CampfireCards.Hooks.OnDynamiteFusePrefix(out __state); }
+        [HarmonyFinalizer] static Exception Finalizer(Exception __exception, bool __state) { return CampfireCards.Hooks.OnDynamiteFuseFinalizer(__exception, __state); }
     }
 
 }
