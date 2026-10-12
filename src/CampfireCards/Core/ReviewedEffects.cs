@@ -4,20 +4,33 @@ using CampfireCards.Generated;
 
 namespace CampfireCards.Core
 {
-    /// <summary>One permanent Double Deal penalty per owner. Replayed messages cannot reroll it.</summary>
+    /// <summary>
+    /// Permanent Double Deal penalties: one per acquisition, kept for the run even if the card is sacrificed. Each
+    /// penalty fills the next slot, so a replayed message (same slot) cannot reroll or duplicate one.
+    /// </summary>
     public sealed class PenaltyLedger
     {
-        private readonly Dictionary<int, byte> _choices = new Dictionary<int, byte>();
+        private static readonly byte[] None = new byte[0];
+        private readonly Dictionary<int, List<byte>> _choices = new Dictionary<int, List<byte>>();
         public static bool Valid(byte choice) => choice >= 1 && choice <= 4;
-        public byte Of(int actor) => _choices.TryGetValue(actor, out var v) ? v : (byte)0;
-        public bool TrySet(int actor, byte choice)
+        public IReadOnlyList<byte> Of(int actor) => _choices.TryGetValue(actor, out var v) ? (IReadOnlyList<byte>)v : None;
+        public int Count(int actor) => Of(actor).Count;
+        /// <summary>slot = how many penalties the owner had before this one; any other slot is ignored.</summary>
+        public bool TrySet(int actor, int slot, byte choice)
         {
-            if (!Valid(choice) || _choices.ContainsKey(actor)) return false;
-            _choices[actor] = choice;
+            if (!Valid(choice)) return false;
+            if (!_choices.TryGetValue(actor, out var list)) _choices[actor] = list = new List<byte>();
+            if (slot != list.Count) return false;
+            list.Add(choice);
             return true;
         }
-        public void Restore(int actor, byte choice) { _choices.Remove(actor); if (Valid(choice)) _choices[actor] = choice; }
-        public void Forget(int actor) => _choices.Remove(actor);
+        public void Restore(int actor, IEnumerable<byte> choices)
+        {
+            _choices.Remove(actor);
+            var list = new List<byte>();
+            foreach (var c in choices) if (Valid(c)) list.Add(c);
+            if (list.Count > 0) _choices[actor] = list;
+        }
         public void Reset() => _choices.Clear();
     }
 

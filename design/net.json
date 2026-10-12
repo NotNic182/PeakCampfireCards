@@ -144,11 +144,15 @@
      "type": "int"
     },
     {
+     "name": "penaltyCounts",
+     "type": "byte[]"
+    },
+    {
      "name": "penaltyVariants",
      "type": "byte[]"
     }
    ],
-   "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card)",
+   "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card; penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants)",
    "handler": "OnStateSync"
   },
   {
@@ -421,11 +425,15 @@
      "type": "int"
     },
     {
+     "name": "slot",
+     "type": "byte"
+    },
+    {
      "name": "variant",
      "type": "byte"
     }
    ],
-   "purpose": "Clown Luggage Special chooses one permanent penalty; its first valid choice is retained and included in state sync.",
+   "purpose": "Clown Luggage Special rolls one permanent penalty per acquisition; slot = how many the owner already had, so a replayed message cannot reroll or duplicate it. Included in state sync; sacrificing the card keeps it.",
    "handler": "OnCardPenalty"
   },
   {

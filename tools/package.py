@@ -28,6 +28,7 @@ FILES = [
     (os.path.join(ROOT, 'design', 'reviews', 'card-editing-submitted.xlsx'), 'design/reviews/card-editing-submitted.xlsx'),
     (os.path.join(ROOT, 'docs', 'card-images.md'), 'docs/card-images.md'),
     (os.path.join(ROOT, 'docs', 'card-text-and-playtest.md'), 'docs/card-text-and-playtest.md'),
+    (os.path.join(ROOT, 'docs', 'card-interactions.md'), 'docs/card-interactions.md'),
     (os.path.join(ROOT, 'docs', 'research', 'card-copy-review.json'), 'docs/research/card-copy-review.json'),
     (os.path.join(ROOT, 'assets', 'card-images', 'README.md'), 'art/cards/README.md'),
     (os.path.join(ROOT, 'design', 'editable', 'card-image-map.csv'), 'art/cards/card-image-map.csv'),

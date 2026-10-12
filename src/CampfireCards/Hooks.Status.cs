@@ -19,6 +19,10 @@ namespace CampfireCards
             AccessTools.FieldRefAccess<CharacterHeatEmission, Character>("character");
         private static readonly AccessTools.FieldRef<CharacterHeatEmission, float> HeatEmissionCounter =
             AccessTools.FieldRefAccess<CharacterHeatEmission, float>("counter");
+        private static readonly AccessTools.FieldRef<CharacterAfflictions, bool> AfflictionsInAirport =
+            AccessTools.FieldRefAccess<CharacterAfflictions, bool>("m_inAirport");
+        private static readonly AccessTools.FieldRef<CharacterData, bool> NativeInvincible =
+            AccessTools.FieldRefAccess<CharacterData, bool>("isInvincible");
 
         /// <summary>Inside CharacterMovement/CharacterClimbing.CheckFallDamage: the Injury being added is fall damage.</summary>
         [ThreadStatic] private static int _fallDepth;
@@ -38,15 +42,20 @@ namespace CampfireCards
         // ------------------------------------------------------------------ AddStatus
         /// <summary>
         /// hooks.json addStatus. Order: card multipliers (fall or non-fall Injury, build-up rates), Shared Burden split,
-        /// Delayed Consequences (fall only), Phoenix Clause (fall only). Card-applied penalties (CardStatus.Raw) pass untouched.
+        /// Phoenix Clause (fall only), Delayed Consequences (fall only). Card-applied penalties (CardStatus.Raw) pass untouched.
         /// </summary>
-        public static bool OnAddStatusPrefix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE statusType, ref float amount, bool fromRPC, ref bool __result, out bool __state)
+        public static bool OnAddStatusPrefix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE statusType, ref float amount, bool fromRPC, bool ignoreInvincibility, bool ignoreSkeleton, ref bool __result, out bool __state)
         {
             __state = false;
             if (amount <= 0f || CardStatus.Raw) return true;
             var ch = __instance.character;
             if (!Mine(ch)) return true;
             if (statusType == CharacterAfflictions.STATUSTYPE.Petrify) return true;   // scaled once, in AddPetrify
+            // Let vanilla reject blocked Injury and produce its normal Milk feedback. A blocked hit must not spend
+            // Parachute, charge a Shared Burden helper, or become a delayed payment.
+            if (statusType == CharacterAfflictions.STATUSTYPE.Injury &&
+                NativeInjuryRules.Blocks(ch.isZombie, ch.statusesLocked, ch.isScoutmaster, AfflictionsInAirport(__instance),
+                    NativeInvincible(ch.data), ignoreInvincibility)) return true;
 
             float before = amount;
             bool fall = statusType == CharacterAfflictions.STATUSTYPE.Injury && _fallDepth > 0;
@@ -56,18 +65,8 @@ namespace CampfireCards
 
             if (statusType == CharacterAfflictions.STATUSTYPE.Injury && amount > 0f)
             {
-                amount = SharedBurdenSplit(amount);
-                if (fall)
-                {
-                    var delayed = Ability_DelayedConsequences.Owned;
-                    if (delayed != null) amount = delayed.Defer(amount);
-                    var phoenix = Ability_PhoenixClause.Owned;
-                    if (phoenix != null && phoenix.TryPreventFatalFall(ch, amount))
-                    {
-                        __result = false;
-                        return false;
-                    }
-                }
+                amount = ResolveInjury(ch, amount, fall, ignoreInvincibility, ignoreSkeleton, out bool prevented);
+                if (prevented) { __result = false; return false; }
             }
 
             // only a status scaled to nothing is cancelled (The Mountain's Heir: no fall Injury); tiny per-frame Hunger and
@@ -84,18 +83,27 @@ namespace CampfireCards
         }
 
         /// <summary>Shared Burden: a nearby teammate's aura cuts the Injury; half of what it prevents (capped) goes to that teammate.</summary>
-        private static float SharedBurdenSplit(float amount)
+        private static float ResolveInjury(Character ch, float amount, bool fall, bool ignoreInvincibility, bool ignoreSkeleton, out bool prevented)
         {
             int owner = Effects.SharedBurdenOwner;
-            if (owner == int.MinValue || owner == NetSend.LocalActor) return amount;
-            float factor = Mathf.Clamp01(Effects.SharedBurdenFactor);
-            float prevented = amount * (1f - factor);
+            bool sharing = owner != int.MinValue && owner != NetSend.LocalActor;
+            float factor = sharing ? Effects.SharedBurdenFactor : 1f;
             var def = Array.Find(CardTable.Cards, c => c.Ability == "SharedBurden");
             float absorb = def != null ? CardSettings.Current.Param(def, "absorb", 0.5f) : 0.5f;
             float cap = def != null ? CardSettings.Current.Param(def, "cap", 0.1f) : 0.1f;
-            float share = Mathf.Min(prevented * absorb, cap);
-            if (share >= 0.0125f) NetSend.RaiseTo(new InjuryShare { amount = share }, owner);
-            return amount * factor;
+            var delayed = fall ? Ability_DelayedConsequences.Owned : null;
+            var phoenix = fall ? Ability_PhoenixClause.Owned : null;
+            Func<float, bool> rescue = null;
+            if (phoenix != null)
+                rescue = injury =>
+                {
+                    float immediate = injury, later = 0f;
+                    if (delayed != null) delayed.Preview(injury, out immediate, out later);
+                    return phoenix.TryPreventFatalFall(ch, immediate, later, ignoreSkeleton);
+                };
+            Func<float, float> defer = delayed != null ? injury => delayed.Defer(injury, ignoreInvincibility, ignoreSkeleton) : (Func<float, float>)null;
+            return InjuryResolution.Resolve(amount, factor, absorb, cap, fall, rescue, defer,
+                share => NetSend.RaiseTo(new InjuryShare { amount = share }, owner), out prevented);
         }
 
         // ------------------------------------------------------------------ SubtractStatus / Petrify
@@ -302,12 +310,15 @@ namespace CampfireCards
             {
                 var p = ch.player;
                 var sel = ch.refs.items.currentSelectedSlot;
-                int carried = 0, held = 0, contents = 0, sticky = 0;
+                // Items with negative weight (a Balloon Bunch) are lift, not burden: lighter-load cards scale only the
+                // positive weights, so they never shrink that lift.
+                int carried = 0, held = 0, contents = 0, sticky = 0, lift = 0;
                 for (int i = 0; i < p.itemSlots.Length; i++)
                 {
                     var slot = p.itemSlots[i];
                     if (slot == null || slot.prefab == null) continue;
-                    if (sel.IsSome && sel.Value == i) held += slot.prefab.CarryWeight; else carried += slot.prefab.CarryWeight;
+                    int w = slot.prefab.CarryWeight;
+                    if (w < 0) lift += w; else if (sel.IsSome && sel.Value == i) held += w; else carried += w;
                 }
                 var bp = p.backpackSlot;
                 if (bp != null && !bp.IsEmpty() && bp.data != null)
@@ -315,20 +326,29 @@ namespace CampfireCards
                     BackpackData bd;
                     if (bp.data.TryGetDataEntry<BackpackData>(DataEntryKey.BackpackData, out bd))
                     {
-                        foreach (var s in bd.itemSlots) if (s != null && !s.IsEmpty()) contents += s.prefab.CarryWeight;
+                        foreach (var s in bd.itemSlots)
+                        {
+                            if (s == null || s.IsEmpty()) continue;
+                            int w = s.prefab.CarryWeight;
+                            if (w < 0) lift += w; else contents += w;
+                        }
                         int pack = 0;
                         Item packItem;
                         if (ItemDatabase.TryGetItem(bp.GetPrefabName(), out packItem)) pack += packItem.CarryWeight;
-                        if (sel.IsSome && sel.Value == Player.BACKPACKSLOTINDEX) held += pack; else carried += pack;
+                        if (pack < 0) lift += pack; else if (sel.IsSome && sel.Value == Player.BACKPACKSLOTINDEX) held += pack; else carried += pack;
                     }
                 }
                 var temp = p.GetItemSlot(TemporaryItemSlot.SLOT_INDEX);
-                if (temp != null && !temp.IsEmpty()) held += temp.prefab.CarryWeight;   // the hands-full slot is always in hand
+                if (temp != null && !temp.IsEmpty())
+                {
+                    int w = temp.prefab.CarryWeight;
+                    if (w < 0) lift += w; else held += w;   // the hands-full slot is always in hand
+                }
                 int scout = ch.data.carriedPlayer != null ? 8 : 0;
                 foreach (var s in StickyItemComponent.ALL_STUCK_ITEMS)
                     if (s != null && s.stuckToCharacter == ch) sticky += s.addWeightToStuckPlayer;
 
-                float units = StatComposites.CarriedWeight(Effects.Local, carried, held, contents, scout, sticky);
+                float units = StatComposites.CarriedWeight(Effects.Local, carried, held, contents, scout, sticky, lift);
                 __instance.SetStatus(CharacterAfflictions.STATUSTYPE.Weight, 0.025f * units);
             }
 

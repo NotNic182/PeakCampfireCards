@@ -286,14 +286,13 @@
         150
       ],
       "anchor": "top, Gap below the card name as laid out; down to Gap above the flavour line, or BottomPad above the card's bottom edge",
-      "visual": "named Benefit and Drawback lines (bold label) in green and red; a blank drawback shows No drawback in the theme accent",
+      "visual": "the benefit text in green, then the drawback text in red, exactly as written in cards.json, with no labels; a blank drawback shows only the benefit",
       "text": "{positive}\n{negative}",
       "consts": {
         "FontSize": 20,
         "MinFontSize": 15,
         "GoodColor": "@good",
         "BadColor": "@bad",
-        "NoDrawback": "No drawback",
         "GoodPrefix": "Benefit: ",
         "BadPrefix": "Drawback: ",
         "LineHeight": 1.15,

@@ -505,7 +505,7 @@ namespace CampfireCards.Ui
             UiKit.Place(effects.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -effectsTop));
             UiKit.LineHeight(effects, Ui_CardEffects.LineHeight);
             UiKit.AutoSize(effects, Ui_CardEffects.MinFontSize);
-            effects.text = EffectText(def, Soft(accent));
+            effects.text = EffectText(def);
 
             var button = inner.AddComponent<Button>();
             button.targetGraphic = frame;
@@ -520,15 +520,13 @@ namespace CampfireCards.Ui
         /// <summary>Secondary text on a card face: the theme's accent, slightly softened, so it belongs to the card's own hue.</summary>
         private static Color Soft(Color accent) => new Color(accent.r, accent.g, accent.b, Ui_CardFlavor.AccentAlpha);
 
-        /// <summary>The card's named benefit and drawback lines, with live key bindings filled in. noDrawback colours "No drawback".</summary>
-        public static string EffectText(CardDef def, Color noDrawback)
+        /// <summary>The card's benefit (green) and drawback (red) exactly as written, unlabelled, with live key bindings filled in.</summary>
+        public static string EffectText(CardDef def)
         {
             var sb = new StringBuilder();
-            sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor))
-              .Append("<b>").Append(Ui_CardEffects.GoodPrefix).Append("</b>").Append(CardPresentation.Text(def, def.Positive)).Append("</color>\n");
-            bool none = string.IsNullOrEmpty(def.Negative);
-            string bad = none ? Ui_CardEffects.NoDrawback : "<b>" + Ui_CardEffects.BadPrefix + "</b>" + CardPresentation.Text(def, def.Negative);
-            sb.Append(UiKit.ColorTag(none ? noDrawback : Ui_CardEffects.BadColor)).Append(bad).Append("</color>");
+            sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(CardPresentation.Text(def, def.Positive)).Append("</color>");
+            if (!string.IsNullOrEmpty(def.Negative))
+                sb.Append('\n').Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(CardPresentation.Text(def, def.Negative)).Append("</color>");
             return sb.ToString();
         }
 

@@ -22,7 +22,7 @@ namespace CampfireCards.Cards
     /// systems.json Effects: every player's card collection (synced), and for the local scout the folded modifiers
     /// from its own cards (with their conditions) plus nearby teammates' auras. The Harmony hooks read Local.
     /// </summary>
-    public static class Effects
+    public static partial class Effects
     {
         public const byte FlagSkipNext = 1, FlagOfferOne = 2, FlagBalloonUsed = 4;
         public static readonly PenaltyLedger Penalties = new PenaltyLedger();
@@ -37,10 +37,8 @@ namespace CampfireCards.Cards
         public static int SharedBurdenOwner = int.MinValue;
         public static float SharedBurdenFactor = 1f;
 
-        private static readonly List<ActiveMod> _mods = new List<ActiveMod>();
         private static readonly Action<CharacterAfflictions> UpdateWeight =
             HarmonyLib.AccessTools.MethodDelegate<Action<CharacterAfflictions>>(HarmonyLib.AccessTools.Method(typeof(CharacterAfflictions), "UpdateWeight"));
-        private static readonly HashSet<long> _seenTeamMods = new HashSet<long>();
 
         public static bool HasAnyState => CardsByActor.Count > 0;
 
@@ -69,9 +67,9 @@ namespace CampfireCards.Cards
                         if (m.Target == ModTarget.team || m.When != Generated.Condition.always) continue;
                         mods.Add(new ActiveMod { CardId = def.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = s.ModValue(def, i), Rarity = def.Rarity });
                     }
-                    AddPenalty(mods, NetSend.LocalActor, def);
                 }
             }
+            AddPenalties(mods, NetSend.LocalActor);
             into.Fold(mods, s);
         }
 
@@ -99,32 +97,6 @@ namespace CampfireCards.Cards
         {
             byte f = Flags(actor);
             PickFlags[actor] = on ? (byte)(f | flag) : (byte)(f & ~flag);
-        }
-
-        /// <summary>
-        /// A card joins a player's collection. live = picked or granted right now (acquisition effects run); false = state
-        /// sync. Returns false when the card was refused (unknown, or a duplicate the rules do not allow).
-        /// </summary>
-        public static bool AddCard(int actor, byte cardId, bool live)
-        {
-            var list = CardsOf(actor);
-            var def = CardSettings.Current.Card(cardId);
-            if (def == null) return false;
-            if (list.Contains(cardId) && (!CardSettings.Current.AllowDuplicates || def.Rarity == CardRarity.Mythic))
-            {
-                Plugin.Log.LogWarning($"Ignored duplicate card {def.Name} for actor {actor}");
-                return false;
-            }
-            if (def.Rarity == CardRarity.Mythic && live && MythicOwner(cardId) != int.MinValue)
-            {
-                Plugin.Log.LogWarning($"Ignored {def.Name} for actor {actor}: a Mythic is once per run");
-                return false;
-            }
-            list.Add(cardId);
-            if (live && def.Ability == "DoubleDown") SetFlag(actor, FlagOfferOne, true);
-            if (actor == NetSend.LocalActor) LocalCards.OnAcquired(def, live);
-            Hud.RefreshMyCards();
-            return true;
         }
 
         /// <summary>Who owns this card (int.MinValue = nobody). Used for Mythics, which exist once per run.</summary>
@@ -167,40 +139,13 @@ namespace CampfireCards.Cards
                     if (m.Channel != channel || m.Target != ModTarget.self || m.When != Generated.Condition.always) continue;
                     mods.Add(new ActiveMod { CardId = def.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = s.ModValue(def, i), Rarity = def.Rarity });
                 }
-                if (def.Ability == "DoubleDeal" && PenaltyLedger.Valid(Penalties.Of(actor)) && CardPenaltyRules.ChannelFor(Penalties.Of(actor)) == channel)
-                    AddPenalty(mods, actor, def);
             }
+            AddPenalties(mods, actor, channel);
             _scratch.Fold(mods, s);
             return _scratch[channel];
         }
 
         private static readonly ModResult _scratch = new ModResult();
-
-        /// <summary>A card leaves a player's collection (Mountain's Bargain); its abilities, timers and modifiers go with it.</summary>
-        public static void RemoveCard(int actor, byte cardId)
-        {
-            var list = CardsOf(actor);
-            if (!list.Remove(cardId)) return;
-            var def = CardSettings.Current.Card(cardId);
-            if (actor == NetSend.LocalActor && def != null) LocalCards.OnRemoved(def);
-            if (def != null && def.Ability == "DoubleDeal" && !HasAbility(actor, "DoubleDeal")) Penalties.Forget(actor);
-            Hud.RefreshMyCards();
-        }
-
-        public static void SetAll(int actor, IEnumerable<byte> cards, byte flags)
-        {
-            if (actor == NetSend.LocalActor)
-            {
-                foreach (var old in CardsOf(actor).ToList())
-                {
-                    var d = CardSettings.Current.Card(old);
-                    if (d != null) LocalCards.OnRemoved(d);
-                }
-            }
-            CardsByActor[actor] = new List<byte>();
-            foreach (var id in cards) AddCard(actor, id, false);
-            PickFlags[actor] = flags;
-        }
 
         /// <summary>Run over: every card, flag, aura, timer and stat change is cleared.</summary>
         public static void Reset()
@@ -214,67 +159,6 @@ namespace CampfireCards.Cards
             var me = Character.localCharacter;
             if (me != null) ApplyFields(me);
             Hud.RefreshMyCards();
-        }
-
-        // ------------------------------------------------------------------ modifier gathering
-        public static void Recompute(Character me)
-        {
-            _mods.Clear();
-            _seenTeamMods.Clear();
-            SharedBurdenOwner = int.MinValue;
-            SharedBurdenFactor = 1f;
-            float sharedBest = float.MaxValue;
-            var s = CardSettings.Current;
-            int localActor = NetSend.LocalActor;
-
-            foreach (var kv in CardsByActor)
-            {
-                bool isMe = kv.Key == localActor;
-                Character owner = null;
-                float dist = float.MaxValue;
-                if (!isMe && PlayerHandler.TryGetCharacter(kv.Key, out owner) && owner != null && owner.data != null && !owner.data.dead)
-                    dist = Vector3.Distance(owner.Center, me.Center);
-
-                foreach (var id in kv.Value)
-                {
-                    var def = s.Card(id);
-                    if (def == null) continue;
-                    float radius = s.Param(def, "radius", 6f);
-                    for (int i = 0; i < def.Mods.Length; i++)
-                    {
-                        var m = def.Mods[i];
-                        bool apply = false;
-                        switch (m.Target)
-                        {
-                            case ModTarget.self:
-                                apply = isMe && Condition(m.When, me, def);
-                                break;
-                            case ModTarget.team:
-                                apply = !isMe && dist <= radius;
-                                break;
-                            case ModTarget.teamAndSelf:
-                                apply = isMe || dist <= radius;
-                                break;
-                        }
-                        if (!apply) continue;
-                        if (m.Target != ModTarget.self)
-                        {
-                            long key = ((long)def.Id << 8) | (uint)i;   // the same aura from two owners counts once
-                            if (!_seenTeamMods.Add(key)) continue;
-                            if (def.Ability == "SharedBurden")
-                            {
-                                // handled by the Injury hook so the prevented share can be sent to the owner
-                                if (dist < sharedBest) { sharedBest = dist; SharedBurdenOwner = kv.Key; SharedBurdenFactor = s.ModValue(def, i); }
-                                continue;
-                            }
-                        }
-                        _mods.Add(new ActiveMod { CardId = def.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = s.ModValue(def, i), Rarity = def.Rarity });
-                    }
-                    if (isMe) AddPenalty(_mods, localActor, def);
-                }
-            }
-            Local.Fold(_mods, s);
-            ApplyFields(me);
         }
 
         private static bool Condition(Condition c, Character me, CardDef def)
@@ -399,37 +283,64 @@ namespace CampfireCards.Cards
         // ------------------------------------------------------------------ state sync
         public static StateSync BuildStateSync(int sessionId)
         {
-            var actors = new List<int>(); var counts = new List<byte>(); var cards = new List<byte>(); var flags = new List<byte>(); var penalties = new List<byte>();
+            var actors = new List<int>(); var counts = new List<byte>(); var cards = new List<byte>(); var flags = new List<byte>();
+            var penaltyCounts = new List<byte>(); var penalties = new List<byte>();
             foreach (var kv in CardsByActor)
             {
                 actors.Add(kv.Key);
                 counts.Add((byte)Math.Min(255, kv.Value.Count));
                 cards.AddRange(kv.Value.Take(255));
                 flags.Add(Flags(kv.Key));
-                penalties.Add(Penalties.Of(kv.Key));
+                var own = Penalties.Of(kv.Key).Take(255).ToList();
+                penaltyCounts.Add((byte)own.Count);
+                penalties.AddRange(own);
             }
-            return new StateSync { actors = actors.ToArray(), counts = counts.ToArray(), cards = cards.ToArray(), pickFlags = flags.ToArray(), sessionId = sessionId, penaltyVariants = penalties.ToArray() };
+            return new StateSync { actors = actors.ToArray(), counts = counts.ToArray(), cards = cards.ToArray(), pickFlags = flags.ToArray(), sessionId = sessionId,
+                penaltyCounts = penaltyCounts.ToArray(), penaltyVariants = penalties.ToArray() };
         }
 
         public static void ApplyStateSync(StateSync m)
         {
-            int pos = 0;
+            int pos = 0, penaltyPos = 0;
             for (int i = 0; i < m.actors.Length; i++)
             {
                 int n = i < m.counts.Length ? m.counts[i] : 0;
                 var list = new List<byte>();
                 for (int k = 0; k < n && pos < m.cards.Length; k++) list.Add(m.cards[pos++]);
                 SetAll(m.actors[i], list, i < m.pickFlags.Length ? m.pickFlags[i] : (byte)0);
-                Penalties.Restore(m.actors[i], HasAbility(m.actors[i], "DoubleDeal") && m.penaltyVariants != null && i < m.penaltyVariants.Length ? m.penaltyVariants[i] : (byte)0);
+                // Clown Luggage penalties are permanent: they stay even after the card itself was sacrificed
+                int pn = m.penaltyCounts != null && i < m.penaltyCounts.Length ? m.penaltyCounts[i] : 0;
+                var own = new List<byte>();
+                for (int k = 0; k < pn && m.penaltyVariants != null && penaltyPos < m.penaltyVariants.Length; k++) own.Add(m.penaltyVariants[penaltyPos++]);
+                Penalties.Restore(m.actors[i], own);
             }
         }
 
-        private static void AddPenalty(List<ActiveMod> mods, int actor, CardDef def)
+        /// <summary>
+        /// Every Clown Luggage penalty the player has rolled (one per acquisition). They come from the ledger, not the
+        /// owned cards, so sacrificing the card keeps them. channel = only that channel (ActorChannel).
+        /// </summary>
+        private static void AddPenalties(List<ActiveMod> mods, int actor, Channel? channel = null)
         {
-            byte variant = Penalties.Of(actor);
-            if (def.Ability != "DoubleDeal" || !PenaltyLedger.Valid(variant)) return;
-            mods.Add(new ActiveMod { CardId = def.Id, ModIndex = -1, Channel = CardPenaltyRules.ChannelFor(variant), Op = ModOp.mul,
-                Value = CardSettings.Current.Param(def, CardPenaltyRules.Parameter(variant), variant <= 2 ? 1.15f : 1.2f), Rarity = def.Rarity });
+            var choices = Penalties.Of(actor);
+            if (choices.Count == 0) return;
+            var def = DoubleDealCard();
+            if (def == null) return;
+            foreach (var variant in choices)
+            {
+                var c = CardPenaltyRules.ChannelFor(variant);
+                if (channel.HasValue && c != channel.Value) continue;
+                mods.Add(new ActiveMod { CardId = def.Id, ModIndex = -1, Channel = c, Op = ModOp.mul, Value = PenaltyValue(def, variant), Rarity = def.Rarity });
+            }
+        }
+
+        public static float PenaltyValue(CardDef doubleDeal, byte variant) =>
+            CardSettings.Current.Param(doubleDeal, CardPenaltyRules.Parameter(variant), variant <= 2 ? 1.15f : 1.2f);
+
+        public static CardDef DoubleDealCard()
+        {
+            var row = Array.Find(CardTable.Cards, c => c.Ability == "DoubleDeal");
+            return row != null ? CardSettings.Current.Card(row.Id) : null;
         }
     }
 }

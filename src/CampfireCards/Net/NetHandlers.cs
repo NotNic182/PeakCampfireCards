@@ -137,7 +137,7 @@ namespace CampfireCards.Net
         public static void OnCardPenalty(CardPenalty m, int sender)
         {
             if (m.actor != sender || !Effects.HasAbility(sender, "DoubleDeal")) return;
-            Effects.Penalties.TrySet(sender, m.variant);
+            Effects.Penalties.TrySet(sender, m.slot, m.variant);
         }
 
         public static void OnCardRewardUsed(CardRewardUsed m, int sender)

@@ -132,11 +132,10 @@ namespace CampfireCards
                     k *= Effects.Local[Channel.healSelfUse];
                 if (Mathf.Abs(k - 1f) > 0.0001f) __instance.changeAmount = -Round025(-__state * k);
             }
-            if (IsCurativeItem(item))
-            {
+            // SubtractStatus(Poison, ..., decreasedNaturally:false) also subtracts Spores on the local scout.
+            if (Core.CurativeSelection.RecordMedicalCure(b.Cured, type,
+                CharacterAfflictions.STATUSTYPE.Poison, CharacterAfflictions.STATUSTYPE.Spores, IsCurativeItem(item)))
                 b.Curative = true;
-                b.Cured.Add(type);
-            }
         }
 
         public static void OnModifyStatusAction(Action_ModifyStatus __instance, float __state)

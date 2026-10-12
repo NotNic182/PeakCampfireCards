@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.6.1";
+        public const string Version = "0.6.3";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -126,7 +126,7 @@ namespace CampfireCards
             s.AllowDuplicates = cfg.Bind("Cards", "AllowDuplicates", false, "Allow a player to own the same card more than once (Mythics never repeat).").Value;
             s.MythicsEnabled = cfg.Bind("Cards", "MythicsEnabled", true, "Mythic cards can appear (each at most once per run, for the whole team).").Value;
             s.StaminaCostCap = Mathf.Clamp01(cfg.Bind("Cards", "StaminaCostReductionCapPercent", 60f,
-                "Normal cards combined can lower a stamina cost by at most this many percent. Mythics ignore the cap.").Value / 100f);
+                "Soft cap: once normal cards together lower a stamina cost by this many percent, further discounts count at reduced strength (80% off becomes about 72%). Mythics ignore the cap.").Value / 100f);
             s.MaxStaminaFloor = Mathf.Clamp01(cfg.Bind("Cards", "MaxStaminaFloor", 50f,
                 "Normal cards combined cannot pull maximum stamina below this (100 = a full bar).").Value / 100f);
 

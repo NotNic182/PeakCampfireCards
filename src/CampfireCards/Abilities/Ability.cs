@@ -7,9 +7,9 @@ using UnityEngine;
 namespace CampfireCards.Abilities
 {
     /// <summary>
-    /// A card's custom behaviour (cards.json "ability"). One instance exists per owned card, only on the owner's client.
-    /// Instances are created when the card is acquired and dropped when it is removed or the run ends, so every timer,
-    /// latch and listener they hold goes away with them (no global subscriptions).
+    /// A card's custom behaviour (cards.json "ability"). One instance exists per card ID, only on the owner's client.
+    /// Removed cards stop ticking and clean up live effects, but retain spent charges and cooldowns until the run ends.
+    /// Reacquiring a card reuses its instance; duplicate ownership never creates additional ability charges.
     /// </summary>
     public abstract class Ability
     {

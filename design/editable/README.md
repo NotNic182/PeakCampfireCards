@@ -5,10 +5,11 @@ existing names, benefit descriptions, drawback descriptions and flavor lines, co
 
 Edit the blue columns: **name**, **benefit**, **drawback**, **flavor**, **requested_effects**. For an effect change,
 write what you want in plain English in requested_effects, including its numbers and when it triggers. Keep
-**id** and **key** unchanged so the card can be matched to its code when you return the file. Leave a drawback
-empty to display the game's standard no-drawback message.
+**id** and **key** unchanged so the card can be matched to its code when you return the file. In game, each card
+shows your benefit (green) and drawback (red) text exactly as written, with no labels. Leave a drawback empty and
+the card shows only its benefit.
 
-The 0.6.1 wording pass keeps the funny names and makes the stat, amount, trigger and duration explicit. Keep
+The 0.6.1 wording pass (0.6.2 fixes card conflicts) keeps the funny names and makes the stat, amount, trigger and duration explicit. Keep
 `{key}` in manual card descriptions: the game substitutes your configured key. See
 [the copy and playtest notes](../../docs/card-text-and-playtest.md) for terminology and the supplied log findings.
 

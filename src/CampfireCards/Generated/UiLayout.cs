@@ -172,7 +172,7 @@ namespace CampfireCards.Generated
         public const float LineHeight = 1.05f;
     }
 
-    /// <summary>named Benefit and Drawback lines (bold label) in green and red; a blank drawback shows No drawback in the theme accent. auto-size between MinFontSize and FontSize inside the room the name and flavour leave; manual key placeholders in the card text show the live binding (CardPresentation)</summary>
+    /// <summary>the benefit text in green, then the drawback text in red, exactly as written in cards.json, with no labels; a blank drawback shows only the benefit. auto-size between MinFontSize and FontSize inside the room the name and flavour leave; manual key placeholders in the card text show the live binding (CardPresentation)</summary>
     public static class Ui_CardEffects
     {
         public const string Parent = "Card";
@@ -184,7 +184,6 @@ namespace CampfireCards.Generated
         public const float MinFontSize = 15.0f;
         public static readonly Color GoodColor = new Color(0.62f, 0.92f, 0.45f, 1f);
         public static readonly Color BadColor = new Color(0.98f, 0.52f, 0.47f, 1f);
-        public const string NoDrawback = "No drawback";
         public const string GoodPrefix = "Benefit: ";
         public const string BadPrefix = "Drawback: ";
         public const float LineHeight = 1.15f;

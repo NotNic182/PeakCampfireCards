@@ -105,27 +105,41 @@ namespace CampfireCards.Tests
         public void RandomPenaltySurvivesReplayAndStateRestoreWithoutRerolling()
         {
             var ledger = new PenaltyLedger();
-            Assert.False(ledger.TrySet(2, 0)); Assert.False(ledger.TrySet(2, 5));
-            Assert.True(ledger.TrySet(2, 3));
-            Assert.False(ledger.TrySet(2, 1));
+            Assert.False(ledger.TrySet(2, 0, 0)); Assert.False(ledger.TrySet(2, 0, 5));
+            Assert.True(ledger.TrySet(2, 0, 3));
+            Assert.False(ledger.TrySet(2, 0, 1));    // replayed slot 0 cannot reroll
+            Assert.False(ledger.TrySet(2, 2, 1));    // a skipped slot is ignored
             var snapshot = StateSync.Read(new StateSync
             {
                 actors = new[] { 2 }, counts = new byte[] { 1 }, cards = new byte[] { 40 },
-                pickFlags = new byte[] { 4 }, penaltyVariants = new[] { ledger.Of(2) }, sessionId = 5
+                pickFlags = new byte[] { 4 }, penaltyCounts = new byte[] { 1 }, penaltyVariants = ledger.Of(2).ToArray(), sessionId = 5
             }.Write());
-            var restored = new PenaltyLedger(); restored.Restore(snapshot.actors[0], snapshot.penaltyVariants[0]);
-            Assert.Equal(3, restored.Of(2)); Assert.Equal(4, snapshot.pickFlags[0]);
-            Assert.False(restored.TrySet(2, 4));
-            Assert.Equal(Channel.allInjury, CardPenaltyRules.ChannelFor(restored.Of(2)));
-            restored.Reset(); Assert.Equal(0, restored.Of(2));
+            var restored = new PenaltyLedger(); restored.Restore(snapshot.actors[0], snapshot.penaltyVariants.Take(snapshot.penaltyCounts[0]));
+            Assert.Equal(new byte[] { 3 }, restored.Of(2)); Assert.Equal(4, snapshot.pickFlags[0]);
+            Assert.False(restored.TrySet(2, 0, 4));
+            Assert.Equal(Channel.allInjury, CardPenaltyRules.ChannelFor(restored.Of(2)[0]));
+            restored.Reset(); Assert.Empty(restored.Of(2));
+        }
+
+        [Fact]
+        public void EachClownLuggageAcquisitionKeepsItsOwnPermanentPenalty()
+        {
+            var ledger = new PenaltyLedger();
+            Assert.True(ledger.TrySet(7, 0, 1));
+            // the card is sacrificed and later picked again: the old penalty stays and the new pick adds a second one
+            Assert.True(ledger.TrySet(7, ledger.Count(7), 4));
+            Assert.Equal(new byte[] { 1, 4 }, ledger.Of(7));
+            Assert.False(ledger.TrySet(7, 1, 2));    // replay of the second message
+            Assert.Equal(2, ledger.Count(7));
         }
 
         [Fact]
         public void NewPenaltyAndRewardMessagesRoundTripAndDispatch()
         {
-            var penalty = new CardPenalty { actor = 2, variant = 4 };
+            var penalty = new CardPenalty { actor = 2, slot = 1, variant = 4 };
             var reward = new CardRewardUsed { actor = 2 };
             Assert.Equal(4, CardPenalty.Read(penalty.Write()).variant);
+            Assert.Equal(1, CardPenalty.Read(penalty.Write()).slot);
             Assert.Equal(2, CardRewardUsed.Read(reward.Write()).actor);
             NetHandlers.Last.Clear();
             Assert.True(NetDispatcher.Dispatch(108, penalty.Write(), 2));
@@ -155,6 +169,25 @@ namespace CampfireCards.Tests
             // Four ordinary weight units, two held (including a bag shell), ten inside the bag, eight scout, one stuck item.
             Assert.Equal((4f + 2f * .75f + 10f * 1.1f + 8f + 1f) * .5f,
                 StatComposites.CarriedWeight(r, 4f, 2f, 10f, 8f, 1f), 5);
+        }
+
+        [Fact]
+        public void WeightCardsNeverShrinkNegativeWeightLift()
+        {
+            var r = new ModResult();
+            r.Fold(new[] { new ActiveMod { CardId = 33, ModIndex = 0, Channel = Channel.totalWeight, Op = ModOp.mul, Value = .5f, Rarity = CardRarity.Rare } }, new CardSettings());
+            // 20 units of gear halved, a Balloon Bunch's -15 lift kept whole
+            Assert.Equal(20f * .5f - 15f, StatComposites.CarriedWeight(r, 20f, 0f, 0f, 0f, 0f, -15f), 5);
+            Assert.Equal(10f, StatComposites.CarriedWeight(r, 20f, 0f, 0f, 0f, 0f), 5);
+        }
+
+        [Fact]
+        public void PhoenixClauseJudgesTheWholeDeferredFall()
+        {
+            var q = new DelayedInjuryQueue { DeferShare = .75f, Keep = .8f, Delay = 20f };
+            // 25% now + 75% x 0.8 later = 85% of the fall in total
+            Assert.Equal(.85f, q.TotalOf(1f), 5);
+            Assert.Equal(0, q.Pending);   // judging a fall queues nothing
         }
 
         [Theory]

@@ -236,11 +236,33 @@ namespace CampfireCards.Tests
         }
 
         [Fact]
-        public void StaminaCostReductionIsCappedAt60Percent()
+        public void StaminaCostReductionHasASoftCapAt60Percent()
         {
             var r = new ModResult();
+            // 0.5 x 0.5 = 0.25 (75% off) is past the 0.4 floor: 0.4 x sqrt(0.25 / 0.4)
             r.Fold(new[] { M(Channel.climbStamina, ModOp.mul, 0.5f), M(Channel.climbStamina, ModOp.mul, 0.5f) }, new CardSettings());
-            Assert.Equal(0.4f, r[Channel.climbStamina], 4);
+            Assert.Equal(0.4f * (float)Math.Sqrt(0.625), r[Channel.climbStamina], 4);
+            // above the floor nothing changes
+            r.Fold(new[] { M(Channel.climbStamina, ModOp.mul, 0.6f), M(Channel.climbStamina, ModOp.mul, 0.85f) }, new CardSettings());
+            Assert.Equal(0.51f, r[Channel.climbStamina], 4);
+        }
+
+        [Fact]
+        public void EveryExtraDiscountStillHelpsPastTheSoftCap()
+        {
+            // Fartberry Fitness (0.6) then Endurance Badge (0.65) then Piton Fingers (0.88): each one lowers the cost further
+            float a = ModResult.SoftCostCap(0.6f, 0.4f), b = ModResult.SoftCostCap(0.6f * 0.65f, 0.4f), c = ModResult.SoftCostCap(0.6f * 0.65f * 0.88f, 0.4f);
+            Assert.True(a > b && b > c && c > 0f);
+            Assert.Equal(0.4f * (float)Math.Sqrt(0.5), ModResult.SoftCostCap(0.2f, 0.4f), 4);   // 80% off becomes ~72%
+            Assert.Equal(0f, ModResult.SoftCostCap(0f, 0.4f));
+        }
+
+        [Fact]
+        public void MythicDiscountsStillGoPastTheSoftCap()
+        {
+            var r = new ModResult();
+            r.Fold(new[] { M(Channel.climbStamina, ModOp.mul, 0.4f), M(Channel.climbStamina, ModOp.mul, 0.5f, CardRarity.Mythic) }, new CardSettings());
+            Assert.Equal(0.2f, r[Channel.climbStamina], 4);
         }
 
         [Fact]

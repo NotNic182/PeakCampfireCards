@@ -37,6 +37,7 @@ namespace CampfireCards.Abilities
             HarmonyLib.AccessTools.MethodDelegate<System.Func<Character, float, bool, bool, bool>>(HarmonyLib.AccessTools.Method(typeof(Character), "UseStamina"));
         private bool _paid;
         public override void Tick(Character me, float dt) { if (!me.data.isReaching) _paid = false; }
+        public override void OnRemoved(Character me) => _paid = false;
         public void OnPull(Character me)
         {
             if (_paid) return;

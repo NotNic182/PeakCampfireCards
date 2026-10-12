@@ -157,7 +157,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card). Sender: host. Receivers: target.</summary>
+    /// <summary>full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card; penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants). Sender: host. Receivers: target.</summary>
     public struct StateSync : INetEvent
     {
         public const byte Code = 93;
@@ -169,6 +169,7 @@ namespace CampfireCards.Net
         public byte[] cards;
         public byte[] pickFlags;
         public int sessionId;
+        public byte[] penaltyCounts;
         public byte[] penaltyVariants;
         public byte[] Write()
         {
@@ -179,6 +180,7 @@ namespace CampfireCards.Net
                 w.Write(cards == null ? 0 : cards.Length); if (cards != null) w.Write(cards);
                 w.Write(pickFlags == null ? 0 : pickFlags.Length); if (pickFlags != null) w.Write(pickFlags);
                 w.Write(sessionId);
+                w.Write(penaltyCounts == null ? 0 : penaltyCounts.Length); if (penaltyCounts != null) w.Write(penaltyCounts);
                 w.Write(penaltyVariants == null ? 0 : penaltyVariants.Length); if (penaltyVariants != null) w.Write(penaltyVariants);
                 w.Flush(); return ms.ToArray();
             }
@@ -193,6 +195,7 @@ namespace CampfireCards.Net
                 {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.cards: bad length " + n); v.cards = r.ReadBytes(n); }}
                 {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.pickFlags: bad length " + n); v.pickFlags = r.ReadBytes(n); }}
                 v.sessionId = r.ReadInt32();
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.penaltyCounts: bad length " + n); v.penaltyCounts = r.ReadBytes(n); }}
                 {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.penaltyVariants: bad length " + n); v.penaltyVariants = r.ReadBytes(n); }}
             }
             return v;
@@ -613,7 +616,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>Clown Luggage Special chooses one permanent penalty; its first valid choice is retained and included in state sync.. Sender: the card owner. Receivers: All.</summary>
+    /// <summary>Clown Luggage Special rolls one permanent penalty per acquisition; slot = how many the owner already had, so a replayed message cannot reroll or duplicate it. Included in state sync; sacrificing the card keeps it.. Sender: the card owner. Receivers: All.</summary>
     public struct CardPenalty : INetEvent
     {
         public const byte Code = 108;
@@ -621,12 +624,14 @@ namespace CampfireCards.Net
         public const bool Reliable = true;
         public const string Receivers = "All";
         public int actor;
+        public byte slot;
         public byte variant;
         public byte[] Write()
         {
             using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
             {
                 w.Write(actor);
+                w.Write(slot);
                 w.Write(variant);
                 w.Flush(); return ms.ToArray();
             }
@@ -637,6 +642,7 @@ namespace CampfireCards.Net
             using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
             {
                 v.actor = r.ReadInt32();
+                v.slot = r.ReadByte();
                 v.variant = r.ReadByte();
             }
             return v;

@@ -31,7 +31,8 @@ namespace CampfireCards.Tests
             result.Fold(new[] { halfCost }, settings);
             Assert.Equal(0.5f, result[Channel.climbStamina]);
             result.Fold(new[] { halfCost, halfCost }, settings);
-            Assert.Equal(0.4f, result[Channel.climbStamina], precision: 5); // normal-card 60% reduction cap
+            Assert.Equal(ModResult.SoftCostCap(0.25f, 0.4f), result[Channel.climbStamina], precision: 5); // normal-card soft cap past 60% off
+            Assert.True(result[Channel.climbStamina] < 0.4f && result[Channel.climbStamina] > 0.25f);
         }
     }
 }

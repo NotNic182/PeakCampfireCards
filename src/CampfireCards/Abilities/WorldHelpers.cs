@@ -77,11 +77,11 @@ namespace CampfireCards.Abilities
     {
         [ThreadStatic] public static bool Raw;
 
-        public static void Add(Character me, CharacterAfflictions.STATUSTYPE type, float amount)
+        public static void Add(Character me, CharacterAfflictions.STATUSTYPE type, float amount, bool ignoreInvincibility = false, bool ignoreSkeleton = false)
         {
             if (me == null || amount <= 0f) return;
             Raw = true;
-            try { me.refs.afflictions.AddStatus(type, amount); }
+            try { me.refs.afflictions.AddStatus(type, amount, ignoreInvincibility: ignoreInvincibility, ignoreSkeleton: ignoreSkeleton); }
             finally { Raw = false; }
         }
 

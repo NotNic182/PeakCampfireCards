@@ -87,6 +87,7 @@ namespace CampfireCards.Abilities
         }
 
         public override bool ConditionFlag(Condition c) => c == Condition.pulseActive && _m.Active;
+        public override void OnRemoved(Character me) => _m.Reset();
     }
 
     /// <summary>Momentum Fiend: sprint 2 s to boost sprint speed until you stop; stopping after the boost adds Drowsy (30 s cooldown).</summary>
@@ -104,6 +105,7 @@ namespace CampfireCards.Abilities
         }
 
         public override bool ConditionFlag(Condition c) => c == Condition.momentumActive && _m.Active;
+        public override void OnRemoved(Character me) => _m.ClearMotion();
 
         public override AbilityStatus Status(Character me) => _m.Active ? AbilityStatus.Ok(Line(null, "sprint boost active")) : AbilityStatus.None;
     }

@@ -74,15 +74,19 @@ namespace CampfireCards
             if (Mathf.Abs(adjusted - current) > .00001f) afflictions.SetStatus(CharacterAfflictions.STATUSTYPE.Curse, adjusted);
         }
 
+        /// <summary>
+        /// hooks.json carriedDeath (Character.UpdateVariablesFixed, where the game advances deathTimer). Only a fully
+        /// passed-out scout's timer runs in vanilla, so only that state is measured.
+        /// </summary>
         public static void OnCarriedDeathPrefix(Character __instance, out float __state)
         {
             __state = -1f;
-            if (Mine(__instance) && !__instance.data.dead && (__instance.data.passedOut || __instance.data.fullyPassedOut))
+            if (Mine(__instance) && !__instance.data.dead && __instance.data.fullyPassedOut)
                 __state = __instance.data.deathTimer;
         }
         public static void OnCarriedDeath(Character __instance, float __state)
         {
-            if (__state < 0f || !Mine(__instance) || __instance.data.dead || !(__instance.data.passedOut || __instance.data.fullyPassedOut)) return;
+            if (__state < 0f || !Mine(__instance) || __instance.data.dead || !__instance.data.fullyPassedOut) return;
             var carrier = __instance.data.carrier;
             if (carrier == null || carrier.data.dead) return;
             float multiplier = Effects.ActorChannel(NetSend.ActorOf(carrier), Channel.carriedDeathRate);
@@ -90,26 +94,5 @@ namespace CampfireCards
             // if native rules (e.g. spores) still advance it, scale that actual progression instead.
             __instance.data.deathTimer = ReviewedEffectMath.CarriedDeathTimer(__state, __instance.data.deathTimer, multiplier, Time.fixedDeltaTime / 60f);
         }
-
-        private static bool CannotEatCooked(Item item, Character eater) =>
-            RunState.RunStarted && item != null && eater != null && IsFood(item) && IsCooked(item)
-            && Effects.HasAbility(NetSend.ActorOf(eater), "CampfireMeal");
-
-        public static void OnCanEat(Item __instance, ref bool __result)
-        {
-            if (__result && CannotEatCooked(__instance, __instance.holderCharacter)) __result = false;
-        }
-        public static void OnCanFeedCooked(Item __instance, ref bool __result)
-        {
-            if (__result && __instance.overrideHolderCharacter != null && CannotEatCooked(__instance, __instance.overrideHolderCharacter)) __result = false;
-        }
-        public static bool OnFinishFoodCastPrefix(Item __instance)
-        {
-            if (!CannotEatCooked(__instance, __instance.holderCharacter)) return true;
-            if (Mine(__instance.holderCharacter)) Ui.Hud.Toast("Marshmallow Morale: you can't eat cooked food");
-            return false;
-        }
-        public static bool OnFinishFoodFeedPrefix(Item __instance) =>
-            __instance.overrideHolderCharacter == null || !CannotEatCooked(__instance, __instance.overrideHolderCharacter);
     }
 }

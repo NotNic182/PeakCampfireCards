@@ -23,12 +23,14 @@ namespace CampfireCards.Abilities
         public bool Available => _charge.Available(0) && !Revival.Busy;
 
         /// <summary>Called by the fall-damage hook with the Injury about to land. Returns true when the fall was prevented.</summary>
-        public bool TryPreventFatalFall(Character me, float injury)
+        public bool TryPreventFatalFall(Character me, float injury, float deferred = 0f, bool ignoreSkeleton = false)
         {
             if (!Available || me.data.dead || me.data.passedOut) return false;
             var aff = me.refs.afflictions;
-            float after = aff.statusSum + Mathf.Min(injury, Mathf.Max(0f, aff.GetStatusCap(CharacterAfflictions.STATUSTYPE.Injury) - aff.GetCurrentStatus(CharacterAfflictions.STATUSTYPE.Injury)));
-            if (after <= 0.99f) return false;
+            var type = CharacterAfflictions.STATUSTYPE.Injury;
+            float nativeMultiplier = NativeInjuryRules.Multiplier(me.data.isSkeleton, ignoreSkeleton, Ascents.etcDamageMultiplier);
+            if (!NativeInjuryRules.WouldPassOut(aff.statusSum, aff.GetCurrentStatus(type), aff.GetIncrementalStatus(type),
+                aff.GetStatusCap(type), nativeMultiplier, injury, deferred)) return false;
             return Trigger(me);
         }
 
@@ -69,18 +71,39 @@ namespace CampfireCards.Abilities
         private readonly DelayedInjuryQueue _q = new DelayedInjuryQueue();
         public static Ability_DelayedConsequences Owned => LocalCards.Get<Ability_DelayedConsequences>();
 
-        public float Defer(float fallInjury)
+        public float Defer(float fallInjury, bool ignoreInvincibility = false, bool ignoreSkeleton = false)
+        {
+            Configure();
+            return _q.Add(fallInjury, Now, ignoreInvincibility, ignoreSkeleton);
+        }
+
+        /// <summary>All the Injury a fall will cost once its deferred share lands (what Phoenix Clause judges).</summary>
+        public float TotalOf(float fallInjury)
+        {
+            Configure();
+            return _q.TotalOf(fallInjury);
+        }
+
+        public void Preview(float fallInjury, out float immediate, out float deferred)
+        {
+            Configure();
+            float share = fallInjury * _q.DeferShare;
+            immediate = fallInjury - share;
+            deferred = share * _q.Keep;
+        }
+
+        private void Configure()
         {
             _q.DeferShare = P("defer", 0.75f);
             _q.Delay = P("delay", 20f);
             _q.Keep = P("keep", 0.8f);
-            return _q.Add(fallInjury, Now);
         }
 
         public override void Tick(Character me, float dt)
         {
-            float due = _q.Tick(Now);
-            if (due > 0f && !me.data.dead) CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, due);
+            // Being a ghost defers collection, not the debt itself. Unconscious scouts still pay on time.
+            _q.CollectDue(Now, canApply: !me.data.dead, (due, ignoreInvincibility, ignoreSkeleton) =>
+                CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, due, ignoreInvincibility, ignoreSkeleton));
         }
 
         public override void OnRemoved(Character me) => _q.Clear();
@@ -96,6 +119,7 @@ namespace CampfireCards.Abilities
         private bool _hasAnchor;
         private Vector3 _anchor;
         public override bool IsManual => true;
+        public override void OnRemoved(Character me) => _hasAnchor = false;
 
         public override bool Activate(Character me)
         {

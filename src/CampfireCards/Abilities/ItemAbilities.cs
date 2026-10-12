@@ -71,15 +71,8 @@ namespace CampfireCards.Abilities
 
         public override void OnCurativeUsed(Character me, CurativeEvent cure)
         {
-            float worst = 0f;
-            CharacterAfflictions.STATUSTYPE pick = CharacterAfflictions.STATUSTYPE.Injury;
-            foreach (var t in Candidates)
-            {
-                if (cure.Cured != null && cure.Cured.Contains(t)) continue;
-                float v = CardStatus.Get(me, t);
-                if (v > worst + 0.0001f) { worst = v; pick = t; }
-            }
-            if (worst > 0f)
+            CharacterAfflictions.STATUSTYPE pick;
+            if (CurativeSelection.TryHighestOther(Candidates, cure.Cured, t => CardStatus.Get(me, t), out pick))
             {
                 float amount = P("bonus", 0.075f);
                 CardStatus.Remove(me, pick, amount);
@@ -179,27 +172,4 @@ namespace CampfireCards.Abilities
         }
     }
 
-    /// <summary>
-    /// Double Deal: the host deals two bonus cards; the owner rolls one persistent modifier and syncs it.
-    /// </summary>
-    public sealed class Ability_DoubleDeal : Ability
-    {
-        public override void OnAcquired(Character me)
-        {
-            int actor = NetSend.LocalActor;
-            byte variant = (byte)Random.Range(1, 5);
-            if (!Effects.Penalties.TrySet(actor, variant)) return;
-            NetSend.Raise(new CardPenalty { actor = actor, variant = variant }, Photon.Realtime.ReceiverGroup.All);
-            Hud.Toast(Status(me).Text);
-        }
-
-        public override AbilityStatus Status(Character me)
-        {
-            byte v = Effects.Penalties.Of(NetSend.LocalActor);
-            if (!PenaltyLedger.Valid(v)) return AbilityStatus.Wait(Line(null, "syncing drawback"));
-            var channel = CardPenaltyRules.ChannelFor(v);
-            float value = S.Param(Card, CardPenaltyRules.Parameter(v), v <= 2 ? 1.15f : 1.2f);
-            return AbilityStatus.Wait(Line(null, BuildStats.Say(value, true, null, StatWords.Of(channel))));
-        }
-    }
 }

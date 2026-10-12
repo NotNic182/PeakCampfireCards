@@ -39,7 +39,6 @@ namespace CampfireCards
             {
                 var view = PhotonView.Find(itemPhotonID);
                 var item = view != null ? view.GetComponent<Item>() : null;
-                if (CannotEatCooked(item, __instance)) return false;
                 if (!Mine(__instance) || !(__instance.data.passedOut || __instance.data.fullyPassedOut)) return true;
                 var feeder = item != null ? item.trueHolderCharacter : null;
                 if (feeder == null || feeder == __instance) return true;

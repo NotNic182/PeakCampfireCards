@@ -17,7 +17,7 @@ namespace CampfireCards.Core
 
     /// <summary>
     /// Folds active modifiers into one value per channel, always from scratch (no stat drift):
-    /// mul channels multiply, add channels add; normal cards are capped (stamina-cost reduction, max-stamina floor)
+    /// mul channels multiply, add channels add; normal cards are capped (a soft stamina-cost cap, max-stamina floor)
     /// before Mythic modifiers are applied, so Mythics can go past the caps; a 'set' override wins over everything.
     /// Unity-free so it can be unit tested.
     /// </summary>
@@ -75,7 +75,7 @@ namespace CampfireCards.Core
                 if (def.IsMul)
                 {
                     float normal = _normalMul[i];
-                    if (def.Cap == CapGroup.staminaCost) normal = Math.Max(normal, 1f - s.StaminaCostCap);
+                    if (def.Cap == CapGroup.staminaCost) normal = SoftCostCap(normal, 1f - s.StaminaCostCap);
                     v = normal * _mythicMul[i];
                 }
                 else
@@ -89,5 +89,16 @@ namespace CampfireCards.Core
         }
 
         public float this[Channel c] => _final[(int)c];
+
+        /// <summary>
+        /// Soft stamina-cost cap: above the floor (0.4 = 60% off by default) a cost multiplier is unchanged; past it, the
+        /// extra discount counts at half strength in log terms (floor x sqrt(product / floor)), so every further card
+        /// still lowers the cost a little and the cost never reaches zero. Example: 0.2 (80% off) becomes about 0.283.
+        /// </summary>
+        public static float SoftCostCap(float product, float floor)
+        {
+            if (floor <= 0f || product >= floor) return product;
+            return floor * (float)Math.Sqrt(Math.Max(0f, product) / floor);
+        }
     }
 }

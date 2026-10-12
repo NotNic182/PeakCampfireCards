@@ -161,12 +161,11 @@ namespace CampfireCards.Ui
                 sb.Append(UiKit.ColorTag(rarity)).Append("■ <b>").Append(def.Name).Append("</b></color>  ").Append(Meta)
                   .Append(UiKit.ColorTag(rarity)).Append("<cspace=0.08em><uppercase>").Append(Deck.RarityName(def.Rarity))
                   .Append("</uppercase></cspace></color></size>\n");
-                sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(Indent).Append("<b>").Append(Ui_CardEffects.GoodPrefix).Append("</b>")
+                // the card's own benefit and drawback text, unlabelled, as on the card face
+                sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(Indent)
                   .Append(CardPresentation.Text(def, def.Positive)).Append(EndIndent).Append("</color>\n");
-                if (string.IsNullOrEmpty(def.Negative))
-                    sb.Append(UiKit.ColorTag(Ui_CardFlavor.Color)).Append(Indent).Append(Ui_CardEffects.NoDrawback).Append(EndIndent).Append("</color>\n");
-                else
-                    sb.Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent).Append("<b>").Append(Ui_CardEffects.BadPrefix).Append("</b>")
+                if (!string.IsNullOrEmpty(def.Negative))
+                    sb.Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent)
                       .Append(CardPresentation.Text(def, def.Negative)).Append(EndIndent).Append("</color>\n");
                 AppendConditional(sb, def);
                 foreach (var a in abilities)
@@ -224,7 +223,7 @@ namespace CampfireCards.Ui
         /// <summary>Green when the value helps the scout, red when it hurts (stats.json better).</summary>
         private static Color GoodOrBad(StatLine l, float v) => BuildStats.Helps(v, l.IsMul, l.Words) ? Ui_CardEffects.GoodColor : Ui_CardEffects.BadColor;
 
-        /// <summary>The same + / - marker the cards use, so help and harm never rest on green and red alone.</summary>
+        /// <summary>A Benefit / Drawback marker on combined stat totals, so help and harm never rest on green and red alone.</summary>
         private static string Mark(StatLine l, float v) => BuildStats.Helps(v, l.IsMul, l.Words) ? Ui_CardEffects.GoodPrefix : Ui_CardEffects.BadPrefix;
 
         // ------------------------------------------------------------------ right: combined effects and auras

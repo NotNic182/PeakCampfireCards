@@ -14,6 +14,8 @@ namespace CampfireCards.Cards
     public static class LocalCards
     {
         private static readonly Dictionary<byte, Ability> _abilities = new Dictionary<byte, Ability>();
+        // A removed card stops ticking and cleans up its live effects, but its spent charges/cooldowns belong to the run.
+        private static readonly Dictionary<byte, Ability> _retired = new Dictionary<byte, Ability>();
         public static int Biome = -1;
         public static int RunSeed;
         public static int IncapEvent;
@@ -36,10 +38,20 @@ namespace CampfireCards.Cards
 
         public static void OnAcquired(CardDef def, bool live)
         {
-            if (_abilities.ContainsKey(def.Id)) return;
-            var a = AbilityRegistry.Create(def);
-            if (a == null) return;
-            _abilities[def.Id] = a;
+            Ability a;
+            if (_abilities.TryGetValue(def.Id, out a))
+            {
+                // The bonus deal belongs to each accepted pick, so its acquisition price must too. Reuse the
+                // ability rather than resetting any timers, and leave other cards' duplicate behaviour unchanged.
+                if (!live || !def.DrawsCards) return;
+            }
+            else
+            {
+                if (_retired.TryGetValue(def.Id, out a)) _retired.Remove(def.Id);
+                else a = AbilityRegistry.Create(def);
+                if (a == null) return;
+                _abilities[def.Id] = a;
+            }
             var me = Character.localCharacter;
             if (live && me != null)
             {
@@ -53,6 +65,7 @@ namespace CampfireCards.Cards
             Ability a;
             if (!_abilities.TryGetValue(def.Id, out a)) return;
             _abilities.Remove(def.Id);
+            _retired[def.Id] = a;
             var me = Character.localCharacter;
             try { if (me != null) a.OnRemoved(me); }
             catch (System.Exception e) { Plugin.Log.LogError($"{def.Name} OnRemoved: {e}"); }
@@ -66,6 +79,7 @@ namespace CampfireCards.Cards
                 try { if (me != null) a.OnRemoved(me); } catch { }
             }
             _abilities.Clear();
+            _retired.Clear();
             Biome = -1;
             IncapEvent = 0;
             _downHandled = false;

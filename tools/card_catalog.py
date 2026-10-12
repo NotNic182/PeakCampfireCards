@@ -20,7 +20,7 @@ FIELDS = ['id', 'key', 'rarity', 'category', 'enabled_by_default', 'name', 'bene
 TEXT_FIELDS = {'name': 'name', 'benefit': 'positive', 'drawback': 'negative', 'flavor': 'flavor'}
 NOTES = {
     'PackRat': 'Now halves total weight and blocks new items in the third pocket; existing items remain retrievable. Enabled by default on a fresh config; previous Enabled=false is preserved.',
-    'DoubleDeal': 'Two bonus cards and one permanent random penalty. The selected penalty is shown in Current Build and retained in state sync.',
+    'DoubleDeal': 'Two bonus cards and one permanent random penalty. The penalty stays if the card is sacrificed to Fine Print; picking the card again rolls another. Shown in Current Build and retained in state sync.',
     'SporeLungs': 'Requested Mandrake/Zombie immunity plus next-biome zombie spawn is pending. The existing spores resistance remains; see docs/card-edit-review.md.',
     'BonePlating': 'Native timed Infinite Stamina, Invincibility or Low Gravity. Low Gravity is floating, not free flight. Ghost time pauses the ten-minute clock.',
     'SecondWind': 'Manual V; below 20 stamina, restore 25, five-minute cooldown. Key configurable.',
@@ -32,7 +32,10 @@ NOTES = {
     'CleansingRitual': 'Medical items only (not ordinary food).',
     'ScavengersInstinct': 'Screen labels through terrain, not object outlines.',
     'HerosArrival': 'Book of Bones / Scout Effigy revives are not detected for this reward.',
-    'Thornbreaker': 'New thorns only; one remaining thorn is rounded up and is not removed.',
+    'Thornbreaker': 'New thorns only; rounded to the nearest whole thorn, so one thorn stays one and two become one.',
+    'HalfTank': 'Changed in 0.6.2: the old cooked-food ban blocked Cook It, Keep It and Cooking Badge Deluxe; cooked food now removes 25% less Hunger instead.',
+    'RescueHarness': 'Fixed in 0.6.2: the death-timer drawback now runs (it never triggered before).',
+    'PhoenixClause': "Judges the whole fall, including Piton Payment Plan's delayed share, and cancels all of it.",
     'EternalCampfire': 'The revive is for a nearby passed-out scout; host migration does not preserve used revive charges.',
 }
 
@@ -68,10 +71,10 @@ def write_workbook(rows, path):
     guide = wb.active; guide.title = 'Read me'
     instructions = [
         ('Campfire Cards — edit and send back', f'PEAK target: 2.6.b. Source: design/cards.json, mod {VERSION}. All 64 cards are included. See card-edit-review.xlsx for your submitted requests and their implementation status.'),
-        ('Edit the blue columns on Cards', 'Name, Benefit, Drawback, Flavor, Requested effects. Existing text is copied exactly from the mod.'),
+        ('Edit the blue columns on Cards', 'Name, Benefit, Drawback, Flavor, Requested effects. Existing text is copied exactly from the mod. In game, a card shows its Benefit and Drawback exactly as written: benefit in green, drawback in red, no labels.'),
         ('Changing gameplay', 'Write mechanics in plain English in Requested effects, including numbers, trigger, duration, and drawback. Text edits alone do not change gameplay.'),
         ('Keep these unchanged', 'ID and Key identify the card for reimport. Rarity, Category and Enabled by default are reference fields.'),
-        ('No drawback', 'Leave Drawback blank; the game shows its standard no-drawback message.'),
+        ('No drawback', 'Leave Drawback blank; the card then shows only its benefit.'),
         ('Ability key placeholder', 'Keep {key} in manual card text: the game replaces it with your configured binding. Defaults: Nic of Time V, Discount Cure-All K, Bootleg Scoutmaster Bugle B, Budget Checkpoint Flag N.'),
         ('Your own images', 'Save <Key>.png in art/cards beside CampfireCards.dll. See card-image-map.csv and docs/card-images.md. Restart PEAK after changing images.'),
         ('Current implementation', 'Notes flag known limitations. Current code shows the actual modifiers, ability handler and parameters. Existing Enabled settings are preserved during upgrade.'),

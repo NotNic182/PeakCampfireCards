@@ -30,13 +30,25 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
 - There are two Mythics. They have no drawback, can go past the normal limits, and each can be owned by only one
   player per run.
 - Percentage effects stack by multiplying. Flat maximum-stamina changes add up.
-- Normal cards together can cut a stamina cost by at most 60%, and cannot pull maximum stamina below 50.
+- Stamina-cost discounts from normal cards have a soft cap at 60%: past it, extra discounts still help but at reduced
+  strength (a stack worth 80% off gives about 72%). Normal cards cannot pull maximum stamina below 50.
 - Team cards (marked "team" below) only appear when you play with others.
 - Cards survive being revived. Everything resets when the run ends.
+- Fine Print is the explicit exception to permanent ownership: it can sacrifice an earlier non-Mythic card.
+  Sacrifice does not refresh that card's run/biome charges or cooldowns, or erase Clown's permanent penalties.
+- Offers remain random by rarity. Earlier card choices do not introduce compatibility exclusions; counteracting
+  modifiers, conditional effects and balance-breaking Mythics are intentional parts of stacking.
 - Ghosts are not dealt cards. Campfire eligibility is captured when the fire is lit, so being revived afterward
   does not grant a card from that same fire. A living scout who dies before choosing is skipped without receiving
   an automatic card; the other scouts can finish their choices.
 - Card-draw cards (Clown Luggage Special, Scout's Dishonor) give their bonus cards right away. Bonus cards are never card-draw cards.
+- Clown Luggage Special's random penalty is permanent: sacrificing the card to Fine Print keeps it, and picking the card
+  again later rolls a second penalty.
+- BingBong Parachute judges a fall by all the Injury it will cost, including the part Piton Payment Plan bills later,
+  and cancels all of it.
+- Lighter-load cards scale only positive item weight; a Balloon Bunch's lift is never reduced.
+- Version 0.6.3 fixes interaction and ability-state handling without changing card numbers or rarity weights.
+  See [the interaction fixes and playtest checks](docs/card-interactions.md).
 
 ## Controls
 
@@ -105,7 +117,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Just hot. | Common | Cold builds 50% slower. | Heat builds 30% faster. |
 | Antidote Enthusiast | Uncommon | Poison builds 35% slower. | Heat and Cold build 25% faster. |
 | ROOTS Survivor | Uncommon | Spores build 35% slower. | No drawback |
-| Cactus? What Cactus? | Common | New Thorns add 40% less status, rounded up to whole thorns. | Removing Thorns takes twice as long. |
+| Cactus? What Cactus? | Common | New Thorns add 40% less status, rounded to the nearest whole thorn. | Removing Thorns takes twice as long. |
 | Aloe | Uncommon | Heat wears off 60% faster. | Heat builds 15% faster. |
 | Heat Pack | Uncommon | Cold wears off 60% faster. | Cold builds 15% faster. |
 | Fartberry Fitness | Rare | Above 20 Poison, climbing uses 40% less stamina. | Poison wears off 30% slower. |
@@ -154,7 +166,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Meditation | Uncommon | Crouch and stay still to recover stamina 35% faster. | No drawback |
 | I'm getting Scoutmastered | Uncommon | Sprint 25% faster. | Lose 12.5 maximum stamina. |
 | Endurance Badge | Rare | Climb for 3s straight: climbing uses 35% less stamina for the next 1s. | No drawback |
-| Marshmallow Morale | Common | Each new campfire clears your Hunger. | You cannot eat cooked food, including food fed to you. |
+| Marshmallow Morale | Common | Each new campfire clears your Hunger. | Cooked food removes 25% less Hunger. |
 
 ### Survival
 
@@ -220,7 +232,7 @@ A campfire lit while a pick is still running gets its own pick right after it. L
     use 30 seconds, set it after that first launch. Sacrifice choices follow the same host timer.
   - `PickMode`: `Simultaneous` (default) or `Turns`. The host's choice applies to everyone.
 - `Keys`: `SecondWind` (V), `EmergencyPurge` (K), `BloodBattery` (B), `SafetyNet` (N), `BuildScreen` (J).
-- `Cards`: `OfferCount`, `AllowDuplicates`, `MythicsEnabled`, `StaminaCostReductionCapPercent` (60), `MaxStaminaFloor` (50).
+- `Cards`: `OfferCount`, `AllowDuplicates`, `MythicsEnabled`, `StaminaCostReductionCapPercent` (60, a soft cap), `MaxStaminaFloor` (50).
 - `Rarity Weights`: one weight per rarity.
 - `Card - <Key>`: `Enabled`, every modifier value, and every parameter (thresholds, amounts, cooldowns, radii).
   Statuses and stamina use the game's units, where 0.1 is 10.
@@ -245,10 +257,12 @@ A campfire lit while a pick is still running gets its own pick right after it. L
 - Continuing a quicksaved run starts with no cards.
 - Revives from the Book of Bones and the Scout Effigy do not count for Otto-Matic Clutch.
 - Cactus? What Cactus? cuts thorns as they stick to you; thorns already in you when you get the card, or when you leave
-  the Eternal Campfire's aura, keep their value. PEAK counts Thorns in steps of one thorn, so an odd thorn is
-  rounded up: one thorn alone is never removed.
+  the Eternal Campfire's aura, keep their value. PEAK counts Thorns in steps of one thorn, so the result is rounded
+  to the nearest whole thorn: one thorn alone stays one thorn, two become one.
 - If the host leaves during a run, the new host does not know which Eternal Campfire revives were already used
   this biome (waiting campfire picks carry over to the new host).
+- An ordinary state sync preserves existing local ability state. A fresh client reconnect does not yet restore
+  instance-held charges, cooldowns, anchors or queued Injury from the earlier client session.
 
 ## Building from source
 Requirements: .NET SDK 8 or newer, Python 3, and PEAK with BepInEx installed (the project references PEAK's own

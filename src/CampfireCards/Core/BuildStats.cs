@@ -19,9 +19,10 @@ namespace CampfireCards.Core
         /// <summary>Weight of the item in hand (Hooks.OnUpdateWeight): carried-item weight times held-item weight.</summary>
         public static float HeldItemWeight(ModResult r) => r[Channel.itemWeight] * r[Channel.heldItemWeight];
 
-        public static float CarriedWeight(ModResult r, float carried, float held, float backpackContents, float scout, float stuck) =>
+        /// <summary>Weight units: positive burdens are scaled by the cards; negative-weight lift is added unscaled.</summary>
+        public static float CarriedWeight(ModResult r, float carried, float held, float backpackContents, float scout, float stuck, float lift = 0f) =>
             (r[Channel.itemWeight] * (carried + held * r[Channel.heldItemWeight] + backpackContents * r[Channel.backpackItemWeight])
-                + scout * r[Channel.carryScoutWeight] + stuck) * r[Channel.totalWeight];
+                + scout * r[Channel.carryScoutWeight] + stuck) * r[Channel.totalWeight] + Math.Min(0f, lift);
         public static float StaminaCost(ModResult r, bool climbing) => r[Channel.staminaUsage] * (climbing ? r[Channel.climbStamina] : 1f);
         public static float FoodNutrition(ModResult r, bool cooked) =>
             r[Channel.foodHunger] * (cooked ? r[Channel.cookedFoodHunger] : r[Channel.uncookedFoodHunger]);

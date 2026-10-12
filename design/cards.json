@@ -737,11 +737,19 @@
       "category": "stamina",
       "type": "Campfire-triggered passive",
       "positive": "Each new campfire clears your Hunger.",
-      "negative": "You cannot eat cooked food, including food fed to you.",
+      "negative": "Cooked food removes 25% less Hunger.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [],
+      "mods": [
+        [
+          "cookedFoodHunger",
+          "mul",
+          0.75,
+          "always",
+          "self"
+        ]
+      ],
       "ability": "CampfireMeal",
       "params": {},
       "theme": "pine",
@@ -886,7 +894,7 @@
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "New Thorns add 40% less status, rounded up to whole thorns.",
+      "positive": "New Thorns add 40% less status, rounded to the nearest whole thorn.",
       "negative": "Removing Thorns takes twice as long.",
       "flavor": "",
       "multiplayerOnly": false,

@@ -15,7 +15,7 @@ namespace CampfireCards.Core
         public bool MythicsEnabled = true;
         /// <summary>false (default) = a player can never own the same card twice in a run.</summary>
         public bool AllowDuplicates;
-        /// <summary>Normal cards combined can reduce a stamina cost by at most this much (0.6 = 60%).</summary>
+        /// <summary>Soft cap: past this combined stamina-cost reduction (0.6 = 60%), further discounts count at reduced strength.</summary>
         public float StaminaCostCap = 0.6f;
         /// <summary>Normal cards combined cannot pull maximum stamina below this (0.5 = 50).</summary>
         public float MaxStaminaFloor = 0.5f;

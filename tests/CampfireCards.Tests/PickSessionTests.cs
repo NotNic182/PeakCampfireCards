@@ -27,6 +27,7 @@ namespace CampfireCards.Tests
         public PickSessionTests()
         {
             PickSession.Reset();
+            LocalCards.Reset(); Effects.Penalties.Reset(); Deck.BonusCards = new byte[0];
             PlayerHandler.Characters.Clear(); Effects.Owned.Clear(); Effects.PickFlags.Clear();
             NetSend.Sent.Clear(); NetSend.IsHost = true; NetSend.LocalActor = 1; NetSend.Deliver = true;
             PhotonNetwork.CurrentRoom = new Photon.Realtime.Room(); PhotonNetwork.Time = 0;

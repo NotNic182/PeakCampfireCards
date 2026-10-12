@@ -86,12 +86,14 @@ namespace CampfireCards.Core
                 penalty = true;
                 _lastPenalty = now;
             }
-            Active = false;
-            _sprinted = 0f;
+            ClearMotion();
             return penalty;
         }
 
-        public void Reset() { _sprinted = 0f; Active = false; _lastPenalty = float.NegativeInfinity; }
+        /// <summary>Discard the current sprint buildup/boost while preserving the absolute crash cooldown.</summary>
+        public void ClearMotion() { _sprinted = 0f; Active = false; }
+
+        public void Reset() { ClearMotion(); _lastPenalty = float.NegativeInfinity; }
     }
 
     /// <summary>
@@ -126,33 +128,51 @@ namespace CampfireCards.Core
     /// </summary>
     public sealed class DelayedInjuryQueue
     {
-        private struct Entry { public float Due; public float Amount; }
+        private struct Entry
+        {
+            public float Due, Amount;
+            public bool IgnoreInvincibility, IgnoreSkeleton;
+        }
         private readonly List<Entry> _entries = new List<Entry>();
         public float DeferShare = 0.75f, Delay = 20f, Keep = 0.70f;
 
         public int Pending => _entries.Count;
 
         /// <returns>the Injury to apply right now.</returns>
-        public float Add(float fallInjury, float now)
+        public float Add(float fallInjury, float now, bool ignoreInvincibility = false, bool ignoreSkeleton = false)
         {
             float deferred = fallInjury * DeferShare;
-            _entries.Add(new Entry { Due = now + Delay, Amount = deferred * Keep });
+            _entries.Add(new Entry
+            {
+                Due = now + Delay, Amount = deferred * Keep,
+                IgnoreInvincibility = ignoreInvincibility, IgnoreSkeleton = ignoreSkeleton
+            });
             return fallInjury - deferred;
         }
 
-        /// <returns>the total delayed Injury due at this time.</returns>
-        public float Tick(float now)
+        /// <returns>the Injury a fall costs in total: the part applied now plus the reduced share billed later.</returns>
+        public float TotalOf(float fallInjury) => fallInjury * (1f - DeferShare + DeferShare * Keep);
+
+        /// <summary>Debt keeps its original deadline while the scout is dead and lands on the first living tick.</summary>
+        /// <returns>the total delayed Injury due at this time, or zero without consuming debt when it cannot be applied.</returns>
+        public float Tick(float now, bool canApply = true)
         {
             float due = 0f;
-            for (int i = _entries.Count - 1; i >= 0; i--)
-            {
-                if (_entries[i].Due <= now)
-                {
-                    due += _entries[i].Amount;
-                    _entries.RemoveAt(i);
-                }
-            }
+            CollectDue(now, canApply, (amount, ignoreInvincibility, ignoreSkeleton) => due += amount);
             return due;
+        }
+
+        /// <summary>Replay each due payment in original fall order, retaining its native immunity exemptions.</summary>
+        public void CollectDue(float now, bool canApply, Action<float, bool, bool> apply)
+        {
+            if (!canApply) return;
+            for (int i = 0; i < _entries.Count;)
+            {
+                var entry = _entries[i];
+                if (entry.Due > now) { i++; continue; }
+                _entries.RemoveAt(i);
+                apply(entry.Amount, entry.IgnoreInvincibility, entry.IgnoreSkeleton);
+            }
         }
 
         public void Clear() => _entries.Clear();
