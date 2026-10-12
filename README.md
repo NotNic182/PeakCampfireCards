@@ -112,7 +112,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Bing BOING | Rare | Jump again in mid-air for a double jump. Cooldown: 15s. | Each double jump adds 7.5 Drowsy. |
 | Energy Drink Overdose | Uncommon | Climb 30% faster. | Climbing uses 20% more stamina. |
 | Tenderfoot Insurance | Uncommon | Take 25% less fall Injury. | Dynamite deals 3 times as much Injury. |
-| Daddy | Common | Grab walls from 20% farther away. | All stamina costs are 10% higher. |
+| Daddy | Common | Grab walls from 40% farther away. | All stamina costs are 10% higher. |
 
 ### Environment
 

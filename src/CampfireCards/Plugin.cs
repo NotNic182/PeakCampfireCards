@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.6.5";
+        public const string Version = "0.6.6";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -110,9 +110,9 @@ namespace CampfireCards
         /// <summary>
         /// The card balance this build ships. A config written for an older balance gets every card's numbers (modifier
         /// values and parameters) reset to the new defaults once; Enabled choices and every other setting are kept.
-        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min).
+        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min), 6 = 0.6.6 (Daddy reach x1.4).
         /// </summary>
-        public const int CardBalanceVersion = 5;
+        public const int CardBalanceVersion = 6;
 
         public static CardSettings LoadSettings(ConfigFile cfg)
         {

@@ -494,7 +494,7 @@
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Grab walls from 20% farther away.",
+      "positive": "Grab walls from 40% farther away.",
       "negative": "All stamina costs are 10% higher.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -503,7 +503,7 @@
         [
           "grabReach",
           "mul",
-          1.2,
+          1.4,
           "always",
           "self"
         ],

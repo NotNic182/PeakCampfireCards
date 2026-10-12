@@ -646,7 +646,7 @@ namespace CampfireCards.Tests
             var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
             Assert.Equal("You get cold 50% slower", BuildStats.Say(lines["Cold build-up"], lines["Cold build-up"].Now));
             Assert.Equal("You heat up 30% faster", BuildStats.Say(lines["Heat build-up"], lines["Heat build-up"].Now));
-            Assert.Equal("Grab walls from 20% farther away", BuildStats.Say(lines["Wall-grab reach"], lines["Wall-grab reach"].Now));
+            Assert.Equal("Grab walls from 40% farther away", BuildStats.Say(lines["Wall-grab reach"], lines["Wall-grab reach"].Now));
             Assert.Equal("Your stamina bar is 10 longer", BuildStats.Say(lines["Max stamina"], lines["Max stamina"].Now));
             Assert.Equal("Stamina starts coming back 0.3 seconds sooner", BuildStats.Say(lines["Stamina regen delay"], lines["Stamina regen delay"].Now));
             Assert.Equal("Falls hurt 40% more", BuildStats.Say(lines["Fall Injury received"], lines["Fall Injury received"].Now));
