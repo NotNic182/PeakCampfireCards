@@ -15,7 +15,8 @@ namespace CampfireCards.Core
     /// </summary>
     public sealed class SettingsFingerprint
     {
-        public static readonly string[] RuleNames = { "offer count", "duplicate cards", "Mythics enabled", "stamina-cost reduction cap", "max-stamina floor" };
+        public static readonly string[] RuleNames = { "offer count", "duplicate cards", "Mythics enabled", "stamina-cost reduction cap", "max-stamina floor",
+            "card strength on Tenderfoot-Peak", "card strength on Ascent 1-3", "card strength on Ascent 4-6", "card strength on Ascent 7-8" };
 
         public int[] Rules;
         public int[] Weights;
@@ -25,11 +26,14 @@ namespace CampfireCards.Core
 
         public static int Q(float v) => (int)Math.Round((double)v * 10000.0);
 
+        private static float Tier(CardSettings s, int i) => s.DifficultyStrength != null && i < s.DifficultyStrength.Length ? s.DifficultyStrength[i] : 1f;
+
         public static SettingsFingerprint Of(CardSettings s)
         {
             var f = new SettingsFingerprint
             {
-                Rules = new[] { s.OfferCount, s.AllowDuplicates ? 1 : 0, s.MythicsEnabled ? 1 : 0, Q(s.StaminaCostCap), Q(s.MaxStaminaFloor) },
+                Rules = new[] { s.OfferCount, s.AllowDuplicates ? 1 : 0, s.MythicsEnabled ? 1 : 0, Q(s.StaminaCostCap), Q(s.MaxStaminaFloor),
+                    Q(Tier(s, 0)), Q(Tier(s, 1)), Q(Tier(s, 2)), Q(Tier(s, 3)) },
                 Weights = s.RarityWeights.Select(Q).ToArray(),
                 Cards = new int[CardTable.Cards.Length]
             };
@@ -55,13 +59,13 @@ namespace CampfireCards.Core
                 foreach (var ch in def.Key) h = Mix(h, ch);
                 h = Mix(h, s.IsEnabled(def) ? 1 : 0);
                 h = Mix(h, (int)def.Rarity);
-                for (int m = 0; m < def.Mods.Length; m++) h = Mix(h, Q(s.ModValue(def, m)));
+                for (int m = 0; m < def.Mods.Length; m++) h = Mix(h, Q(s.RawModValue(def, m)));
                 int idx = s.IndexOf(def.Id);
                 var names = idx >= 0 ? s.Params[idx].Keys.OrderBy(k => k, StringComparer.Ordinal) : Enumerable.Empty<string>();
                 foreach (var name in names)
                 {
                     foreach (var ch in name) h = Mix(h, ch);
-                    h = Mix(h, Q(s.Param(def, name)));
+                    h = Mix(h, Q(s.RawParam(def, name)));
                 }
                 return h;
             }

@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.6.6";
+        public const string Version = "0.6.8";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -94,7 +94,7 @@ namespace CampfireCards
             VerboseLog = Config.Bind("Debug", "VerboseLog", false, "Log every card event.");
             DevKeys = Config.Bind("Debug", "DevKeys", false,
                 "Testing keys: F9 lights the current campfire, F10 warps you next to it, F11 shows a sample offer, F8 (host) grants the cards listed in GrantCard, F7 logs the active card effects.");
-            DevGrantCard = Config.Bind("Debug", "GrantCard", "", "Card keys granted by F8 with DevKeys on, comma separated (for example GeckoGrip, BloodBattery). Re-read on every press.");
+            DevGrantCard = Config.Bind("Debug", "GrantCard", "", "Cards the host grants with F8 (DevKeys on), by card key, comma separated: \"GeckoGrip, BloodBattery\" gives them to the host. Add \"; PlayerName: Key, Key\" (in-game name or player number) to give another player cards, e.g. after a rejoin. Re-read on every press.");
 
             CardSettings.Current = LoadSettings(Config);
 
@@ -129,6 +129,11 @@ namespace CampfireCards
                 "Soft cap: once normal cards together lower a stamina cost by this many percent, further discounts count at reduced strength (80% off becomes about 72%). Mythics ignore the cap.").Value / 100f);
             s.MaxStaminaFloor = Mathf.Clamp01(cfg.Bind("Cards", "MaxStaminaFloor", 50f,
                 "Normal cards combined cannot pull maximum stamina below this (100 = a full bar).").Value / 100f);
+
+            string[] tierKeys = { "CardStrengthTenderfootPeakPercent", "CardStrengthAscent1to3Percent", "CardStrengthAscent4to6Percent", "CardStrengthAscent7to8Percent" };
+            for (int t = 0; t < tierKeys.Length && t < s.DifficultyStrength.Length; t++)
+                s.DifficultyStrength[t] = Mathf.Clamp(Current(cfg.Bind("Cards", tierKeys[t], CardTable.DifficultyStrength[t] * 100f,
+                    "How strong card benefits are on " + DifficultyScale.TierNames[t] + ", in percent (100 = as the cards say). Drawbacks and Mythics are never scaled."), resetCards), 5f, 150f) / 100f;
 
             var names = Enum.GetNames(typeof(CardRarity));
             for (int r = 0; r < names.Length && r < s.RarityWeights.Length; r++)

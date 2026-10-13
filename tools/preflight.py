@@ -139,6 +139,11 @@ def main():
             problem('cards: rarityWeights has no %s' % k)
         if k not in cards['rarityColors'] or len(cards['rarityColors'][k]) != 4:
             problem('cards: rarityColors %s must be [r,g,b,a]' % k)
+    tiers = cards.get('difficultyStrength', {})
+    for k in ('tenderfootPeak', 'ascent1to3', 'ascent4to6', 'ascent7to8'):
+        v = tiers.get(k)
+        if not isinstance(v, (int, float)) or not (0.05 <= v <= 1.5):
+            problem('cards: difficultyStrength.%s must be a number from 0.05 to 1.5 (got %r)' % (k, v))
     if not (1 <= cards['offerCount'] <= 5):
         problem('cards: offerCount %s unreasonable' % cards['offerCount'])
     for tid, th in cards['themes'].items():

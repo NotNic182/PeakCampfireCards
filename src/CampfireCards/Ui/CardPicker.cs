@@ -536,9 +536,12 @@ namespace CampfireCards.Ui
         public static string EffectText(CardDef def)
         {
             var sb = new StringBuilder();
-            sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(CardPresentation.Text(def, def.Positive)).Append("</color>");
+            // the benefit's numbers are the ones this difficulty uses (Core.DifficultyScale); the drawback is never scaled
+            sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(CardPresentation.Benefit(def, out string note)).Append("</color>");
             if (!string.IsNullOrEmpty(def.Negative))
                 sb.Append('\n').Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(CardPresentation.Text(def, def.Negative)).Append("</color>");
+            if (note != null)
+                sb.Append('\n').Append("<size=80%>").Append(UiKit.ColorTag(UiPalette.Faint)).Append(note).Append("</color></size>");
             return sb.ToString();
         }
 

@@ -201,10 +201,12 @@ namespace CampfireCards.Ui
               .Append(UiKit.ColorTag(rarity)).Append("<cspace=0.08em><uppercase>").Append(Deck.RarityName(def.Rarity))
               .Append("</uppercase></cspace></color></size>\n");
             sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(Indent)
-              .Append(CardPresentation.Text(def, def.Positive)).Append(EndIndent).Append("</color>\n");
+              .Append(CardPresentation.Benefit(def, out string note)).Append(EndIndent).Append("</color>\n");
             if (!string.IsNullOrEmpty(def.Negative))
                 sb.Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent)
                   .Append(CardPresentation.Text(def, def.Negative)).Append(EndIndent).Append("</color>\n");
+            if (note != null)
+                sb.Append(Detail).Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor)).Append(Indent).Append(note).Append(EndIndent).Append("</color></size>\n");
         }
 
         // ------------------------------------------------------------------ Team view: the other players' cards
@@ -320,6 +322,12 @@ namespace CampfireCards.Ui
         {
             var sb = new StringBuilder();
             AppendHeader(sb, Ui_BuildScreen.StatsHeader);
+            // which difficulty tier the numbers are for (Core.DifficultyScale)
+            float strength = CardSettings.Current.BenefitStrength;
+            string tier = CardPresentation.TierName();
+            sb.Append(Meta).Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor))
+              .Append(strength < 0.9999f ? string.Format(Ui_BuildScreen.StrengthLine, (strength * 100f).ToString("0"), tier) : string.Format(Ui_BuildScreen.FullStrengthLine, tier))
+              .Append("</color></size>\n");
             Effects.FoldAlways(_always);
             var lines = BuildStats.Lines(Effects.Local, _always);
             if (lines.Count == 0) sb.Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor)).Append(Ui_BuildScreen.NothingNow).Append("</color>\n");

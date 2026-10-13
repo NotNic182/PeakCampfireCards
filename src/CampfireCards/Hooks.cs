@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ExitGames.Client.Photon;
 using CampfireCards.Abilities;
 using CampfireCards.Cards;
+using CampfireCards.Core;
 using CampfireCards.Generated;
 using CampfireCards.Net;
 using CampfireCards.Ui;
@@ -226,6 +227,8 @@ namespace CampfireCards
             // contexts are set and cleared inside game methods; nothing legitimately spans frames
             _fallDepth = 0; _climbDepth = 0; _climbCtx = null;
             _itemActionDepth = 0; _itemScaled = false;
+            // card benefits scale with the run's difficulty (the game syncs the Ascent to every player)
+            CardSettings.Current.BenefitStrength = RunState.OnIsland ? CardSettings.Current.StrengthFor(Ascents.currentAscent) : 1f;
 
             if (!RunState.OnIsland) return;
             var local = Character.localCharacter;
@@ -333,6 +336,19 @@ namespace CampfireCards
         }
 
         // ------------------------------------------------------------------ dev keys
+        /// <summary>A player in the room by in-game name (case-insensitive) or player number; int.MinValue when none.</summary>
+        private static int DevFindPlayer(string who)
+        {
+            int number;
+            var players = PhotonNetwork.PlayerList;
+            if (players == null) return int.MinValue;
+            if (int.TryParse(who, out number))
+                foreach (var p in players) if (p != null && p.ActorNumber == number) return number;
+            foreach (var p in players)
+                if (p != null && string.Equals(NetSend.NameOf(p.ActorNumber).Trim(), who, StringComparison.OrdinalIgnoreCase)) return p.ActorNumber;
+            return int.MinValue;
+        }
+
         /// <summary>Testing keys (config Debug.DevKeys): F9 light the current campfire, F10 warp next to it, F11 sample offer, F8 grant a card.</summary>
         private static void DevKeys(Character local)
         {
@@ -366,17 +382,29 @@ namespace CampfireCards
             {
                 // re-read the file so GrantCard can be edited while the game runs
                 try { Plugin.Instance.Config.Reload(); } catch (Exception e) { Plugin.Log.LogWarning("Config reload: " + e.Message); }
-                var wanted = (Plugin.DevGrantCard?.Value ?? "").Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                var ids = new List<byte>();
-                foreach (var key in wanted)
+                // "Key, Key" grants the host; "; Name: Key, Key" grants another player by in-game name (or player number),
+                // so a host can give everyone back their cards after a rejoin or a continued save
+                foreach (var entry in (Plugin.DevGrantCard?.Value ?? "").Split(';'))
                 {
-                    var def = Array.Find(CardTable.Cards, c => string.Equals(c.Key, key, StringComparison.OrdinalIgnoreCase));
-                    if (def != null) ids.Add(def.Id); else Plugin.Log.LogWarning("DevKeys: no card " + key);
-                }
-                if (ids.Count > 0)
-                {
-                    Plugin.Log.LogInfo("DevKeys: granting " + string.Join(", ", ids.ConvertAll(Deck.NameOf)));
-                    NetSend.Raise(new CardsGranted { sessionId = PickSession.SessionId, actor = NetSend.LocalActor, cards = ids.ToArray(), reason = 9 }, Photon.Realtime.ReceiverGroup.All);
+                    string list = entry;
+                    int actor = NetSend.LocalActor;
+                    int colon = entry.IndexOf(':');
+                    if (colon > 0)
+                    {
+                        string who = entry.Substring(0, colon).Trim();
+                        list = entry.Substring(colon + 1);
+                        actor = DevFindPlayer(who);
+                        if (actor == int.MinValue) { Plugin.Log.LogWarning("DevKeys: no player named " + who); Ui.Hud.Toast("GrantCard: no player named " + who); continue; }
+                    }
+                    var ids = new List<byte>();
+                    foreach (var key in list.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        var def = Array.Find(CardTable.Cards, c => string.Equals(c.Key, key, StringComparison.OrdinalIgnoreCase));
+                        if (def != null) ids.Add(def.Id); else { Plugin.Log.LogWarning("DevKeys: no card " + key); Ui.Hud.Toast("GrantCard: no card " + key); }
+                    }
+                    if (ids.Count == 0) continue;
+                    Plugin.Log.LogInfo("DevKeys: granting " + NetSend.NameOf(actor) + " " + string.Join(", ", ids.ConvertAll(Deck.NameOf)));
+                    NetSend.Raise(new CardsGranted { sessionId = PickSession.SessionId, actor = actor, cards = ids.ToArray(), reason = 9 }, Photon.Realtime.ReceiverGroup.All);
                 }
             }
             if (kb.f7Key.wasPressedThisFrame) DumpEffects(local);

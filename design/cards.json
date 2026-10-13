@@ -33,6 +33,12 @@
     "legendary": 3.0,
     "mythic": 0.5
   },
+  "difficultyStrength": {
+    "tenderfootPeak": 0.6,
+    "ascent1to3": 0.75,
+    "ascent4to6": 0.9,
+    "ascent7to8": 1.0
+  },
   "rarityColors": {
     "common": [
       0.62,

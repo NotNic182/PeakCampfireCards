@@ -294,7 +294,7 @@
         150
       ],
       "anchor": "top, Gap below the card name as laid out; down to Gap above the flavour line, or BottomPad above the card's bottom edge",
-      "visual": "the benefit text in green, then the drawback text in red, exactly as written in cards.json, with no labels; a blank drawback shows only the benefit",
+      "visual": "the benefit text in green, then the drawback text in red, exactly as written in cards.json, with no labels; a blank drawback shows only the benefit; below Ascent 7, numbers in the benefit are the ones this difficulty uses (Core.DifficultyScale), and a card whose benefit has no number to rewrite gets a faint 'Benefits at N% on <tier>' line",
       "text": "{positive}\n{negative}",
       "consts": {
         "FontSize": 20,
@@ -305,7 +305,8 @@
         "BadPrefix": "Drawback: ",
         "LineHeight": 1.15,
         "Gap": 10,
-        "BottomPad": 14
+        "BottomPad": 14,
+        "StrengthNote": "Benefits at {0}% on {1}."
       },
       "behaviour": "auto-size between MinFontSize and FontSize inside the room the name and flavour leave; manual key placeholders in the card text show the live binding (CardPresentation)",
       "soundOn": "none"
@@ -547,7 +548,9 @@
         "CardCountMany": "{0} cards",
         "Ghost": "ghost",
         "Down": "passed out",
-        "PenaltyLabel": "Clown Luggage penalty: "
+        "PenaltyLabel": "Clown Luggage penalty: ",
+        "StrengthLine": "{1}: card benefits at {0}% (drawbacks and Mythics at full strength).",
+        "FullStrengthLine": "{0}: cards at full strength."
       },
       "behaviour": "toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; text that does not fit is split into pages at FontSize (no shrinking), the key steps through the pages, then (with teammates) through the Team view's pages, and closes after the last; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI",
       "soundOn": "none"

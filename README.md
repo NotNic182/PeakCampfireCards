@@ -30,6 +30,10 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
 - There are two Mythics. They have no drawback, can go past the normal limits, and each can be owned by only one
   player per run.
 - Percentage effects stack by multiplying. Flat maximum-stamina changes add up.
+- Cards are balanced for Ascent 7–8. On easier difficulties every benefit shrinks: 60% on Tenderfoot and Peak, 75% on
+  Ascent 1–3, 90% on Ascent 4–6 (cards.json difficultyStrength, the card sheet's Difficulty tab, or the CardStrength
+  config entries). The card text shows the number for your difficulty. Drawbacks and Mythics stay at full strength.
+  When a card's numbers multiply into one benefit (amount x cooldown), the strength is shared between them.
 - Stamina-cost discounts from normal cards have a soft cap at 60%: past it, extra discounts still help but at reduced
   strength (a stack worth 80% off gives about 72%). Normal cards cannot pull maximum stamina below 50.
 - Team cards (marked "team" below) only appear when you play with others.
@@ -293,24 +297,19 @@ The output is `build/CampfireCards-<version>.zip`.
 
 ## Editing the deck
 
-Open [the card workbook](design/editable/card-editing.xlsx) and edit the blue columns on **Cards**: Name, Benefit,
-Drawback, Flavor and Requested effects. All 64 cards are included, with current numbers and handlers on the
-**Current code** tab. The **New ideas** tab is for new concepts. Keep ID and Key unchanged, then send the saved
-workbook back to have the changes implemented. A [CSV copy](design/editable/card-editing.csv) is also available.
-
-Changing a description alone does not change an effect. Describe gameplay changes in Requested effects with
-the trigger, amount, duration and drawback. [Effect feasibility](docs/effect-feasibility.md) explains what is
-already supported, where new hooks are needed, and what still requires a PEAK 2.6.b playtest.
-
-To regenerate the editable files or make a text-only review copy:
+Open [the card sheet](design/editable/card-sheet.xlsx) and edit the blue cells. The **Cards** tab has each card's
+name, rarity, benefit, drawback and flavor exactly as shown in game; the **Numbers** tab has every number in plain
+units (+40 = 40% more, seconds, stamina points). Keep the **#** column as it is, then send the saved workbook back.
 
 ```bash
-python tools/card_catalog.py export --xlsx   # XLSX requires openpyxl; omit --xlsx for CSV only
-python tools/card_catalog.py import-text design/editable/card-editing.xlsx --output build/cards-reviewed.json
+python tools/card_sheet.py export                      # regenerate the sheet from design/cards.json
+python tools/card_sheet.py apply edited.xlsx --check   # show what an edited sheet would change
+python tools/card_sheet.py apply edited.xlsx           # write it into design/cards.json, then tools/build.sh
 ```
 
-The import writes a separate review copy, keeps mechanics unchanged, and reports gameplay requests for
-implementation. Run `python -m unittest discover -s tests -p 'test_*.py'` to check the catalog round trip.
+Applying validates every value first, warns when a card's text still shows a number that was changed, and raises the
+card balance version when a number changes. [Effect feasibility](docs/effect-feasibility.md) explains what is supported
+beyond tweaks. Run `python -m unittest discover -s tests -p 'test_*.py'` to check the sheet round trip.
 
 ## Credits
 Design and code: NotNic. PEAK is by Aggro Crab and Landcrab; this is a fan mod and is not affiliated with them.

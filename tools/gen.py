@@ -58,6 +58,7 @@ def gen_stats(stats, conditions):
 
 
 RARITIES = ['common', 'uncommon', 'rare', 'legendary', 'mythic']
+DIFFICULTY_TIERS = ['tenderfootPeak', 'ascent1to3', 'ascent4to6', 'ascent7to8']
 
 
 def cs_rgba(a):
@@ -86,6 +87,9 @@ def gen_cards(cards):
     lines.append('    {')
     lines.append('        public const int OfferCount = %d;' % cards['offerCount'])
     lines.append('        public static readonly float[] RarityWeights = new float[] { %s };' % ', '.join(cs_float(cards['rarityWeights'][r]) for r in RARITIES))
+    tiers = cards.get('difficultyStrength', {})
+    lines.append('        /// <summary>Card benefit strength by difficulty: Tenderfoot-Peak, Ascent 1-3, Ascent 4-6, Ascent 7-8 (Core.DifficultyScale).</summary>')
+    lines.append('        public static readonly float[] DifficultyStrength = new float[] { %s };' % ', '.join(cs_float(tiers.get(k, 1.0)) for k in DIFFICULTY_TIERS))
     lines.append('        public static readonly Rgba[] RarityColors = new Rgba[] { %s };' % ', '.join(cs_rgba(cards['rarityColors'][r]) for r in RARITIES))
     lines.append('        public static readonly string[] SpawnItems = new string[] { %s };' % ', '.join(cs_str(x) for x in cards['spawnItems']))
     lines.append('        public static readonly ThemeDef[] Themes = new ThemeDef[]')

@@ -21,6 +21,8 @@ namespace CampfireCards.Generated
     {
         public const int OfferCount = 3;
         public static readonly float[] RarityWeights = new float[] { 48.0f, 32.0f, 16.5f, 3.0f, 0.5f };
+        /// <summary>Card benefit strength by difficulty: Tenderfoot-Peak, Ascent 1-3, Ascent 4-6, Ascent 7-8 (Core.DifficultyScale).</summary>
+        public static readonly float[] DifficultyStrength = new float[] { 0.6f, 0.75f, 0.9f, 1.0f };
         public static readonly Rgba[] RarityColors = new Rgba[] { new Rgba(0.62f, 0.62f, 0.62f, 1.0f), new Rgba(0.36f, 0.8f, 0.36f, 1.0f), new Rgba(0.4f, 0.63f, 1.0f, 1.0f), new Rgba(0.76f, 0.5f, 1.0f, 1.0f), new Rgba(1.0f, 0.8f, 0.22f, 1.0f) };
         public static readonly string[] SpawnItems = new string[] { "RopeSpool", "Bandages", "BalloonBunch" };
         public static readonly ThemeDef[] Themes = new ThemeDef[]

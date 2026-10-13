@@ -1,32 +1,31 @@
-# Your card editing files
+# Editing the cards
 
-Use **card-editing.xlsx** if you have Excel, Google Sheets or LibreOffice. Its **Cards** tab contains all 64
-existing names, benefit descriptions, drawback descriptions and flavor lines, copied exactly from the mod.
+Open **card-sheet.xlsx** in Excel, Google Sheets or LibreOffice. Edit the blue cells, save as .xlsx, and send it
+back: it is applied straight into the mod.
 
-Edit the blue columns: **name**, **benefit**, **drawback**, **flavor**, **requested_effects**. For an effect change,
-write what you want in plain English in requested_effects, including its numbers and when it triggers. Keep
-**id** and **key** unchanged so the card can be matched to its code when you return the file. In game, each card
-shows your benefit (green) and drawback (red) text exactly as written, with no labels. Leave a drawback empty and
-the card shows only its benefit.
+- **Cards** tab: each card's name, rarity, benefit, drawback and flavor, exactly as the card shows them in game
+  (benefit in green, drawback in red, no labels). Leave Drawback empty for a card with no drawback. Keep `{key}` in
+  key-press cards: the game fills in the player's key.
+- **Numbers** tab: every number a card uses, in plain units. "% change": +40 means 40% more, -12 means 12% less, -100
+  means none at all. Points: 25 is a quarter of the stamina bar or a status bar. Seconds and metres are what they say.
+- **Difficulty** tab: how strong benefits are on each difficulty, in percent. The cards are written for Ascent 7–8
+  (100%); easier difficulties shrink every benefit to that share. Drawbacks and Mythics stay at 100%.
+- The **#** column matches each row to its card: don't change it, and don't add or remove rows.
+- The card text is what players read; the Numbers tab is what the game does. When you change a number, change the
+  text too. Applying the sheet warns when a card's text still shows the old number.
 
-The 0.6.1 wording pass (0.6.2 fixes card conflicts) keeps the funny names and makes the stat, amount, trigger and duration explicit. Keep
-`{key}` in manual card descriptions: the game substitutes your configured key. See
-[the copy and playtest notes](../../docs/card-text-and-playtest.md) for terminology and the supplied log findings.
+For the mod's maintainer:
 
-To change an illustration, use the stable **key** for its PNG filename. **card-image-map.csv** lists all 64
-filenames. [Image instructions](../../docs/card-images.md) explain the folder, dimensions and restart step.
+```bash
+python tools/card_sheet.py export                      # write card-sheet.xlsx from design/cards.json
+python tools/card_sheet.py apply edited.xlsx --check   # show what would change
+python tools/card_sheet.py apply edited.xlsx           # write it into design/cards.json, then gen + build
+```
 
-**Current code** contains the actual modifiers, ability names and parameters. **notes** flags existing
-limitations. Bing Bong's Baggage now halves total weight and locks pocket three; previous disabled config
-choices remain. **New ideas** starts empty for you to add concepts.
+Applying refuses impossible values (below -100%, negative seconds, a rarity that doesn't exist) before writing
+anything, and raises the card balance version when a number changes so saved configs pick up the new numbers once.
 
-**card-edit-review.xlsx** adds a **Review** tab with all 50 submitted edits, the shipped effects and implementation
-notes. [The review report](../../docs/card-edit-review.md) explains the pending ROOTS Survivor replacement and
-the native Low Gravity interpretation of “Flying.” The original uploaded workbook is preserved separately.
+To change an illustration, use **card-image-map.csv** for each card's PNG filename and see
+[the image instructions](../../docs/card-images.md).
 
-**card-editing.csv** holds the same catalog in a plain spreadsheet format. For renamed/reworded cards, the
-import tool validates the stable identities and produces a separate JSON review copy. Gameplay changes and
-new ideas need implementation; a text change never silently changes stats.
-
-See [the effect investigation](../../docs/effect-feasibility.md) before picking new mechanics. The intended
-game version is PEAK **2.6.b**. Runtime tests on that version are still needed for new physics effects.
+The older files here (card-editing.xlsx/.csv, card-edit-review.xlsx) are the history of the 0.6.0 review pass.

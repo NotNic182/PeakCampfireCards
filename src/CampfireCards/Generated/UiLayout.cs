@@ -175,7 +175,7 @@ namespace CampfireCards.Generated
         public const float LineHeight = 1.05f;
     }
 
-    /// <summary>the benefit text in green, then the drawback text in red, exactly as written in cards.json, with no labels; a blank drawback shows only the benefit. auto-size between MinFontSize and FontSize inside the room the name and flavour leave; manual key placeholders in the card text show the live binding (CardPresentation)</summary>
+    /// <summary>the benefit text in green, then the drawback text in red, exactly as written in cards.json, with no labels; a blank drawback shows only the benefit; below Ascent 7, numbers in the benefit are the ones this difficulty uses (Core.DifficultyScale), and a card whose benefit has no number to rewrite gets a faint 'Benefits at N% on <tier>' line. auto-size between MinFontSize and FontSize inside the room the name and flavour leave; manual key placeholders in the card text show the live binding (CardPresentation)</summary>
     public static class Ui_CardEffects
     {
         public const string Parent = "Card";
@@ -192,6 +192,7 @@ namespace CampfireCards.Generated
         public const float LineHeight = 1.15f;
         public const float Gap = 10.0f;
         public const float BottomPad = 14.0f;
+        public const string StrengthNote = "Benefits at {0}% on {1}.";
     }
 
     /// <summary>italic, in the card theme's accent (secondary text taken from the card's own hue); the Color const is for flavour-style text off the card (No drawback on the Current Build). none</summary>
@@ -394,6 +395,8 @@ namespace CampfireCards.Generated
         public const string Ghost = "ghost";
         public const string Down = "passed out";
         public const string PenaltyLabel = "Clown Luggage penalty: ";
+        public const string StrengthLine = "{1}: card benefits at {0}% (drawbacks and Mythics at full strength).";
+        public const string FullStrengthLine = "{0}: cards at full strength.";
     }
 
 }
