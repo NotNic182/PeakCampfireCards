@@ -34,9 +34,9 @@
     "mythic": 0.5
   },
   "difficultyStrength": {
-    "tenderfootPeak": 0.6,
-    "ascent1to3": 0.75,
-    "ascent4to6": 0.9,
+    "tenderfootPeak": 1.0,
+    "ascent1to3": 1.0,
+    "ascent4to6": 1.0,
     "ascent7to8": 1.0
   },
   "rarityColors": {
@@ -287,7 +287,7 @@
       "category": "climbing",
       "type": "Passive",
       "positive": "Climbing uses 12% less stamina.",
-      "negative": "Sprinting uses 12% more stamina.",
+      "negative": "Sprinting uses 5% more stamina.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -302,7 +302,7 @@
         [
           "sprintStamina",
           "mul",
-          1.12,
+          1.05,
           "always",
           "self"
         ]
@@ -320,7 +320,7 @@
       "category": "climbing",
       "type": "Passive",
       "positive": "Jump 30% higher.",
-      "negative": "Take 30% more fall Injury.",
+      "negative": "Take 15% more fall Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -335,7 +335,7 @@
         [
           "fallInjury",
           "mul",
-          1.3,
+          1.15,
           "always",
           "self"
         ]
@@ -353,7 +353,7 @@
       "category": "climbing",
       "type": "Passive",
       "positive": "Cold builds 35% slower while climbing blue ice.",
-      "negative": "Warming up takes 10% longer.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -363,13 +363,6 @@
           "mul",
           0.65,
           "climbingColdSurface",
-          "self"
-        ],
-        [
-          "coldDecay",
-          "mul",
-          0.9090909090909091,
-          "always",
           "self"
         ]
       ],
@@ -414,7 +407,7 @@
       "category": "climbing",
       "type": "Active movement ability",
       "positive": "Jump again in mid-air for a double jump. Cooldown: 15s.",
-      "negative": "Each double jump adds 7.5 Drowsy.",
+      "negative": "Each double jump adds 5 Drowsy.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -422,7 +415,7 @@
       "ability": "SecondSpring",
       "params": {
         "cooldown": 15,
-        "drowsy": 0.075
+        "drowsy": 0.05
       },
       "theme": "stone",
       "art": "spring"
@@ -468,7 +461,7 @@
       "category": "climbing",
       "type": "Passive",
       "positive": "Take 25% less fall Injury.",
-      "negative": "Dynamite deals 3 times as much Injury.",
+      "negative": "Dynamite deals 50% more Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -483,7 +476,7 @@
         [
           "dynamiteInjury",
           "mul",
-          3,
+          1.5,
           "always",
           "self"
         ]
@@ -501,7 +494,7 @@
       "category": "climbing",
       "type": "Passive",
       "positive": "Grab walls from 40% farther away.",
-      "negative": "All stamina costs are 10% higher.",
+      "negative": "All stamina costs are 5% higher.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -516,7 +509,7 @@
         [
           "staminaUsage",
           "mul",
-          1.1,
+          1.05,
           "always",
           "self"
         ]
@@ -534,7 +527,7 @@
       "category": "stamina",
       "type": "Passive",
       "positive": "Gain 25 maximum stamina.",
-      "negative": "Hunger builds 35% faster.",
+      "negative": "Hunger builds 15% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -549,7 +542,7 @@
         [
           "hungerRate",
           "mul",
-          1.35,
+          1.15,
           "always",
           "self"
         ]
@@ -565,8 +558,8 @@
       "name": "Nic of Time",
       "rarity": "rare",
       "category": "stamina",
-      "type": "Automatic ability",
-      "positive": "Press {key} below 20 stamina to recover 25. Cooldown: 5 min.",
+      "type": "Manually activated ability",
+      "positive": "Press {key} below 20 stamina to recover 30. Cooldown: 3 min.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -575,8 +568,8 @@
       "ability": "SecondWind",
       "params": {
         "threshold": 0.2,
-        "restore": 0.25,
-        "cooldown": 300
+        "restore": 0.3,
+        "cooldown": 180
       },
       "theme": "pine",
       "art": "star"
@@ -589,7 +582,7 @@
       "category": "stamina",
       "type": "Passive",
       "positive": "Sprinting uses 15% less stamina.",
-      "negative": "Climbing uses 15% more stamina.",
+      "negative": "Climbing uses 5% more stamina.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -604,7 +597,7 @@
         [
           "climbStamina",
           "mul",
-          1.15,
+          1.05,
           "always",
           "self"
         ]
@@ -621,8 +614,8 @@
       "rarity": "common",
       "category": "stamina",
       "type": "Passive",
-      "positive": "Stamina regeneration starts 0.3s sooner.",
-      "negative": "Lose 15 maximum stamina.",
+      "positive": "Stamina regeneration starts 0.5s sooner.",
+      "negative": "Lose 5 maximum stamina.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -630,14 +623,14 @@
         [
           "regenDelay",
           "add",
-          -0.3,
+          -0.5,
           "always",
           "self"
         ],
         [
           "maxStamina",
           "add",
-          -0.15,
+          -0.05,
           "always",
           "self"
         ]
@@ -681,7 +674,7 @@
       "category": "stamina",
       "type": "Passive",
       "positive": "Sprint 25% faster.",
-      "negative": "Lose 12.5 maximum stamina.",
+      "negative": "Lose 7.5 maximum stamina.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -696,7 +689,7 @@
         [
           "maxStamina",
           "add",
-          -0.125,
+          -0.075,
           "always",
           "self"
         ]
@@ -713,7 +706,7 @@
       "rarity": "rare",
       "category": "stamina",
       "type": "Cyclic conditional passive",
-      "positive": "Climb for 3s straight: climbing uses 35% less stamina for the next 1s.",
+      "positive": "Climb for 2s straight: climbing uses 40% less stamina for the next 2s.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -722,15 +715,15 @@
         [
           "climbStamina",
           "mul",
-          0.65,
+          0.6,
           "pulseActive",
           "self"
         ]
       ],
       "ability": "PulseClimber",
       "params": {
-        "buildup": 3,
-        "boost": 1
+        "buildup": 2,
+        "boost": 2
       },
       "theme": "pine",
       "art": "rope"
@@ -743,7 +736,7 @@
       "category": "stamina",
       "type": "Campfire-triggered passive",
       "positive": "Each new campfire clears your Hunger.",
-      "negative": "Cooked food removes 25% less Hunger.",
+      "negative": "Cooked food removes 10% less Hunger.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -751,7 +744,7 @@
         [
           "cookedFoodHunger",
           "mul",
-          0.75,
+          0.9,
           "always",
           "self"
         ]
@@ -769,7 +762,7 @@
       "category": "environment",
       "type": "Passive",
       "positive": "Heat builds 50% slower.",
-      "negative": "Cold builds 30% faster.",
+      "negative": "Cold builds 10% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -784,7 +777,7 @@
         [
           "coldRate",
           "mul",
-          1.3,
+          1.1,
           "always",
           "self"
         ]
@@ -802,7 +795,7 @@
       "category": "environment",
       "type": "Passive",
       "positive": "Cold builds 50% slower.",
-      "negative": "Heat builds 30% faster.",
+      "negative": "Heat builds 10% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -817,7 +810,7 @@
         [
           "heatRate",
           "mul",
-          1.3,
+          1.1,
           "always",
           "self"
         ]
@@ -835,7 +828,7 @@
       "category": "environment",
       "type": "Passive",
       "positive": "Poison builds 35% slower.",
-      "negative": "Heat and Cold build 25% faster.",
+      "negative": "Heat and Cold build 10% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -850,14 +843,14 @@
         [
           "heatRate",
           "mul",
-          1.25,
+          1.1,
           "always",
           "self"
         ],
         [
           "coldRate",
           "mul",
-          1.25,
+          1.1,
           "always",
           "self"
         ]
@@ -901,7 +894,7 @@
       "category": "environment",
       "type": "Passive",
       "positive": "New Thorns add 40% less status, rounded to the nearest whole thorn.",
-      "negative": "Removing Thorns takes twice as long.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -910,13 +903,6 @@
           "thornsRate",
           "mul",
           0.6,
-          "always",
-          "self"
-        ],
-        [
-          "thornRemovalTime",
-          "mul",
-          2,
           "always",
           "self"
         ]
@@ -934,7 +920,7 @@
       "category": "environment",
       "type": "Conditional passive",
       "positive": "Heat wears off 60% faster.",
-      "negative": "Heat builds 15% faster.",
+      "negative": "Heat builds 5% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -949,7 +935,7 @@
         [
           "heatRate",
           "mul",
-          1.15,
+          1.05,
           "always",
           "self"
         ]
@@ -967,7 +953,7 @@
       "category": "environment",
       "type": "Conditional passive",
       "positive": "Cold wears off 60% faster.",
-      "negative": "Cold builds 15% faster.",
+      "negative": "Cold builds 5% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -982,7 +968,7 @@
         [
           "coldRate",
           "mul",
-          1.15,
+          1.05,
           "always",
           "self"
         ]
@@ -1000,7 +986,7 @@
       "category": "environment",
       "type": "Conditional passive",
       "positive": "Above 20 Poison, climbing uses 40% less stamina.",
-      "negative": "Poison wears off 30% slower.",
+      "negative": "Poison wears off 10% slower.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1015,7 +1001,7 @@
         [
           "poisonDecay",
           "mul",
-          0.7,
+          0.9,
           "always",
           "self"
         ]
@@ -1054,7 +1040,7 @@
       "rarity": "uncommon",
       "category": "survival",
       "type": "Passive",
-      "positive": "Healing items remove 25% more Injury from you.",
+      "positive": "Healing removes 25% more Injury from you.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1081,7 +1067,7 @@
       "category": "survival",
       "type": "Conditional passive",
       "positive": "At 20+ Injury, climbing and sprinting use 25% less stamina.",
-      "negative": "Take 10% more Injury.",
+      "negative": "Take 5% more Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1103,7 +1089,7 @@
         [
           "allInjury",
           "mul",
-          1.1,
+          1.05,
           "always",
           "self"
         ]
@@ -1119,8 +1105,8 @@
       "name": "Discount Cure-All",
       "rarity": "rare",
       "category": "survival",
-      "type": "Automatic ability",
-      "positive": "Press {key} at 35+ Poison, Spores or Drowsy to remove 20 from the highest. Once per biome.",
+      "type": "Manually activated ability",
+      "positive": "Press {key} at 25+ Poison, Spores or Drowsy to remove 25 from the highest. Once per biome.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1128,8 +1114,8 @@
       "mods": [],
       "ability": "EmergencyPurge",
       "params": {
-        "threshold": 0.35,
-        "remove": 0.2
+        "threshold": 0.25,
+        "remove": 0.25
       },
       "theme": "berry",
       "art": "cross"
@@ -1186,7 +1172,7 @@
       "category": "survival",
       "type": "Passive",
       "positive": "Reviving does not add Curse.",
-      "negative": "Take 25% more Injury.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1195,13 +1181,6 @@
           "reviveCurse",
           "mul",
           0,
-          "always",
-          "self"
-        ],
-        [
-          "allInjury",
-          "mul",
-          1.25,
           "always",
           "self"
         ]
@@ -1264,8 +1243,8 @@
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Passive",
-      "positive": "Held items weigh 25% less.",
-      "negative": "Backpack contents weigh 10% more.",
+      "positive": "Held items weigh 45% less.",
+      "negative": "Backpack contents weigh 5% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1273,14 +1252,14 @@
         [
           "heldItemWeight",
           "mul",
-          0.75,
+          0.55,
           "always",
           "self"
         ],
         [
           "backpackItemWeight",
           "mul",
-          1.1,
+          1.05,
           "always",
           "self"
         ]
@@ -1296,7 +1275,7 @@
       "name": "Idol Hands",
       "rarity": "common",
       "category": "inventory",
-      "type": "Conditional passive",
+      "type": "Passive",
       "positive": "Held items weigh 35% less.",
       "negative": "",
       "flavor": "",
@@ -1324,7 +1303,7 @@
       "category": "inventory",
       "type": "Consumption-triggered",
       "positive": "Once per biome, your first cooked meal is not consumed.",
-      "negative": "Uncooked food removes 50% less Hunger.",
+      "negative": "Uncooked food removes 15% less Hunger.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1332,7 +1311,7 @@
         [
           "uncookedFoodHunger",
           "mul",
-          0.5,
+          0.85,
           "always",
           "self"
         ]
@@ -1350,7 +1329,7 @@
       "category": "inventory",
       "type": "Consumption-triggered passive",
       "positive": "Cooked food removes 50% more Hunger.",
-      "negative": "Eating cookable food raw adds 7.5 Poison.",
+      "negative": "Eating cookable food raw adds 5 Poison.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1365,7 +1344,7 @@
       ],
       "ability": "CampChef",
       "params": {
-        "poison": 0.075
+        "poison": 0.05
       },
       "theme": "sun",
       "art": "flame"
@@ -1378,19 +1357,11 @@
       "category": "inventory",
       "type": "Campfire-triggered",
       "positive": "Get one Balloon Bunch at the next campfire. Once per run.",
-      "negative": "All stamina costs are 10% higher.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "staminaUsage",
-          "mul",
-          1.1,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "NextCampfireSpawn",
       "params": {
         "item": 2
@@ -1426,7 +1397,7 @@
       "category": "inventory",
       "type": "One-time acquisition",
       "positive": "Immediately gain 2 random bonus cards.",
-      "negative": "One permanent random penalty: climbing or sprinting cost +15%, Injury +20%, or Hunger buildup +20%.",
+      "negative": "One permanent random penalty: climbing or sprinting cost +10%, Injury +10%, or Hunger buildup +10%. It stays even if you give this card up.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": true,
@@ -1434,10 +1405,10 @@
       "ability": "DoubleDeal",
       "params": {
         "bonusCards": 2,
-        "climbPenalty": 1.15,
-        "sprintPenalty": 1.15,
-        "injuryPenalty": 1.2,
-        "hungerPenalty": 1.2
+        "climbPenalty": 1.1,
+        "sprintPenalty": 1.1,
+        "injuryPenalty": 1.1,
+        "hungerPenalty": 1.1
       },
       "theme": "sun",
       "art": "star"
@@ -1449,8 +1420,8 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "You and teammates within 6 m use 15% less climbing stamina.",
-      "negative": "With no teammate within 6 m, climbing uses 15% more stamina.",
+      "positive": "You and teammates within 8 m use 20% less climbing stamina.",
+      "negative": "With no teammate within 8 m, climbing uses 5% more stamina.",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1458,28 +1429,28 @@
         [
           "climbStamina",
           "mul",
-          0.85,
+          0.8,
           "always",
           "team"
         ],
         [
           "climbStamina",
           "mul",
-          0.85,
+          0.8,
           "teammateNear",
           "self"
         ],
         [
           "climbStamina",
           "mul",
-          1.15,
+          1.05,
           "noTeammateNear",
           "self"
         ]
       ],
       "ability": "",
       "params": {
-        "radius": 6
+        "radius": 8
       },
       "theme": "sky",
       "art": "rope"
@@ -1492,7 +1463,7 @@
       "category": "team",
       "type": "Passive",
       "positive": "Healing items used on teammates remove 60% more Injury.",
-      "negative": "Healing items used on yourself remove 35% less Injury.",
+      "negative": "Healing items used on yourself remove 15% less Injury.",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1507,7 +1478,7 @@
         [
           "healSelfUse",
           "mul",
-          0.65,
+          0.85,
           "always",
           "self"
         ]
@@ -1525,7 +1496,7 @@
       "category": "team",
       "type": "Passive",
       "positive": "Carried scouts weigh 35% less.",
-      "negative": "Their paused death timer drains at 15% of normal speed. Already-active timers drain 15% faster.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1534,13 +1505,6 @@
           "carryScoutWeight",
           "mul",
           0.65,
-          "always",
-          "self"
-        ],
-        [
-          "carriedDeathRate",
-          "mul",
-          1.15,
           "always",
           "self"
         ]
@@ -1558,7 +1522,7 @@
       "category": "team",
       "type": "Conditional passive",
       "positive": "Huddling warms you 35% more, from 35% farther away.",
-      "negative": "With no teammate within 6 m, Cold builds 20% faster.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1569,19 +1533,10 @@
           1.35,
           "always",
           "self"
-        ],
-        [
-          "coldRate",
-          "mul",
-          1.2,
-          "noTeammateNear",
-          "self"
         ]
       ],
       "ability": "",
-      "params": {
-        "radius": 6
-      },
+      "params": {},
       "theme": "sky",
       "art": "flame"
     },
@@ -1613,7 +1568,7 @@
       "category": "team",
       "type": "Passive",
       "positive": "Pull teammates up from 30% farther away.",
-      "negative": "Starting a pull costs 10 stamina, once per continuous reach.",
+      "negative": "Starting a pull costs a base 5 stamina, once per continuous reach.",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1628,7 +1583,7 @@
       ],
       "ability": "HelpCost",
       "params": {
-        "stamina": 0.1
+        "stamina": 0.05
       },
       "theme": "sky",
       "art": "rope"
@@ -1641,7 +1596,7 @@
       "category": "team",
       "type": "Proximity aura",
       "positive": "Teammates within 6 m take 30% less Injury.",
-      "negative": "You take half the prevented Injury, up to 10 per hit.",
+      "negative": "You take a quarter of the prevented Injury, up to 5 per hit.",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1657,8 +1612,8 @@
       "ability": "SharedBurden",
       "params": {
         "radius": 6,
-        "absorb": 0.5,
-        "cap": 0.1
+        "absorb": 0.25,
+        "cap": 0.05
       },
       "theme": "sky",
       "art": "shield"
@@ -1670,8 +1625,8 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "Teammates within 6 m recover stamina 12% faster.",
-      "negative": "With no teammate within 6 m, all stamina costs are 10% higher.",
+      "positive": "You and teammates within 8 m recover stamina 15% faster.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1679,21 +1634,21 @@
         [
           "regenRate",
           "mul",
-          1.12,
+          1.15,
           "always",
           "team"
         ],
         [
-          "staminaUsage",
+          "regenRate",
           "mul",
-          1.1,
-          "noTeammateNear",
+          1.15,
+          "teammateNear",
           "self"
         ]
       ],
       "ability": "",
       "params": {
-        "radius": 6
+        "radius": 8
       },
       "theme": "sky",
       "art": "flame"
@@ -1706,7 +1661,7 @@
       "category": "mutation",
       "type": "Passive",
       "positive": "Sprint 35% faster and jump 25% higher.",
-      "negative": "Take 40% more fall Injury.",
+      "negative": "Take 25% more fall Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1728,7 +1683,7 @@
         [
           "fallInjury",
           "mul",
-          1.4,
+          1.25,
           "always",
           "self"
         ]
@@ -1746,7 +1701,7 @@
       "category": "mutation",
       "type": "Acquisition and campfire triggered",
       "positive": "Gain 30 yellow stamina now, then 20 at each later campfire.",
-      "negative": "Gain 10 Curse now, then 2 at each later campfire.",
+      "negative": "Gain 5 Curse now, then 1 at each later campfire, up to 10 Curse in total.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1755,8 +1710,9 @@
       "params": {
         "bonusNow": 0.3,
         "bonusFire": 0.2,
-        "curseNow": 0.1,
-        "curseFire": 0.02
+        "curseNow": 0.05,
+        "curseFire": 0.01,
+        "curseBudget": 0.1
       },
       "theme": "ember",
       "art": "star"
@@ -1769,7 +1725,7 @@
       "category": "mutation",
       "type": "Random biome-triggered passive",
       "positive": "Inventory items weigh 10% less. Each biome: 65% chance of 25 yellow stamina.",
-      "negative": "A failed roll adds 20 Injury instead.",
+      "negative": "A failed roll adds 7.5 Injury instead.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1786,7 +1742,7 @@
       "params": {
         "chance": 0.65,
         "bonus": 0.25,
-        "injury": 0.2
+        "injury": 0.075
       },
       "theme": "ember",
       "art": "rock"
@@ -1820,7 +1776,7 @@
       "category": "mutation",
       "type": "Conditional passive",
       "positive": "Sprint for 2s to move 30% faster until you stop.",
-      "negative": "Stopping after a boost adds 7.5 Drowsy, at most once every 30s.",
+      "negative": "Stopping after a boost adds 2.5 Drowsy, at most once every 60s.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1836,8 +1792,8 @@
       "ability": "MomentumFiend",
       "params": {
         "buildup": 2,
-        "drowsy": 0.075,
-        "cooldown": 30
+        "drowsy": 0.025,
+        "cooldown": 60
       },
       "theme": "ember",
       "art": "wind"
@@ -1872,7 +1828,7 @@
       "category": "mutation",
       "type": "Passive",
       "positive": "Gain 40 maximum stamina.",
-      "negative": "Take 50% more Injury.",
+      "negative": "Take 25% more Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1887,7 +1843,7 @@
         [
           "allInjury",
           "mul",
-          1.5,
+          1.25,
           "always",
           "self"
         ]
@@ -1905,7 +1861,7 @@
       "category": "mutation",
       "type": "Equipment-conditional passive",
       "positive": "Without a backpack: sprint 30% faster and jump 20% higher.",
-      "negative": "With a backpack: sprint 15% slower.",
+      "negative": "With a backpack: sprint 5% slower.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1927,7 +1883,7 @@
         [
           "sprintSpeed",
           "mul",
-          0.85,
+          0.95,
           "wearingBackpack",
           "self"
         ]
@@ -1944,16 +1900,17 @@
       "rarity": "legendary",
       "category": "wildcard",
       "type": "One-time acquisition",
-      "positive": "Immediately gain 1 random bonus card, Common to Rare.",
-      "negative": "Gain 10 Curse. Your next campfire offers only 1 card.",
+      "positive": "Immediately gain 2 random bonus cards, Common to Rare.",
+      "negative": "Gain 5 Curse. Your next campfire offers only 2 cards.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": true,
       "mods": [],
       "ability": "DoubleDown",
       "params": {
-        "bonusCards": 1,
-        "curse": 0.1
+        "bonusCards": 2,
+        "curse": 0.05,
+        "nextOffer": 2
       },
       "theme": "dusk",
       "art": "star"
@@ -2007,19 +1964,11 @@
       "category": "wildcard",
       "type": "Manually placed revival anchor",
       "positive": "Press {key} on flat ground: your next pass-out revives you here. Once per biome.",
-      "negative": "Lose 15 maximum stamina. The revival leaves 40 Injury.",
+      "negative": "The revival leaves 40 Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "maxStamina",
-          "add",
-          -0.15,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "SafetyNet",
       "params": {
         "injury": 0.4
@@ -2034,8 +1983,8 @@
       "rarity": "rare",
       "category": "wildcard",
       "type": "Passive",
-      "positive": "Petrification builds 35% slower.",
-      "negative": "Take 15% more fall Injury.",
+      "positive": "Petrification builds 50% slower.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -2043,14 +1992,7 @@
         [
           "petrifyRate",
           "mul",
-          0.65,
-          "always",
-          "self"
-        ],
-        [
-          "fallInjury",
-          "mul",
-          1.15,
+          0.5,
           "always",
           "self"
         ]
@@ -2068,7 +2010,7 @@
       "category": "wildcard",
       "type": "Acquisition-triggered",
       "positive": "Sacrifice one of your cards to gain 35 maximum stamina.",
-      "negative": "Gain 5 Curse at each later campfire.",
+      "negative": "Gain 5 Curse when the sacrifice is made.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -2083,7 +2025,7 @@
       ],
       "ability": "MountainsBargain",
       "params": {
-        "curseFire": 0.05
+        "curse": 0.05
       },
       "theme": "dusk",
       "art": "peak"

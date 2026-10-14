@@ -45,6 +45,21 @@ namespace CampfireCards.Core
         }
 
         /// <summary>
+        /// A change whose amount must reach the game untouched (a card's own removal: the game's exact-amount rules,
+        /// like the Poison cure threshold, read it): nothing is rewritten, but the fraction the game's step is about to
+        /// discard is banked here, and the next routed change of this status delivers it. pending: the game's own
+        /// accumulator, which it zeroes once a step lands.
+        /// </summary>
+        public void Bank(int status, float pending, float amount)
+        {
+            float total = Math.Max(0f, pending) + amount;
+            if (total < Step) return;   // no step lands: the game keeps accumulating, nothing is lost yet
+            // the game's own float math, no epsilon: bank exactly what IT discards, whatever its floor lands
+            float landed = (float)Math.Floor(total / Step) * Step;
+            _carry[status] += Math.Max(0f, total - landed);
+        }
+
+        /// <summary>
         /// The same idea for a whole-number amount (Petrify is an int 0..100): returns the whole part to apply now and
         /// keeps the fraction for the next gain, instead of rounding each gain on its own.
         /// </summary>

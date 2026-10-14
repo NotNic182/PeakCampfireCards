@@ -229,9 +229,11 @@ namespace CampfireCards.Cards
             var hands = new List<byte>();
             foreach (var actor in actors)
             {
-                // Phoenix Clause: skip this pick. Double Down: a one-card offer. Both flags are consumed by this session.
+                // Phoenix Clause: skip this pick. Scout's Dishonor: a reduced offer (its nextOffer param, at most the
+                // normal hand). Both flags are consumed by this session.
                 byte flags = Effects.Flags(actor);
-                int count = (flags & Effects.FlagSkipNext) != 0 ? 0 : (flags & Effects.FlagOfferOne) != 0 ? 1 : handSize;
+                int reduced = Math.Min(handSize, Math.Max(1, (int)Math.Round(CardSettings.Current.Param(Effects.DoubleDownCard(), "nextOffer", 1f))));
+                int count = (flags & Effects.FlagSkipNext) != 0 ? 0 : (flags & Effects.FlagOfferOne) != 0 ? reduced : handSize;
                 var hand = count > 0 ? Deck.Deal(DealRandom.Shared, Effects.CardsOf(actor), count, solo, claimedMythics) : new byte[0];
                 var fixedHand = new byte[handSize];
                 for (int i = 0; i < fixedHand.Length; i++) fixedHand[i] = i < hand.Length ? hand[i] : (byte)0;
@@ -254,7 +256,7 @@ namespace CampfireCards.Cards
             if (!_seenSessions.Add(m.sessionId)) { Plugin.Verbose($"Ignored repeated session start {m.sessionId}"); return; }
             _queue.MarkStarted(m.segment);
             if (m.segment == 255) _openingPending = false;   // a later host never deals the opening again
-            if (m.order == null || m.hands == null || m.handSize == 0 || m.handSize > 5 || m.hands.Length < m.order.Length * m.handSize)
+            if (m.order == null || m.hands == null || m.handSize == 0 || m.handSize > CardSettings.MaxOfferCount || m.hands.Length < m.order.Length * m.handSize)
             {
                 Plugin.Log.LogWarning($"Ignored malformed session start {m.sessionId}");
                 return;
@@ -453,7 +455,9 @@ namespace CampfireCards.Cards
             var got = new List<byte>();
             foreach (var id in m.cards)
             {
-                if (!Effects.AddCard(m.actor, id, live: true)) continue;
+                // reason 9 = the host's F8 restore: the card comes back WITHOUT its pick-time effects (no Curse, no new
+                // Clown penalty, no sacrifice screen, no one-card flag) and may return a Mythic the deck counts as taken
+                if (!Effects.AddCard(m.actor, id, live: m.reason != 9)) continue;
                 got.Add(id);
                 names.Add(Deck.NameOf(id));
             }

@@ -118,11 +118,11 @@ namespace CampfireCards.Tests
             Choose(101, dishonor.Id); var instance = LocalCards.Get<Ability_DoubleDown>();
             Choose(102, dishonor.Id);
             Assert.Same(instance, LocalCards.Get<Ability_DoubleDown>());
-            Assert.Equal(.2f, CardStatus.Get(Character.localCharacter, CharacterAfflictions.STATUSTYPE.Curse), 5);
+            Assert.Equal(.1f, CardStatus.Get(Character.localCharacter, CharacterAfflictions.STATUSTYPE.Curse), 5);
             Assert.Equal(2, NetSend.Sent.OfType<CardsGranted>().Count());
             Assert.Equal(Effects.FlagOfferOne, Effects.Flags(1));
             Effects.SetAll(1, Effects.CardsOf(1), Effects.Flags(1));
-            Assert.Equal(.2f, CardStatus.Get(Character.localCharacter, CharacterAfflictions.STATUSTYPE.Curse), 5);
+            Assert.Equal(.1f, CardStatus.Get(Character.localCharacter, CharacterAfflictions.STATUSTYPE.Curse), 5);
         }
 
         [Fact]
@@ -195,8 +195,8 @@ namespace CampfireCards.Tests
             Assert.False(windAbility.Activate(me)); Assert.False(purgeAbility.Activate(me));
             LocalCards.OnBiomeStarted(me, 1);
             Assert.True(purgeAbility.Activate(me));
-            UnityEngine.Time.time = 299.9f; Assert.False(windAbility.Activate(me));
-            UnityEngine.Time.time = 300f; Assert.True(windAbility.Activate(me));
+            UnityEngine.Time.time = 179.9f; Assert.False(windAbility.Activate(me));
+            UnityEngine.Time.time = 180f; Assert.True(windAbility.Activate(me));
         }
 
         [Fact]

@@ -66,7 +66,7 @@ namespace CampfireCards.Tests
             Effects.CardsOf(2).Add(Card("CampChoir").Id);
             Effects.CardsOf(3).Add(Card("CampChoir").Id);
             Effects.Recompute(Character.localCharacter);
-            Assert.Equal(1.12f, Effects.Local[Channel.regenRate], 5);
+            Assert.Equal(1.15f, Effects.Local[Channel.regenRate], 5);
             Assert.Equal(injury.Value, Effects.Local[Channel.allInjury]);
         }
     }

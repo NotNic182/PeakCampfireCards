@@ -152,7 +152,7 @@
      "type": "byte[]"
     }
    ],
-   "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card; penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants)",
+   "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is reduced (Double Down); penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants)",
    "handler": "OnStateSync"
   },
   {
@@ -213,7 +213,7 @@
      "type": "byte"
     }
    ],
-   "purpose": "bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection",
+   "purpose": "bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection; reason 9 = the host F8 restore, added without acquisition effects (live:false) and exempt from the repeat check",
    "handler": "OnCardsGranted"
   },
   {

@@ -113,7 +113,7 @@ class CardSheetTests(unittest.TestCase):
         from openpyxl import load_workbook
         wb = load_workbook(self.xlsx)
         rows = {r[0].value: r for r in wb['Difficulty'].iter_rows(min_row=2)}
-        self.assertEqual(60, rows['Tenderfoot – Peak'][1].value)
+        self.assertEqual(100, rows['Tenderfoot – Peak'][1].value)   # all tiers default to 100% since the 0.7.1 rebalance
         rows['Ascent 1–3'][1].value = 80
         wb.save(self.xlsx)
         changes, _, numbers = sheet_tool.apply(self.xlsx)

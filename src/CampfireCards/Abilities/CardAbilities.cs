@@ -7,21 +7,24 @@ using CampfireCards.Ui;
 namespace CampfireCards.Abilities
 {
     /// <summary>
-    /// Double Down: the host deals 1 bonus Common-to-Rare card (never a card-draw card, see PickSession); here: +10 Curse now.
-    /// The one-card next offer is a pick flag set for everyone when the card is added (Effects.AddCard).
+    /// Double Down: the host deals the bonus Common-to-Rare cards (never a card-draw card, see PickSession); here: the
+    /// Curse now. The reduced next offer (nextOffer param) is a pick flag set for everyone when the card is added
+    /// (Effects.AddCard); PickSession deals min(offer size, nextOffer).
     /// </summary>
     public sealed class Ability_DoubleDown : Ability
     {
         public override void OnAcquired(Character me)
         {
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Curse, P("curse", 0.1f));
-            Hud.Toast(Card.Name + ": only 1 card to choose from at the next campfire");
+            CardStatus.Penalty(me, CharacterAfflictions.STATUSTYPE.Curse, P("curse", 0.05f));
+            if (!S.DrawbacksEnabled) return;
+            int offer = System.Math.Max(1, (int)System.Math.Round(P("nextOffer", 2f)));
+            Hud.Toast($"{Card.Name}: only {offer} {(offer == 1 ? "card" : "cards")} to choose from at the next campfire");
         }
     }
 
     /// <summary>
     /// Mountain's Bargain: on acquisition the owner picks one non-Mythic card to give up (real card-choice UI);
-    /// the +35 max stamina is a modifier on the card; +5 Curse at every later campfire.
+    /// the +35 max stamina is a modifier on the card; the 5 Curse is charged once, when the sacrifice is committed.
     /// </summary>
     public sealed class Ability_MountainsBargain : Ability
     {
@@ -32,13 +35,9 @@ namespace CampfireCards.Abilities
             CardPicker.Ensure().ShowSacrifice(targets, id =>
             {
                 NetSend.Raise(new CardSacrificed { actor = NetSend.LocalActor, cardId = id }, Photon.Realtime.ReceiverGroup.All);
+                var owner = Character.localCharacter;
+                if (owner != null) CardStatus.Penalty(owner, CharacterAfflictions.STATUSTYPE.Curse, P("curse", 0.05f));
             });
-        }
-
-        public override void OnCampfireLit(Character me, bool acquiredThisFire)
-        {
-            if (acquiredThisFire || me.data.dead) return;
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Curse, P("curseFire", 0.05f));
         }
     }
 }

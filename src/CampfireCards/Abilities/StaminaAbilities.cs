@@ -15,20 +15,45 @@ namespace CampfireCards.Abilities
         }
     }
 
-    /// <summary>Cursed Crown: bonus stamina and Curse now, and smaller amounts at every later campfire.</summary>
+    /// <summary>
+    /// Cursed Crown: bonus stamina and Curse now, smaller amounts at every later campfire — but the Curse stops once the
+    /// card has charged its lifetime budget. The budget counts what was charged, so cleansing cannot reopen it; the
+    /// counter lives in this instance, which survives removal and reacquisition on the same PC (LocalCards._retired).
+    /// </summary>
     public sealed class Ability_CursedCrown : Ability
     {
+        private float _charged;
+
         public override void OnAcquired(Character me)
         {
             me.AddExtraStamina(P("bonusNow", 0.3f));
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Curse, P("curseNow", 0.1f));
+            Charge(me, P("curseNow", 0.05f));
         }
 
         public override void OnCampfireLit(Character me, bool acquiredThisFire)
         {
             if (acquiredThisFire || me.data.dead) return;
             me.AddExtraStamina(P("bonusFire", 0.2f));
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Curse, P("curseFire", 0.02f));
+            Charge(me, P("curseFire", 0.01f));
+        }
+
+        private void Charge(Character me, float amount)
+        {
+            if (!S.DrawbacksEnabled) return;   // nothing charged, nothing counted
+            float room = P("curseBudget", 0.1f) - _charged;
+            amount = UnityEngine.Mathf.Min(amount, room);
+            if (amount <= 0f) return;
+            _charged += amount;
+            CardStatus.Penalty(me, CharacterAfflictions.STATUSTYPE.Curse, amount);
+        }
+
+        public override AbilityStatus Status(Character me)
+        {
+            if (!S.DrawbacksEnabled) return AbilityStatus.None;
+            float budget = P("curseBudget", 0.1f);
+            return _charged >= budget - 0.0001f
+                ? AbilityStatus.Ok(Line(null, "Curse budget spent: later fires are free"))
+                : AbilityStatus.Wait(Line(null, $"Curse charged so far: {Points(_charged)} of {Points(budget)}"));
         }
     }
 
@@ -63,8 +88,8 @@ namespace CampfireCards.Abilities
             else
             {
                 float injury = P("injury", 0.2f);
-                CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, injury);
-                Ui.Hud.Toast($"{Card.Name}: unlucky roll, +{Points(injury)} Injury");
+                CardStatus.Penalty(me, CharacterAfflictions.STATUSTYPE.Injury, injury);
+                Ui.Hud.Toast(S.DrawbacksEnabled ? $"{Card.Name}: unlucky roll, +{Points(injury)} Injury" : $"{Card.Name}: unlucky roll, no bonus this biome");
             }
         }
     }
@@ -81,8 +106,8 @@ namespace CampfireCards.Abilities
             if (!_charge.TryUse(LocalCards.Biome)) { Ui.Hud.Toast(AlreadyUsedThisBiome); return false; }
             float bonus = P("bonus", 0.6f), injury = P("injury", 0.15f);
             me.AddExtraStamina(bonus);
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, injury);
-            Ui.Hud.Toast($"{Card.Name.ToUpperInvariant()}! +{Points(bonus)} extra stamina, +{Points(injury)} Injury");
+            CardStatus.Penalty(me, CharacterAfflictions.STATUSTYPE.Injury, injury);
+            Ui.Hud.Toast($"{Card.Name.ToUpperInvariant()}! +{Points(bonus)} extra stamina" + (S.DrawbacksEnabled ? $", +{Points(injury)} Injury" : ""));
             return true;
         }
 

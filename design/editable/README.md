@@ -9,7 +9,8 @@ back: it is applied straight into the mod.
 - **Numbers** tab: every number a card uses, in plain units. "% change": +40 means 40% more, -12 means 12% less, -100
   means none at all. Points: 25 is a quarter of the stamina bar or a status bar. Seconds and metres are what they say.
 - **Difficulty** tab: how strong benefits are on each difficulty, in percent. The cards are written for Ascent 7–8
-  (100%); easier difficulties shrink every benefit to that share. Drawbacks and Mythics stay at 100%.
+  (100%); easier difficulties shrink every benefit to that share, and above 100% amplifies them. Drawbacks and
+  Mythics stay at 100%.
 - The **#** column matches each row to its card: don't change it, and don't add or remove rows.
 - The card text is what players read; the Numbers tab is what the game does. When you change a number, change the
   text too. Applying the sheet warns when a card's text still shows the old number.

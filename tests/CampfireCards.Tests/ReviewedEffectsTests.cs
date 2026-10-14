@@ -22,7 +22,7 @@ namespace CampfireCards.Tests
         private static Ability Recovery(string key) => AbilityRegistry.Create(CardTable.Cards.Single(c => c.Key == key));
 
         [Fact]
-        public void NicOfTimeWaitsForInputAndHasAFiveMinuteCooldownAcrossBiomes()
+        public void NicOfTimeWaitsForInputAndHasAThreeMinuteCooldownAcrossBiomes()
         {
             var c = new Character(); c.data.currentStamina = .1f;
             var a = Recovery("SecondWind");
@@ -30,13 +30,13 @@ namespace CampfireCards.Tests
             a.Tick(c, 60f);
             Assert.Equal(.1f, c.data.currentStamina);
             Assert.True(a.Activate(c));
-            Assert.Equal(.35f, c.data.currentStamina, 5);
+            Assert.Equal(.4f, c.data.currentStamina, 5);
             c.data.currentStamina = .1f;
             LocalCards.Biome = 1;
             a.OnBiomeStarted(c, 1);
-            UnityEngine.Time.time = 299.9f;
+            UnityEngine.Time.time = 179.9f;
             Assert.False(a.Activate(c));
-            UnityEngine.Time.time = 300f;
+            UnityEngine.Time.time = 180f;
             Assert.True(a.Activate(c));
         }
 
@@ -78,23 +78,23 @@ namespace CampfireCards.Tests
             a.Tick(c, 10f);
             Assert.Equal(.5f, CardStatus.Get(c, CharacterAfflictions.STATUSTYPE.Spores));
             Assert.True(a.Activate(c));
-            Assert.Equal(.3f, CardStatus.Get(c, CharacterAfflictions.STATUSTYPE.Spores), 5);
+            Assert.Equal(.25f, CardStatus.Get(c, CharacterAfflictions.STATUSTYPE.Spores), 5);
             Assert.Equal(.35f, CardStatus.Get(c, CharacterAfflictions.STATUSTYPE.Poison));
             Assert.False(a.Activate(c));
             LocalCards.Biome++;
             Assert.True(a.Activate(c));
-            Assert.Equal(.2f, CardStatus.Get(c, CharacterAfflictions.STATUSTYPE.Drowsy), 5);
+            Assert.Equal(.15f, CardStatus.Get(c, CharacterAfflictions.STATUSTYPE.Drowsy), 5);
         }
 
         [Fact]
-        public void CureAllFailedAttemptPreservesChargeAndAcceptsExactly35()
+        public void CureAllFailedAttemptPreservesChargeAndAcceptsExactly25()
         {
             var c = new Character(); var a = Recovery("EmergencyPurge");
-            c.Statuses[CharacterAfflictions.STATUSTYPE.Poison] = .34f;
+            c.Statuses[CharacterAfflictions.STATUSTYPE.Poison] = .24f;
             Assert.False(a.Activate(c));
-            c.Statuses[CharacterAfflictions.STATUSTYPE.Poison] = .35f;
+            c.Statuses[CharacterAfflictions.STATUSTYPE.Poison] = .25f;
             Assert.True(a.Activate(c));
-            Assert.Equal(.15f, CardStatus.Get(c, CharacterAfflictions.STATUSTYPE.Poison), 5);
+            Assert.Equal(0f, CardStatus.Get(c, CharacterAfflictions.STATUSTYPE.Poison), 5);
         }
     }
 
@@ -167,7 +167,7 @@ namespace CampfireCards.Tests
             r.Fold(defs.SelectMany(c => c.Mods.Select((m, i) => new ActiveMod
             { CardId = c.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = m.Value, Rarity = c.Rarity })), s);
             // Four ordinary weight units, two held (including a bag shell), ten inside the bag, eight scout, one stuck item.
-            Assert.Equal((4f + 2f * .75f + 10f * 1.1f + 8f + 1f) * .5f,
+            Assert.Equal((4f + 2f * .55f + 10f * 1.05f + 8f + 1f) * .5f,
                 StatComposites.CarriedWeight(r, 4f, 2f, 10f, 8f, 1f), 5);
         }
 
@@ -212,7 +212,7 @@ namespace CampfireCards.Tests
             Assert.Equal(.2f, ReviewedEffectMath.RevivalCurse(.2f, .5f, 0f));
             Assert.Equal(.1f, ReviewedEffectMath.RevivalCurse(.2f, .1f, 0f));
             var card = CardTable.Cards.Single(c => c.Key == "CurseBargain");
-            Assert.Contains(card.Mods, m => m.Channel == Channel.allInjury && m.Value == 1.25f);
+            Assert.DoesNotContain(card.Mods, m => m.Channel == Channel.allInjury);   // the rebalance removed its Injury tax
         }
     }
 }

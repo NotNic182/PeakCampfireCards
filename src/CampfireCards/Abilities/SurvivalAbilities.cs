@@ -58,8 +58,12 @@ namespace CampfireCards.Abilities
             _charge.TryUse(0);
             _shieldUntil = Time.time + 4f;
             Revival.TeleportTo(me, pos, -1f); // prevents this fall; does not add or clear unrelated Injury
-            NetSend.Raise(new SkipNextPick { actor = NetSend.LocalActor }, Photon.Realtime.ReceiverGroup.All);
-            Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! Back on safe ground. You skip your next card pick.");
+            if (S.DrawbacksEnabled)
+            {
+                NetSend.Raise(new SkipNextPick { actor = NetSend.LocalActor }, Photon.Realtime.ReceiverGroup.All);
+                Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! Back on safe ground. You skip your next card pick.");
+            }
+            else Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! Back on safe ground.");
             return true;
         }
 
@@ -120,8 +124,12 @@ namespace CampfireCards.Abilities
             _q.Clear();
         }
 
-        public override AbilityStatus Status(Character me) =>
-            _q.Pending > 0 ? AbilityStatus.Wait($"{Card.Name}: Injury from {_q.Pending} {(_q.Pending == 1 ? "fall" : "falls")} still to land") : AbilityStatus.None;
+        public override AbilityStatus Status(Character me)
+        {
+            if (_q.Pending == 0) return AbilityStatus.None;
+            int next = Mathf.CeilToInt(Mathf.Max(0f, _q.NextDue - Now));
+            return AbilityStatus.Wait($"{Card.Name}: {Points(_q.PendingAmount)} Injury from {_q.Pending} {(_q.Pending == 1 ? "fall" : "falls")} still to land, next in {next} s");
+        }
     }
 
     /// <summary>Safety Net: once per biome, press the key to place an anchor on safe ground; going down revives you there with 40 Injury.</summary>
@@ -164,7 +172,7 @@ namespace CampfireCards.Abilities
         private System.Collections.IEnumerator ReviveSoon(Character me, Vector3 pos)
         {
             yield return new WaitForSeconds(1.5f);   // let the pass-out settle, as the game's own revives do
-            if (me != null && (me.data.passedOut || me.data.dead)) Revival.ReviveAt(me, pos, P("injury", 0.4f), -1f);
+            if (me != null && (me.data.passedOut || me.data.dead)) Revival.ReviveAt(me, pos, S.DrawbacksEnabled ? P("injury", 0.4f) : 0f, -1f);
             Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! You woke up at your anchor.");
         }
 
@@ -276,7 +284,7 @@ namespace CampfireCards.Abilities
         public static void Absorb(Character me, float amount)
         {
             if (me == null || me.data.dead || amount <= 0f) return;
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Injury, amount);
+            CardStatus.Penalty(me, CharacterAfflictions.STATUSTYPE.Injury, amount);
         }
     }
 

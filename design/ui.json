@@ -550,7 +550,9 @@
         "Down": "passed out",
         "PenaltyLabel": "Clown Luggage penalty: ",
         "StrengthLine": "{1}: card benefits at {0}% (drawbacks and Mythics at full strength).",
-        "FullStrengthLine": "{0}: cards at full strength."
+        "FullStrengthLine": "{0}: card benefits at full strength.",
+        "DrawbacksOffLine": "Drawbacks are OFF: cards keep only their benefits.",
+        "StrengthLineNoDrawbacks": "{1}: card benefits at {0}% (Mythics at full strength)."
       },
       "behaviour": "toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; text that does not fit is split into pages at FontSize (no shrinking), the key steps through the pages, then (with teammates) through the Team view's pages, and closes after the last; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI",
       "soundOn": "none"

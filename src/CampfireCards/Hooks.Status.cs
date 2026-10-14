@@ -162,6 +162,7 @@ namespace CampfireCards
             var def = Array.Find(CardTable.Cards, c => c.Ability == "SharedBurden");
             float absorb = def != null ? CardSettings.Current.Param(def, "absorb", 0.5f) : 0.5f;
             float cap = def != null ? CardSettings.Current.Param(def, "cap", 0.1f) : 0.1f;
+            if (!CardSettings.Current.DrawbacksEnabled) absorb = 0f;   // "you take half the prevented Injury" is the drawback
             var delayed = fall ? Ability_DelayedConsequences.Owned : null;
             var phoenix = fall ? Ability_PhoenixClause.Owned : null;
             Func<float, bool> rescue = null;
@@ -198,35 +199,51 @@ namespace CampfireCards
         ///   teammate's body heat also huddleStrength; medical items stay exact;
         /// - Injury healed outside an item's own action (Healing Amulet, Remedy Fungus puff, mushroom) uses healReceived;
         ///   item heals are scaled in Hooks.Items;
-        /// then the step leftover is kept (StatusCarry). Card effects (CardStatus.Raw) remove exactly what they say.
+        /// then the step leftover is kept (StatusCarry). A card's own removal (CardStatus.Raw) reaches the game UNTOUCHED,
+        /// because the game reads the exact amount (a Poison/Spores cure of at most 0.1 clears poison-over-time, and a
+        /// Poison removal subtracts the same amount from Spores); only the fraction its 0.025 step is about to discard is
+        /// banked, so an easier difficulty's 4.5-point Medicinal Munchies still averages 4.5 across uses.
         /// </summary>
         public static void OnSubtractStatusPrefix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE statusType, ref float amount, bool decreasedNaturally)
         {
-            if (amount <= 0f || CardStatus.Raw || statusType == CharacterAfflictions.STATUSTYPE.Petrify) return;
+            if (amount <= 0f || statusType == CharacterAfflictions.STATUSTYPE.Petrify) return;
             var ch = __instance.character;
             if (!Mine(ch)) return;
+            bool raw = CardStatus.Raw;
             float before = amount;
-            if (decreasedNaturally)
+            if (!raw)
             {
-                amount *= Effects.NaturalDecayMultiplier(statusType);
-            }
-            else if (statusType == CharacterAfflictions.STATUSTYPE.Cold && _itemActionDepth == 0)
-            {
-                float k = Effects.Local[Channel.coldDecay];
-                if (_heatEmitter != null && _heatEmitter != ch) k *= Effects.Local[Channel.huddleStrength];   // a teammate's body heat
-                amount *= k;
-            }
-            else if (statusType == CharacterAfflictions.STATUSTYPE.Injury && _itemActionDepth == 0)
-            {
-                amount *= Effects.Local[Channel.healReceived];
+                if (decreasedNaturally)
+                {
+                    amount *= Effects.NaturalDecayMultiplier(statusType);
+                }
+                else if (statusType == CharacterAfflictions.STATUSTYPE.Cold && _itemActionDepth == 0)
+                {
+                    float k = Effects.Local[Channel.coldDecay];
+                    if (_heatEmitter != null && _heatEmitter != ch) k *= Effects.Local[Channel.huddleStrength];   // a teammate's body heat
+                    amount *= k;
+                }
+                else if (statusType == CharacterAfflictions.STATUSTYPE.Injury && _itemActionDepth == 0)
+                {
+                    amount *= Effects.Local[Channel.healReceived];
+                }
             }
 
             int i = (int)statusType;
-            if (!_itemScaled && Mathf.Abs(amount - before) <= 0.000001f && SubCarry.Of(i) <= 0f) return;
+            // Poison/Spores carry is delivered only by natural decay: folded into an item's or amulet's cure it would
+            // inflate the number the game's exact-amount rules read (the <=0.1 poison-affliction clear, the twin removal)
+            bool holdCarry = !decreasedNaturally
+                && (statusType == CharacterAfflictions.STATUSTYPE.Poison || statusType == CharacterAfflictions.STATUSTYPE.Spores);
+            if (!raw && !_itemScaled && Mathf.Abs(amount - before) <= 0.000001f && (holdCarry || SubCarry.Of(i) <= 0f)) return;
             if (ch.statusesLocked || (ch.isZombie && statusType != CharacterAfflictions.STATUSTYPE.Drowsy && statusType != CharacterAfflictions.STATUSTYPE.Web)) return;
             if (__instance.GetCurrentStatus(statusType) <= 0f) { SubCarry.Clear(i); return; }   // the game drops its own leftover at 0 too
             var pending = DecrementalStatuses(__instance);
             if (pending == null || i >= pending.Length) return;
+            if (raw)
+            {
+                SubCarry.Bank(i, pending[i], amount);   // the amount itself passes through untouched
+                return;
+            }
             amount = SubCarry.Route(i, pending[i], amount, out bool reset);
             if (reset) pending[i] = 0f;
         }

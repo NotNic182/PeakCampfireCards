@@ -29,7 +29,7 @@ namespace CampfireCards.Cards
                 return false;
             }
             list.Add(cardId);
-            if (live && def.Ability == "DoubleDown") SetFlag(actor, FlagOfferOne, true);
+            if (live && def.Ability == "DoubleDown" && CardSettings.Current.DrawbacksEnabled) SetFlag(actor, FlagOfferOne, true);
             if (actor == NetSend.LocalActor) LocalCards.OnAcquired(def, live);
             Hud.RefreshMyCards();
             return true;

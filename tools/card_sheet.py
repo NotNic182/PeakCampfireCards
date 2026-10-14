@@ -72,6 +72,8 @@ PARAMS = {
     'sprintPenalty': (PERCENT_CHANGE, None, 'Possible penalty: sprint stamina cost'),
     'stamina': (POINTS, 100.0, 'Stamina'),
     'threshold': (POINTS, 100.0, 'Threshold'),
+    'nextOffer': (COUNT, 1.0, 'Cards in your next offer'),
+    'curseBudget': (POINTS, 100.0, 'Most Curse this card can ever add'),
 }
 CARD_LABELS = {
     ('CleansingRitual', 'bonus'): 'Extra status removed',
@@ -95,6 +97,7 @@ CARD_LABELS = {
     ('SecondWind', 'restore'): 'Stamina recovered',
     ('EmergencyPurge', 'remove'): 'Status removed',
     ('DoubleDown', 'bonusCards'): 'Bonus cards (Common to Rare)',
+    ('MountainsBargain', 'curse'): 'Curse when the sacrifice is made',
 }
 HIDDEN_PARAMS = {'item'}   # which item a card spawns: not a number to tweak
 DIFFICULTY_TIERS = [('tenderfootPeak', 'Tenderfoot – Peak'), ('ascent1to3', 'Ascent 1–3'),
@@ -190,8 +193,8 @@ def export(path=OUTPUT):
         ('Text and numbers', 'The card text is what players read; the Numbers tab is what the game does. If you change a '
                              'number, change the text too (the apply step warns when the text still shows the old number).'),
         ('Difficulty tab', 'How strong card benefits are on each difficulty, in percent. The cards are written for Ascent 7–8 '
-                           '(100%); on easier difficulties every benefit shrinks to this share, and the card text shows the '
-                           'smaller number. Drawbacks and Mythics always stay at full strength.'),
+                           '(100%); a lower strength shrinks every benefit to that share, above 100 amplifies it, and the card '
+                           'text shows the number in play. Drawbacks and Mythics always stay at full strength.'),
         ('Card number', 'The # column matches each row to its card. Do not change it, and do not add or remove rows.'),
         ('Sending it back', 'Save as .xlsx and send it back; it is applied straight into the mod.'),
     ]

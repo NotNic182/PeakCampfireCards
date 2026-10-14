@@ -304,7 +304,7 @@ namespace CampfireCards
             {
                 var view = p.photonView;
                 if (view == null || view.Owner == null) return false;
-                return RunState.RunStarted && Effects.HasAbility(view.Owner.ActorNumber, "PocketTradeoff");
+                return RunState.RunStarted && Core.CardSettings.Current.DrawbacksEnabled && Effects.HasAbility(view.Owner.ActorNumber, "PocketTradeoff");
             }
             catch { return false; }
         }

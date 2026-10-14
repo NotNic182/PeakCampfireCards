@@ -69,6 +69,35 @@ namespace CampfireCards.Tests
         }
 
         [Fact]
+        public void CardRemovalFractionsAreBankedAndDeliveredLater()
+        {
+            // Medicinal Munchies at 60% strength removes 4.5 Injury per snack. The amount reaches the game UNTOUCHED
+            // (its exact-amount cure rules read it), so each use lands 2.5 and Bank keeps the 2 the game discards;
+            // the next routed removal (an item heal, natural decay) delivers the banked rest.
+            var carry = new StatusCarry(1);
+            float pending = 0f, removed = 0f;
+            for (int i = 0; i < 10; i++)
+            {
+                carry.Bank(0, pending, 0.045f);
+                removed += Native(ref pending, 0.045f);
+            }
+            Assert.Equal(0.25f, removed, 4);                    // what lands immediately: 2.5 per use, as in vanilla
+            removed += WithCarry(carry, ref pending, 0.001f);   // the next routed removal delivers the bank
+            Assert.InRange(removed, 0.45f - Step, 0.45f + 0.001f);
+        }
+
+        [Fact]
+        public void BankKeepsNothingFromWholeStepAmounts()
+        {
+            // a 7.5-point removal at full strength lands exactly; Bank must not invent a leftover
+            var carry = new StatusCarry(1);
+            float pending = 0f;
+            carry.Bank(0, pending, 0.075f);
+            Native(ref pending, 0.075f);
+            Assert.True(carry.Of(0) < 0.0005f);
+        }
+
+        [Fact]
         public void SmallPerFrameAmountsStillGoToTheGamesOwnAccumulator()
         {
             var carry = new StatusCarry(1);

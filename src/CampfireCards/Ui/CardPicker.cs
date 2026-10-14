@@ -538,7 +538,7 @@ namespace CampfireCards.Ui
             var sb = new StringBuilder();
             // the benefit's numbers are the ones this difficulty uses (Core.DifficultyScale); the drawback is never scaled
             sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(CardPresentation.Benefit(def, out string note)).Append("</color>");
-            if (!string.IsNullOrEmpty(def.Negative))
+            if (!string.IsNullOrEmpty(def.Negative) && Core.CardSettings.Current.DrawbacksEnabled)
                 sb.Append('\n').Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(CardPresentation.Text(def, def.Negative)).Append("</color>");
             if (note != null)
                 sb.Append('\n').Append("<size=80%>").Append(UiKit.ColorTag(UiPalette.Faint)).Append(note).Append("</color></size>");

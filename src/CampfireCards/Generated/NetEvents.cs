@@ -157,7 +157,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is one card; penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants). Sender: host. Receivers: target.</summary>
+    /// <summary>full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is reduced (Double Down); penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants). Sender: host. Receivers: target.</summary>
     public struct StateSync : INetEvent
     {
         public const byte Code = 93;
@@ -259,7 +259,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection. Sender: host. Receivers: All.</summary>
+    /// <summary>bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection; reason 9 = the host F8 restore, added without acquisition effects (live:false) and exempt from the repeat check. Sender: host. Receivers: All.</summary>
     public struct CardsGranted : INetEvent
     {
         public const byte Code = 96;

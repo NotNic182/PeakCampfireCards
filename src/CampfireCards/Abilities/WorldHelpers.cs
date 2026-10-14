@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using CampfireCards.Cards;
+using CampfireCards.Core;
 using CampfireCards.Net;
 using Photon.Pun;
 using UnityEngine;
@@ -89,7 +90,19 @@ namespace CampfireCards.Abilities
             finally { Raw = false; }
         }
 
-        /// <summary>A card's own removal (Mini Tenacity, Medicinal Munchies...) removes exactly what it says.</summary>
+        /// <summary>
+        /// A card's own penalty (Curse, Drowsy, Poison, Injury costs): skipped entirely when the host turned drawbacks off.
+        /// </summary>
+        public static void Penalty(Character me, CharacterAfflictions.STATUSTYPE type, float amount)
+        {
+            if (!CardSettings.Current.DrawbacksEnabled) return;
+            Add(me, type, amount);
+        }
+
+        /// <summary>
+        /// A card's own removal (Mini Tenacity, Medicinal Munchies...): never scaled by other cards, and the fraction the
+        /// game's 0.025 step would discard is kept for the next removal (Hooks.OnSubtractStatusPrefix, StatusCarry).
+        /// </summary>
         public static void Remove(Character me, CharacterAfflictions.STATUSTYPE type, float amount)
         {
             if (me == null || amount <= 0f) return;

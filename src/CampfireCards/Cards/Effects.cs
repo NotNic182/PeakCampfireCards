@@ -28,7 +28,7 @@ namespace CampfireCards.Cards
         public static readonly PenaltyLedger Penalties = new PenaltyLedger();
 
         public static readonly Dictionary<int, List<byte>> CardsByActor = new Dictionary<int, List<byte>>();
-        /// <summary>Per player: bits 1 skip next pick, 2 next offer is one card, 4 one-time Balloon Bunch already spawned.</summary>
+        /// <summary>Per player: bits 1 skip next pick, 2 next offer is reduced (Double Down), 4 one-time Balloon Bunch already spawned.</summary>
         public static readonly Dictionary<int, byte> PickFlags = new Dictionary<int, byte>();
 
         /// <summary>Folded modifiers for the local scout, refreshed every frame.</summary>
@@ -328,6 +328,7 @@ namespace CampfireCards.Cards
         /// </summary>
         private static void AddPenalties(List<ActiveMod> mods, int actor, Channel? channel = null)
         {
+            if (!CardSettings.Current.DrawbacksEnabled) return;
             var choices = Penalties.Of(actor);
             if (choices.Count == 0) return;
             var def = DoubleDealCard();
@@ -346,6 +347,12 @@ namespace CampfireCards.Cards
         public static CardDef DoubleDealCard()
         {
             var row = Array.Find(CardTable.Cards, c => c.Ability == "DoubleDeal");
+            return row != null ? CardSettings.Current.Card(row.Id) : null;
+        }
+
+        public static CardDef DoubleDownCard()
+        {
+            var row = Array.Find(CardTable.Cards, c => c.Ability == "DoubleDown");
             return row != null ? CardSettings.Current.Card(row.Id) : null;
         }
     }

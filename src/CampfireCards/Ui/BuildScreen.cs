@@ -202,7 +202,7 @@ namespace CampfireCards.Ui
               .Append("</uppercase></cspace></color></size>\n");
             sb.Append(UiKit.ColorTag(Ui_CardEffects.GoodColor)).Append(Indent)
               .Append(CardPresentation.Benefit(def, out string note)).Append(EndIndent).Append("</color>\n");
-            if (!string.IsNullOrEmpty(def.Negative))
+            if (!string.IsNullOrEmpty(def.Negative) && CardSettings.Current.DrawbacksEnabled)
                 sb.Append(UiKit.ColorTag(Ui_CardEffects.BadColor)).Append(Indent)
                   .Append(CardPresentation.Text(def, def.Negative)).Append(EndIndent).Append("</color>\n");
             if (note != null)
@@ -326,8 +326,12 @@ namespace CampfireCards.Ui
             float strength = CardSettings.Current.BenefitStrength;
             string tier = CardPresentation.TierName();
             sb.Append(Meta).Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor))
-              .Append(strength < 0.9999f ? string.Format(Ui_BuildScreen.StrengthLine, (strength * 100f).ToString("0"), tier) : string.Format(Ui_BuildScreen.FullStrengthLine, tier))
+              .Append(!DifficultyScale.Unscaled(strength)
+                  ? string.Format(CardSettings.Current.DrawbacksEnabled ? Ui_BuildScreen.StrengthLine : Ui_BuildScreen.StrengthLineNoDrawbacks, (strength * 100f).ToString("0"), tier)
+                  : string.Format(Ui_BuildScreen.FullStrengthLine, tier))
               .Append("</color></size>\n");
+            if (!CardSettings.Current.DrawbacksEnabled)
+                sb.Append(Meta).Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor)).Append(Ui_BuildScreen.DrawbacksOffLine).Append("</color></size>\n");
             Effects.FoldAlways(_always);
             var lines = BuildStats.Lines(Effects.Local, _always);
             if (lines.Count == 0) sb.Append(UiKit.ColorTag(Ui_BuildScreen.InactiveColor)).Append(Ui_BuildScreen.NothingNow).Append("</color>\n");

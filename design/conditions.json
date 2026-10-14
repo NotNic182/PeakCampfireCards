@@ -20,7 +20,7 @@
     {"id": "noTeammateNear", "meaning": "no living teammate is within the card's radius", "shown": "no teammate is near you", "evaluatedBy": "distance to other living scouts"},
     {"id": "separatedFromTeam", "meaning": "far from every living teammate (outside the huddle radius)", "shown": "you're far from every teammate", "evaluatedBy": "distance to other living scouts"},
     {"id": "momentumActive", "meaning": "Momentum Fiend's sprint bonus is active", "shown": "your sprint speed-up is on", "evaluatedBy": "card state machine"},
-    {"id": "pulseActive", "meaning": "Pulse Climber's 1-second boost is active", "shown": "your climbing boost is on", "evaluatedBy": "card state machine"},
+    {"id": "pulseActive", "meaning": "Pulse Climber's 2-second boost is active", "shown": "your climbing boost is on", "evaluatedBy": "card state machine"},
     {"id": "poisonAbove20", "meaning": "Poison is strictly above 20", "shown": "you have more than 20 Poison", "evaluatedBy": "current Poison > 0.20, never Spores"},
     {"id": "climbingColdSurface", "meaning": "wall-climbing on a surface that applies Cold (blue ice)", "shown": "you climb on blue ice", "evaluatedBy": "wall climb flag and CharacterData.climbMod.applyStatus with Cold statusType"}
   ]

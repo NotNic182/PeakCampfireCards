@@ -9,7 +9,8 @@ namespace CampfireCards.Core
     /// <summary>
     /// Card strength by difficulty. The cards are balanced for Ascent 7-8; on easier difficulties PEAK itself is
     /// gentler (climbing costs x1.0 on Peak and x0.7 on Tenderfoot instead of x1.4), so each card's benefits shrink
-    /// toward "no change" by the tier's strength (cards.json difficultyStrength). Drawbacks and Mythics never scale.
+    /// toward "no change" by the tier's strength (cards.json difficultyStrength); a strength above 1 amplifies them
+    /// past the written values instead. Drawbacks and Mythics never scale.
     /// Unity-free so it can be unit tested.
     /// </summary>
     public static class DifficultyScale
@@ -19,15 +20,29 @@ namespace CampfireCards.Core
         /// <summary>Ascents.currentAscent: -1 Tenderfoot, 0 Peak, 1..8 Ascents.</summary>
         public static int TierOf(int ascent) => ascent <= 0 ? 0 : ascent <= 3 ? 1 : ascent <= 6 ? 2 : 3;
 
-        /// <summary>A card modifier: a benefit moves toward no change (x1, or +0); a drawback stays as it is.</summary>
+        /// <summary>Does this modifier work against the player? ('set' mods are Mythic benefits and never count.)</summary>
+        public static bool Hurts(float value, ModOp op, bool isMul, bool higherIsBetter)
+        {
+            if (op == ModOp.set) return false;
+            if (isMul) return value > 0f && (higherIsBetter ? value < 1f : value > 1f);
+            return higherIsBetter ? value < 0f : value > 0f;
+        }
+
+        /// <summary>1 within a rounding hair: the strength that changes nothing.</summary>
+        public static bool Unscaled(float strength) => Math.Abs(strength - 1f) < 0.0001f;
+
+        /// <summary>
+        /// A card modifier: a benefit moves toward no change (x1, or +0) below strength 1 and past its written value
+        /// above it (never past "free": a cost multiplier stops at 0); a drawback stays as it is.
+        /// </summary>
         public static float Mod(float value, ModOp op, bool isMul, bool higherIsBetter, float strength)
         {
-            if (strength >= 0.9999f || op == ModOp.set) return value;
+            if (Unscaled(strength) || op == ModOp.set) return value;
             if (isMul)
             {
                 if (value <= 0f) return value;   // "none at all" (no revival Curse) is all or nothing, not a percentage
                 bool helps = higherIsBetter ? value > 1f : value < 1f;
-                return helps ? 1f + (value - 1f) * strength : value;
+                return helps ? Math.Max(0f, 1f + (value - 1f) * strength) : value;
             }
             bool helpsFlat = higherIsBetter ? value > 0f : value < 0f;
             return helpsFlat ? value * strength : value;
@@ -37,11 +52,11 @@ namespace CampfireCards.Core
         {
             /// <summary>Not a benefit amount (ranges, thresholds, chances, costs, penalties, items): unchanged.</summary>
             Fixed,
-            /// <summary>How much the card gives (stamina, healing, power length): x strength.</summary>
+            /// <summary>How much the card gives (stamina, healing, power length): x strength (above 1: more).</summary>
             Amount,
-            /// <summary>How long you wait for it (cooldowns, intervals, build-up): / strength, so longer.</summary>
+            /// <summary>How long you wait for it (cooldowns, intervals, build-up): / strength, so longer below 1 and shorter above.</summary>
             Wait,
-            /// <summary>The share of a cost that still lands (Piton Payment Plan's keep): the saving shrinks.</summary>
+            /// <summary>The share of a cost that still lands (Piton Payment Plan's keep): the saving scales with the strength, never past free.</summary>
             Reduction
         }
 
@@ -75,7 +90,7 @@ namespace CampfireCards.Core
         /// </summary>
         public static float CardStrength(CardDef card, float strength)
         {
-            if (strength >= 0.9999f || strength <= 0f || card == null) return strength;
+            if (Unscaled(strength) || strength <= 0f || card == null) return strength;
             bool payload = false;
             int factors = 0;
             for (int i = 0; i < card.Mods.Length && !payload; i++)
@@ -101,12 +116,12 @@ namespace CampfireCards.Core
 
         public static float Param(string cardKey, string param, float value, float strength)
         {
-            if (strength >= 0.9999f || strength <= 0f) return value;
+            if (Unscaled(strength) || strength <= 0f) return value;
             switch (KindOf(cardKey, param))
             {
                 case ParamKind.Amount: return value * strength;
                 case ParamKind.Wait: return value / strength;
-                case ParamKind.Reduction: return 1f - (1f - value) * strength;
+                case ParamKind.Reduction: return Math.Max(0f, 1f - (1f - value) * strength);
                 default: return value;
             }
         }
@@ -120,7 +135,7 @@ namespace CampfireCards.Core
         public static string Benefit(CardDef card, CardSettings s, string text, out bool complete)
         {
             complete = true;
-            if (card == null || string.IsNullOrEmpty(text) || card.Rarity == CardRarity.Mythic || s.BenefitStrength >= 0.9999f) return text;
+            if (card == null || string.IsNullOrEmpty(text) || card.Rarity == CardRarity.Mythic || Unscaled(s.BenefitStrength)) return text;
             // each scaled number, with the ways a card may write it (300 s is "5 min")
             var pairs = new List<KeyValuePair<float, float>[]>();
             for (int i = 0; i < card.Mods.Length; i++)
@@ -129,6 +144,8 @@ namespace CampfireCards.Core
                 float raw = s.RawModValue(card, i), now = s.ModValue(card, i);
                 if (Math.Abs(raw - now) < 1e-6f) continue;
                 var def = ChannelTable.Defs[(int)m.Channel];
+                // a drawback dropped by the toggle is not a benefit number to rewrite (its text is hidden anyway)
+                if (!s.DrawbacksEnabled && Hurts(raw, m.Op, def.IsMul, def.HigherIsBetter)) continue;
                 if (def.IsMul) pairs.Add(One(Math.Abs(raw - 1f) * 100f, Math.Abs(now - 1f) * 100f));
                 else if (m.Channel == Channel.regenDelay) pairs.Add(One(Math.Abs(raw), Math.Abs(now)));
                 else pairs.Add(One(Math.Abs(raw) * 100f, Math.Abs(now) * 100f));

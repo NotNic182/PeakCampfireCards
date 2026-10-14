@@ -16,7 +16,7 @@ namespace CampfireCards.Abilities
             if (food.Cooked || food.Item == null) return;
             var cooking = food.Item.cooking;
             if (cooking == null || !cooking.canBeCooked) return;   // packaged snacks cannot be cooked: no penalty
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Poison, P("poison", 0.075f));
+            CardStatus.Penalty(me, CharacterAfflictions.STATUSTYPE.Poison, P("poison", 0.075f));
         }
     }
 
@@ -86,10 +86,11 @@ namespace CampfireCards.Abilities
     {
         public override void OnAcquired(Character me)
         {
-            Hud.Toast(Card.Name + ": your third pocket is locked for the rest of the run");
+            if (S.DrawbacksEnabled) Hud.Toast(Card.Name + ": your third pocket is locked while you hold this card");
         }
 
-        public override AbilityStatus Status(Character me) => AbilityStatus.Wait(Line(null, "pocket 3 locked"));
+        public override AbilityStatus Status(Character me) =>
+            S.DrawbacksEnabled ? AbilityStatus.Wait(Line(null, "pocket 3 locked")) : AbilityStatus.None;
     }
 
     /// <summary>

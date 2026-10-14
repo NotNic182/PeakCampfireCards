@@ -89,10 +89,10 @@ namespace CampfireCards.Tests
             c.MaxStamina = 1f;
             Assert.EndsWith("ready", a.Status(c).Text); Assert.True(a.Status(c).Ready);
             Assert.True(a.Activate(c));
-            Assert.Contains("cooldown 5:00", a.Status(c).Text);
-            UnityEngine.Time.time = 299.5f;
+            Assert.Contains("cooldown 3:00", a.Status(c).Text);
+            UnityEngine.Time.time = 179.5f;
             Assert.Contains("cooldown 0:01", a.Status(c).Text);
-            UnityEngine.Time.time = 300f; c.data.currentStamina = .1f;
+            UnityEngine.Time.time = 180f; c.data.currentStamina = .1f;
             Assert.EndsWith("ready", a.Status(c).Text); Assert.True(a.Status(c).Ready);
             c.data.dead = true;
             Assert.Contains("unavailable while down", a.Status(c).Text);
@@ -103,15 +103,15 @@ namespace CampfireCards.Tests
         {
             var c = new Character();
             var a = Recovery("EmergencyPurge");
-            c.Statuses[CharacterAfflictions.STATUSTYPE.Spores] = .34f;
-            Assert.Contains("needs 35+ Poison, Spores or Drowsy", a.Status(c).Text);
+            c.Statuses[CharacterAfflictions.STATUSTYPE.Spores] = .24f;
+            Assert.Contains("needs 25+ Poison, Spores or Drowsy", a.Status(c).Text);
             Assert.False(a.Activate(c));
-            c.Statuses[CharacterAfflictions.STATUSTYPE.Spores] = .35f;
+            c.Statuses[CharacterAfflictions.STATUSTYPE.Spores] = .25f;
             Assert.EndsWith("ready", a.Status(c).Text); Assert.True(a.Status(c).Ready);
             Assert.True(a.Activate(c));
             Assert.Contains("used this biome", a.Status(c).Text);
             LocalCards.Biome++;
-            Assert.Contains("needs 35+", a.Status(c).Text);
+            Assert.Contains("needs 25+", a.Status(c).Text);
             c.Statuses[CharacterAfflictions.STATUSTYPE.Drowsy] = .5f;
             Assert.EndsWith("ready", a.Status(c).Text); Assert.True(a.Status(c).Ready);
         }

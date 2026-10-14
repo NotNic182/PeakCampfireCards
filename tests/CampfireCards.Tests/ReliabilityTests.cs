@@ -526,6 +526,7 @@ namespace CampfireCards.Tests
             yield return new object[] { "duplicate cards", (Action<CardSettings>)(s => s.AllowDuplicates = true) };
             yield return new object[] { "Mythics enabled", (Action<CardSettings>)(s => s.MythicsEnabled = false) };
             yield return new object[] { "stamina-cost reduction cap", (Action<CardSettings>)(s => s.StaminaCostCap = 0.5f) };
+            yield return new object[] { "drawbacks", (Action<CardSettings>)(s => s.DrawbacksEnabled = false) };
             yield return new object[] { "max-stamina floor", (Action<CardSettings>)(s => s.MaxStaminaFloor = 0.4f) };
             yield return new object[] { "rarity weights", (Action<CardSettings>)(s => s.RarityWeights[4] = 1f) };
             yield return new object[] { "cards: Piton Fingers", (Action<CardSettings>)(s => s.ModValues[0][0] = 0.8f) };
@@ -597,8 +598,8 @@ namespace CampfireCards.Tests
             var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
             Assert.Equal(1.35f, lines["Sprint speed"].Now, 4);
             Assert.Equal(1.25f, lines["Jump height"].Now, 4);
-            Assert.Equal(1.4f * 1.5f, lines["Fall Injury received"].Now, 4);
-            Assert.Equal(1.5f, lines["Other Injury received"].Now, 4);
+            Assert.Equal(1.25f * 1.25f, lines["Fall Injury received"].Now, 4);
+            Assert.Equal(1.25f, lines["Other Injury received"].Now, 4);
             Assert.Equal(StatComposites.Injury(r, true), lines["Fall Injury received"].Now, 5);
             Assert.False(lines["Sprint speed"].Conditional);
         }
@@ -621,7 +622,7 @@ namespace CampfireCards.Tests
             var s = new CardSettings();
             var r = Fold(s, ("OneHandedScout", Always), ("Ultralight", Always), ("EternalCampfire", Always), ("Thornbreaker", Always));
             var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
-            Assert.Equal(0.75f * 0.65f, lines["Item in hand weight"].Now, 4);
+            Assert.Equal(0.55f * 0.65f, lines["Item in hand weight"].Now, 4);
             Assert.DoesNotContain("Carried item weight", lines.Keys); // ordinary pocket items have no Carry-On Only discount
             Assert.Equal(0.6f * 0.4f, lines["Thorns build-up"].Now, 4);
             Assert.Equal(StatComposites.Thorns(r), lines["Thorns build-up"].Now, 5);
@@ -645,11 +646,11 @@ namespace CampfireCards.Tests
             var r = Fold(s, ("WinterCoat", Always), ("LedgeDancer", Always), ("DeepLungs", Always), ("QuickRecovery", Always), ("RocketAnkles", Always));
             var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
             Assert.Equal("You get cold 50% slower", BuildStats.Say(lines["Cold build-up"], lines["Cold build-up"].Now));
-            Assert.Equal("You heat up 30% faster", BuildStats.Say(lines["Heat build-up"], lines["Heat build-up"].Now));
+            Assert.Equal("You heat up 10% faster", BuildStats.Say(lines["Heat build-up"], lines["Heat build-up"].Now));
             Assert.Equal("Grab walls from 40% farther away", BuildStats.Say(lines["Wall-grab reach"], lines["Wall-grab reach"].Now));
-            Assert.Equal("Your stamina bar is 10 longer", BuildStats.Say(lines["Max stamina"], lines["Max stamina"].Now));
-            Assert.Equal("Stamina starts coming back 0.3 seconds sooner", BuildStats.Say(lines["Stamina regen delay"], lines["Stamina regen delay"].Now));
-            Assert.Equal("Falls hurt 40% more", BuildStats.Say(lines["Fall Injury received"], lines["Fall Injury received"].Now));
+            Assert.Equal("Your stamina bar is 20 longer", BuildStats.Say(lines["Max stamina"], lines["Max stamina"].Now));
+            Assert.Equal("Stamina starts coming back 0.5 seconds sooner", BuildStats.Say(lines["Stamina regen delay"], lines["Stamina regen delay"].Now));
+            Assert.Equal("Falls hurt 25% more", BuildStats.Say(lines["Fall Injury received"], lines["Fall Injury received"].Now));
             Assert.True(BuildStats.Helps(lines["Cold build-up"].Now, true, lines["Cold build-up"].Words));
             Assert.False(BuildStats.Helps(lines["Heat build-up"].Now, true, lines["Heat build-up"].Words));
             Assert.False(BuildStats.Helps(lines["Fall Injury received"].Now, true, lines["Fall Injury received"].Words));

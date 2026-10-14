@@ -10,6 +10,9 @@ namespace CampfireCards.Core
     /// </summary>
     public sealed class CardSettings
     {
+        /// <summary>The most cards one pick may offer: the config clamp and the network validation share it.</summary>
+        public const int MaxOfferCount = 10;
+
         public float[] RarityWeights;
         public int OfferCount;
         public bool MythicsEnabled = true;
@@ -19,6 +22,8 @@ namespace CampfireCards.Core
         public float StaminaCostCap = 0.6f;
         /// <summary>Normal cards combined cannot pull maximum stamina below this (0.5 = 50).</summary>
         public float MaxStaminaFloor = 0.5f;
+        /// <summary>false = cards lose their drawbacks: hurting modifiers and ability penalties are skipped.</summary>
+        public bool DrawbacksEnabled = true;
         /// <summary>Benefit strength per difficulty tier (Tenderfoot-Peak, Ascent 1-3, 4-6, 7-8): 1 = as the cards say.</summary>
         public float[] DifficultyStrength;
         /// <summary>
@@ -78,9 +83,11 @@ namespace CampfireCards.Core
         public float ModValue(CardDef c, int modIndex)
         {
             float raw = RawModValue(c, modIndex);
-            if (BenefitStrength >= 0.9999f || c.Rarity == CardRarity.Mythic) return raw;
             var m = c.Mods[modIndex];
             var ch = ChannelTable.Defs[(int)m.Channel];
+            // drawbacks off: a hurting modifier becomes "no change" (Mythics have no drawbacks to drop)
+            if (!DrawbacksEnabled && DifficultyScale.Hurts(raw, m.Op, ch.IsMul, ch.HigherIsBetter)) return ch.IsMul ? 1f : 0f;
+            if (DifficultyScale.Unscaled(BenefitStrength) || c.Rarity == CardRarity.Mythic) return raw;
             return DifficultyScale.Mod(raw, m.Op, ch.IsMul, ch.HigherIsBetter, DifficultyScale.CardStrength(c, BenefitStrength));
         }
 
@@ -91,11 +98,11 @@ namespace CampfireCards.Core
             return i < 0 ? c.Mods[modIndex].Value : ModValues[i][modIndex];
         }
 
-        /// <summary>A card parameter as it plays now: benefit amounts shrink and waits grow with the difficulty.</summary>
+        /// <summary>A card parameter as it plays now: below strength 1 benefit amounts shrink and waits grow; above 1 the reverse.</summary>
         public float Param(CardDef c, string name, float fallback = 0f)
         {
             float raw = RawParam(c, name, fallback);
-            if (BenefitStrength >= 0.9999f || c.Rarity == CardRarity.Mythic) return raw;
+            if (DifficultyScale.Unscaled(BenefitStrength) || c.Rarity == CardRarity.Mythic) return raw;
             return DifficultyScale.Param(c.Key, name, raw, DifficultyScale.CardStrength(c, BenefitStrength));
         }
 

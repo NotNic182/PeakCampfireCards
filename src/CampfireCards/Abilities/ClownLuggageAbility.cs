@@ -13,6 +13,7 @@ namespace CampfireCards.Abilities
     {
         public override void OnAcquired(Character me)
         {
+            if (!S.DrawbacksEnabled) return;   // the random permanent penalty IS the drawback
             int actor = NetSend.LocalActor;
             int slot = Effects.Penalties.Count(actor);
             byte variant = (byte)Random.Range(1, 5);
@@ -24,7 +25,7 @@ namespace CampfireCards.Abilities
         public override AbilityStatus Status(Character me)
         {
             var all = Effects.Penalties.Of(NetSend.LocalActor);
-            if (all.Count == 0) return AbilityStatus.Wait(Line(null, "syncing drawback"));
+            if (all.Count == 0) return AbilityStatus.None;   // an F8-restored card has no penalty; a picked one rolls it synchronously
             var parts = new System.Collections.Generic.List<string>();
             foreach (var v in all) parts.Add(BuildStats.Say(Effects.PenaltyValue(Card, v), true, null, StatWords.Of(CardPenaltyRules.ChannelFor(v))));
             return AbilityStatus.Wait(Line(null, string.Join("; ", parts)));

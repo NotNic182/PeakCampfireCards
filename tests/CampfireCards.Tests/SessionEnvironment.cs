@@ -140,6 +140,11 @@ namespace CampfireCards.Cards
         public static void SetFlag(int actor, byte flags, bool on) => PickFlags[actor] = on ? (byte)(Flags(actor) | flags) : (byte)(Flags(actor) & ~flags);
         public static int MythicOwner(byte id) => Owned.FirstOrDefault(p => p.Value.Contains(id)).Value == null
             ? int.MinValue : Owned.First(p => p.Value.Contains(id)).Key;
+        public static Generated.CardDef DoubleDownCard()
+        {
+            var row = System.Array.Find(Generated.CardTable.Cards, c => c.Ability == "DoubleDown");
+            return row != null ? CardSettings.Current.Card(row.Id) : null;
+        }
         public static float PenaltyValue(Generated.CardDef card, byte variant) =>
             CardSettings.Current.Param(card, CardPenaltyRules.Parameter(variant), variant <= 2 ? 1.15f : 1.2f);
         private static bool Condition(Generated.Condition condition, Character me, Generated.CardDef card) => condition == Generated.Condition.always;
@@ -155,6 +160,11 @@ namespace CampfireCards.Abilities
         public static float Get(Character c, CharacterAfflictions.STATUSTYPE t) => c.Statuses.TryGetValue(t, out var v) ? v : 0f;
         public static void Remove(Character c, CharacterAfflictions.STATUSTYPE t, float amount) => c.Statuses[t] = Math.Max(0f, Get(c, t) - amount);
         public static void Add(Character c, CharacterAfflictions.STATUSTYPE t, float amount) => c.Statuses[t] = Get(c, t) + amount;
+        public static void Penalty(Character c, CharacterAfflictions.STATUSTYPE t, float amount)
+        {
+            if (!Core.CardSettings.Current.DrawbacksEnabled) return;
+            Add(c, t, amount);
+        }
     }
     public static class SafeSpot { public static bool Validate(UnityEngine.Vector3 candidate, out UnityEngine.Vector3 pos) { pos = candidate; return true; } }
     public static class Ability_EternalCampfire { public static bool RequestFromTeammate(Character me, int incapEvent) => false; }

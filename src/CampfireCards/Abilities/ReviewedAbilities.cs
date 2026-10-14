@@ -40,6 +40,7 @@ namespace CampfireCards.Abilities
         public override void OnRemoved(Character me) => _paid = false;
         public void OnPull(Character me)
         {
+            if (!S.DrawbacksEnabled) return;   // the pull cost is the card's drawback
             if (_paid) return;
             _paid = true;
             UseStamina(me, P("stamina", .1f), true, false);

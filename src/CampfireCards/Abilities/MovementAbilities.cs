@@ -67,7 +67,7 @@ namespace CampfireCards.Abilities
             if (me.data.extraJumps >= baseExtra + 1) return;   // an amulet jump was used, ours is still there
             _granted = false;
             _cd.Trigger(Now);
-            CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Drowsy, P("drowsy", 0.075f));
+            CardStatus.Penalty(me, CharacterAfflictions.STATUSTYPE.Drowsy, P("drowsy", 0.075f));
         }
 
         public override void OnRemoved(Character me)
@@ -112,7 +112,7 @@ namespace CampfireCards.Abilities
             _m.PenaltyCooldown = P("cooldown", 30f);
             bool sprinting = me.data.isSprinting && me.input.movementInput.y > 0.01f;
             if (_m.Update(dt, sprinting, Now))
-                CardStatus.Add(me, CharacterAfflictions.STATUSTYPE.Drowsy, P("drowsy", 0.075f));
+                CardStatus.Penalty(me, CharacterAfflictions.STATUSTYPE.Drowsy, P("drowsy", 0.075f));
         }
 
         public override bool ConditionFlag(Condition c) => c == Condition.momentumActive && _m.Active;

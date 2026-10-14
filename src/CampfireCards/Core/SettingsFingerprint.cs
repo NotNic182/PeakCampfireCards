@@ -15,7 +15,7 @@ namespace CampfireCards.Core
     /// </summary>
     public sealed class SettingsFingerprint
     {
-        public static readonly string[] RuleNames = { "offer count", "duplicate cards", "Mythics enabled", "stamina-cost reduction cap", "max-stamina floor",
+        public static readonly string[] RuleNames = { "offer count", "duplicate cards", "Mythics enabled", "stamina-cost reduction cap", "max-stamina floor", "drawbacks",
             "card strength on Tenderfoot-Peak", "card strength on Ascent 1-3", "card strength on Ascent 4-6", "card strength on Ascent 7-8" };
 
         public int[] Rules;
@@ -32,7 +32,7 @@ namespace CampfireCards.Core
         {
             var f = new SettingsFingerprint
             {
-                Rules = new[] { s.OfferCount, s.AllowDuplicates ? 1 : 0, s.MythicsEnabled ? 1 : 0, Q(s.StaminaCostCap), Q(s.MaxStaminaFloor),
+                Rules = new[] { s.OfferCount, s.AllowDuplicates ? 1 : 0, s.MythicsEnabled ? 1 : 0, Q(s.StaminaCostCap), Q(s.MaxStaminaFloor), s.DrawbacksEnabled ? 1 : 0,
                     Q(Tier(s, 0)), Q(Tier(s, 1)), Q(Tier(s, 2)), Q(Tier(s, 3)) },
                 Weights = s.RarityWeights.Select(Q).ToArray(),
                 Cards = new int[CardTable.Cards.Length]

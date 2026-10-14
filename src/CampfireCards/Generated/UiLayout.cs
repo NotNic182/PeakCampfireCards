@@ -396,7 +396,9 @@ namespace CampfireCards.Generated
         public const string Down = "passed out";
         public const string PenaltyLabel = "Clown Luggage penalty: ";
         public const string StrengthLine = "{1}: card benefits at {0}% (drawbacks and Mythics at full strength).";
-        public const string FullStrengthLine = "{0}: cards at full strength.";
+        public const string FullStrengthLine = "{0}: card benefits at full strength.";
+        public const string DrawbacksOffLine = "Drawbacks are OFF: cards keep only their benefits.";
+        public const string StrengthLineNoDrawbacks = "{1}: card benefits at {0}% (Mythics at full strength).";
     }
 
 }

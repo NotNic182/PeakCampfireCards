@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.6.8";
+        public const string Version = "0.7.1";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -94,7 +94,7 @@ namespace CampfireCards
             VerboseLog = Config.Bind("Debug", "VerboseLog", false, "Log every card event.");
             DevKeys = Config.Bind("Debug", "DevKeys", false,
                 "Testing keys: F9 lights the current campfire, F10 warps you next to it, F11 shows a sample offer, F8 (host) grants the cards listed in GrantCard, F7 logs the active card effects.");
-            DevGrantCard = Config.Bind("Debug", "GrantCard", "", "Cards the host grants with F8 (DevKeys on), by card key, comma separated: \"GeckoGrip, BloodBattery\" gives them to the host. Add \"; PlayerName: Key, Key\" (in-game name or player number) to give another player cards, e.g. after a rejoin. Re-read on every press.");
+            DevGrantCard = Config.Bind("Debug", "GrantCard", "", "Cards the host grants with F8 (DevKeys on), by card key, comma separated: \"GeckoGrip, BloodBattery\" gives them to the host. Add \"; PlayerName: Key, Key\" (in-game name or player number) to give another player cards, e.g. after a rejoin. Restored cards arrive without their pick-time effects (no Curse, no new Clown penalty, no bonus draws); charges and cooldowns are whatever that player's own game remembers (fresh after a rejoin, kept when the card left and returned on the same PC). A Mythic can be returned even when the deck still counts its old owner. Re-read on every press.");
 
             CardSettings.Current = LoadSettings(Config);
 
@@ -110,9 +110,9 @@ namespace CampfireCards
         /// <summary>
         /// The card balance this build ships. A config written for an older balance gets every card's numbers (modifier
         /// values and parameters) reset to the new defaults once; Enabled choices and every other setting are kept.
-        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min), 6 = 0.6.6 (Daddy reach x1.4).
+        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min), 6 = 0.6.6 (Daddy reach x1.4), 7 = 0.7.1 full rebalance.
         /// </summary>
-        public const int CardBalanceVersion = 6;
+        public const int CardBalanceVersion = 7;
 
         public static CardSettings LoadSettings(ConfigFile cfg)
         {
@@ -122,7 +122,9 @@ namespace CampfireCards
             bool resetCards = balance.Value < CardBalanceVersion;
             bool saveOnSet = cfg.SaveOnConfigSet;
             if (resetCards) cfg.SaveOnConfigSet = false;
-            s.OfferCount = Mathf.Clamp(cfg.Bind("Cards", "OfferCount", CardTable.OfferCount, "Cards offered at each pick (choose 1).").Value, 1, 5);
+            s.OfferCount = Mathf.Clamp(cfg.Bind("Cards", "OfferCount", CardTable.OfferCount, "Cards offered at each pick (choose 1), from 1 to 10.").Value, 1, CardSettings.MaxOfferCount);
+            s.DrawbacksEnabled = cfg.Bind("Cards", "Drawbacks", true,
+                "false = cards lose their drawbacks for the whole lobby: drawback stats do not apply and there are no Curse, Drowsy, Poison or Injury costs, no Clown Luggage penalty, no skipped pick, no pull cost. Benefits are untouched.").Value;
             s.AllowDuplicates = cfg.Bind("Cards", "AllowDuplicates", false, "Allow a player to own the same card more than once (Mythics never repeat).").Value;
             s.MythicsEnabled = cfg.Bind("Cards", "MythicsEnabled", true, "Mythic cards can appear (each at most once per run, for the whole team).").Value;
             s.StaminaCostCap = Mathf.Clamp01(cfg.Bind("Cards", "StaminaCostReductionCapPercent", 60f,
@@ -133,7 +135,7 @@ namespace CampfireCards
             string[] tierKeys = { "CardStrengthTenderfootPeakPercent", "CardStrengthAscent1to3Percent", "CardStrengthAscent4to6Percent", "CardStrengthAscent7to8Percent" };
             for (int t = 0; t < tierKeys.Length && t < s.DifficultyStrength.Length; t++)
                 s.DifficultyStrength[t] = Mathf.Clamp(Current(cfg.Bind("Cards", tierKeys[t], CardTable.DifficultyStrength[t] * 100f,
-                    "How strong card benefits are on " + DifficultyScale.TierNames[t] + ", in percent (100 = as the cards say). Drawbacks and Mythics are never scaled."), resetCards), 5f, 150f) / 100f;
+                    "How strong card benefits are on " + DifficultyScale.TierNames[t] + ", in percent: 100 = as the cards say, below weakens them, above amplifies them. Drawbacks and Mythics are never scaled."), resetCards), 5f, 150f) / 100f;
 
             var names = Enum.GetNames(typeof(CardRarity));
             for (int r = 0; r < names.Length && r < s.RarityWeights.Length; r++)

@@ -138,6 +138,18 @@ namespace CampfireCards.Core
 
         public int Pending => _entries.Count;
 
+        /// <summary>Total delayed Injury waiting to land.</summary>
+        public float PendingAmount
+        {
+            get { float a = 0f; for (int i = 0; i < _entries.Count; i++) a += _entries[i].Amount; return a; }
+        }
+
+        /// <summary>Earliest due time among the pending entries (float.MaxValue when nothing is pending).</summary>
+        public float NextDue
+        {
+            get { float d = float.MaxValue; for (int i = 0; i < _entries.Count; i++) if (_entries[i].Due < d) d = _entries[i].Due; return d; }
+        }
+
         /// <returns>the Injury to apply right now.</returns>
         public float Add(float fallInjury, float now, bool ignoreInvincibility = false, bool ignoreSkeleton = false)
         {

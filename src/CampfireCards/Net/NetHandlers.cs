@@ -185,6 +185,7 @@ namespace CampfireCards.Net
         public static void OnInjuryShare(InjuryShare m, int sender)
         {
             if (sender == NetSend.LocalActor || !Effects.HasAbility(NetSend.LocalActor, "SharedBurden")) return;
+            if (!CardSettings.Current.DrawbacksEnabled) return;   // the absorbed share is the card's drawback
             var me = Character.localCharacter;
             Character victim;
             if (me == null || !PlayerHandler.TryGetCharacter(sender, out victim) || victim == null) return;
