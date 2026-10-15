@@ -36,8 +36,8 @@ namespace CampfireCards.Tests
             var piton = Card("GeckoGrip");
             Assert.Equal(0.88f, s.ModValue(piton, Mod(piton, Channel.climbStamina)), 4);   // benefit untouched
             Assert.Equal(1f, s.ModValue(piton, Mod(piton, Channel.sprintStamina)), 4);     // drawback gone
-            var hold = Card("QuickRecovery");
-            Assert.Equal(0f, s.ModValue(hold, Mod(hold, Channel.maxStamina)), 4);          // -15 max stamina gone
+            var tax = Card("CardioTax");
+            Assert.Equal(0f, s.ModValue(tax, Mod(tax, Channel.maxStamina)), 4);            // the -2.5 max stamina is gone
             var goat = Card("MountainGoat");
             Assert.Equal(1f, s.ModValue(goat, Mod(goat, Channel.fallInjury)), 4);
             var bones = Card("CurseBargain");

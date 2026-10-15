@@ -44,8 +44,8 @@ namespace CampfireCards.Tests
             Assert.Equal(1.05f, s.ModValue(piton, Mod(piton, Channel.sprintStamina)), 4);
             var lungs = Card("DeepLungs");
             Assert.Equal(0.15f, s.ModValue(lungs, Mod(lungs, Channel.maxStamina)), 4);       // +25 -> +15
-            var hold = Card("QuickRecovery");
-            Assert.Equal(-0.05f, s.ModValue(hold, Mod(hold, Channel.maxStamina)), 4);        // the -5 drawback stays
+            var tax = Card("CardioTax");
+            Assert.Equal(-0.025f, s.ModValue(tax, Mod(tax, Channel.maxStamina)), 4);         // the -2.5 drawback stays
         }
 
         [Fact]
@@ -132,9 +132,9 @@ namespace CampfireCards.Tests
         [InlineData("SecondWind", "Press {key} below 20 stamina to recover 23.2. Cooldown: 3.9 min.")]
         [InlineData("BonePlating", "Every 6.5 min alive: a random 15.5s burst of Infinite Stamina, Invincibility or Low Gravity.")]
         [InlineData("DelayedConsequences", "Take 25% of a fall's Injury now and 66% after 20s: 9% less in total.")]
-        [InlineData("BelayBuddy", "You and teammates within 8 m use 12% less climbing stamina.")]
-        [InlineData("HeatHuddle", "Huddling warms you 21% more, from 21% farther away.")]
-        [InlineData("OverhangArtist", "Hang still on a wall to recover 2.4 stamina per second.")]
+        [InlineData("BelayBuddy", "You and teammates within 8 m use 6% less climbing stamina.")]
+        [InlineData("HeatHuddle", "Huddling warms you 45% more, from farther away, and you get cold 12% slower.")]
+        [InlineData("OverhangArtist", "Hang still on a wall to recover 6 stamina per second.")]
         [InlineData("GeckoGrip", "Climbing uses 7.2% less stamina.")]
         public void CardTextShowsTheNumbersThisDifficultyUses(string key, string expected)
         {

@@ -352,7 +352,7 @@
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Cold builds 35% slower while climbing blue ice.",
+      "positive": "Cold builds 30% slower, and another 50% slower while climbing blue ice.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -361,7 +361,14 @@
         [
           "coldRate",
           "mul",
-          0.65,
+          0.7,
+          "always",
+          "self"
+        ],
+        [
+          "coldRate",
+          "mul",
+          0.5,
           "climbingColdSurface",
           "self"
         ]
@@ -378,8 +385,8 @@
       "rarity": "rare",
       "category": "climbing",
       "type": "Conditional passive",
-      "positive": "Hang still on a wall to recover 4 stamina per second.",
-      "negative": "Climb 30% slower.",
+      "positive": "Hang still on a wall to recover 10 stamina per second.",
+      "negative": "Climb 10% slower.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -387,14 +394,14 @@
         [
           "climbSpeed",
           "mul",
-          0.7,
+          0.9,
           "always",
           "self"
         ]
       ],
       "ability": "OverhangRegen",
       "params": {
-        "regenPerSecond": 0.04
+        "regenPerSecond": 0.1
       },
       "theme": "stone",
       "art": "rope"
@@ -581,8 +588,8 @@
       "rarity": "common",
       "category": "stamina",
       "type": "Passive",
-      "positive": "Sprinting uses 15% less stamina.",
-      "negative": "Climbing uses 5% more stamina.",
+      "positive": "Sprinting uses 30% less stamina.",
+      "negative": "You get hungry 10% faster.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -590,14 +597,14 @@
         [
           "sprintStamina",
           "mul",
-          0.85,
+          0.7,
           "always",
           "self"
         ],
         [
-          "climbStamina",
+          "hungerRate",
           "mul",
-          1.05,
+          1.1,
           "always",
           "self"
         ]
@@ -614,23 +621,23 @@
       "rarity": "common",
       "category": "stamina",
       "type": "Conditional passive",
-      "positive": "Hanging still on a wall drains 75% less stamina.",
-      "negative": "Lose 5 maximum stamina.",
+      "positive": "Hanging still on a wall costs no stamina, and you slip and slide 40% less.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [
         [
-          "maxStamina",
-          "add",
-          -0.05,
+          "slipForce",
+          "mul",
+          0.6,
           "always",
           "self"
         ]
       ],
       "ability": "HoldRefund",
       "params": {
-        "refund": 0.75
+        "refund": 1.0
       },
       "theme": "pine",
       "art": "wind"
@@ -663,8 +670,8 @@
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Passive",
-      "positive": "Sprint 25% faster.",
-      "negative": "Lose 7.5 maximum stamina.",
+      "positive": "Sprint 35% faster.",
+      "negative": "Lose 2.5 maximum stamina.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -672,14 +679,14 @@
         [
           "sprintSpeed",
           "mul",
-          1.25,
+          1.35,
           "always",
           "self"
         ],
         [
           "maxStamina",
           "add",
-          -0.075,
+          -0.025,
           "always",
           "self"
         ]
@@ -751,7 +758,7 @@
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "Heat builds 50% slower.",
+      "positive": "Heat builds 70% slower, and you get drowsy 30% slower.",
       "negative": "Cold builds 10% faster.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -760,7 +767,14 @@
         [
           "heatRate",
           "mul",
-          0.5,
+          0.3,
+          "always",
+          "self"
+        ],
+        [
+          "drowsyRate",
+          "mul",
+          0.7,
           "always",
           "self"
         ],
@@ -784,7 +798,7 @@
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "Cold builds 50% slower.",
+      "positive": "Cold builds 70% slower, and huddling warms you 30% more.",
       "negative": "Heat builds 10% faster.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -793,7 +807,14 @@
         [
           "coldRate",
           "mul",
-          0.5,
+          0.3,
+          "always",
+          "self"
+        ],
+        [
+          "huddleStrength",
+          "mul",
+          1.3,
           "always",
           "self"
         ],
@@ -817,7 +838,7 @@
       "rarity": "uncommon",
       "category": "environment",
       "type": "Passive",
-      "positive": "Poison builds 35% slower.",
+      "positive": "Poison builds 70% slower and wears off 50% faster.",
       "negative": "Heat and Cold build 10% faster.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -826,7 +847,14 @@
         [
           "poisonRate",
           "mul",
-          0.65,
+          0.3,
+          "always",
+          "self"
+        ],
+        [
+          "poisonDecay",
+          "mul",
+          1.5,
           "always",
           "self"
         ],
@@ -857,7 +885,7 @@
       "rarity": "uncommon",
       "category": "environment",
       "type": "Passive",
-      "positive": "Spores build 35% slower.",
+      "positive": "Spores build 80% slower, and Poison 15% slower.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -866,7 +894,14 @@
         [
           "sporesRate",
           "mul",
-          0.65,
+          0.2,
+          "always",
+          "self"
+        ],
+        [
+          "poisonRate",
+          "mul",
+          0.85,
           "always",
           "self"
         ]
@@ -883,7 +918,7 @@
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "New Thorns add 40% less status, rounded to the nearest whole thorn.",
+      "positive": "New Thorns add 80% less status, thorns take 50% less time to remove, and hits that are not falls hurt 20% less.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -892,7 +927,21 @@
         [
           "thornsRate",
           "mul",
-          0.6,
+          0.2,
+          "always",
+          "self"
+        ],
+        [
+          "thornRemovalTime",
+          "mul",
+          0.5,
+          "always",
+          "self"
+        ],
+        [
+          "nonFallInjury",
+          "mul",
+          0.8,
           "always",
           "self"
         ]
@@ -909,7 +958,7 @@
       "rarity": "uncommon",
       "category": "environment",
       "type": "Conditional passive",
-      "positive": "Heat wears off 60% faster.",
+      "positive": "Heat wears off 150% faster.",
       "negative": "Heat builds 5% faster.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -918,7 +967,7 @@
         [
           "heatDecay",
           "mul",
-          1.6,
+          2.5,
           "always",
           "self"
         ],
@@ -942,7 +991,7 @@
       "rarity": "uncommon",
       "category": "environment",
       "type": "Conditional passive",
-      "positive": "Cold wears off 60% faster.",
+      "positive": "Cold wears off 150% faster.",
       "negative": "Cold builds 5% faster.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -951,7 +1000,7 @@
         [
           "coldDecay",
           "mul",
-          1.6,
+          2.5,
           "always",
           "self"
         ],
@@ -1030,7 +1079,7 @@
       "rarity": "uncommon",
       "category": "survival",
       "type": "Passive",
-      "positive": "Healing removes 25% more Injury from you.",
+      "positive": "Healing removes 60% more Injury from you.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1039,7 +1088,7 @@
         [
           "healReceived",
           "mul",
-          1.25,
+          1.6,
           "always",
           "self"
         ]
@@ -1266,7 +1315,7 @@
       "rarity": "common",
       "category": "inventory",
       "type": "Passive",
-      "positive": "Held items weigh 35% less.",
+      "positive": "Held items weigh 65% less, and climbing with an item in hand uses 15% less stamina.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1275,8 +1324,15 @@
         [
           "heldItemWeight",
           "mul",
-          0.65,
+          0.35,
           "always",
+          "self"
+        ],
+        [
+          "climbStamina",
+          "mul",
+          0.85,
+          "climbingWithItem",
           "self"
         ]
       ],
@@ -1292,12 +1348,19 @@
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Consumption-triggered",
-      "positive": "Once per biome, your first cooked meal is not consumed.",
+      "positive": "Cooked food fills you up 30% more, and once per biome your first cooked meal is not consumed.",
       "negative": "Uncooked food removes 15% less Hunger.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [
+        [
+          "cookedFoodHunger",
+          "mul",
+          1.3,
+          "always",
+          "self"
+        ],
         [
           "uncookedFoodHunger",
           "mul",
@@ -1410,7 +1473,7 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "You and teammates within 8 m use 20% less climbing stamina.",
+      "positive": "You and teammates within 8 m use 10% less climbing stamina.",
       "negative": "With no teammate within 8 m, climbing uses 5% more stamina.",
       "flavor": "",
       "multiplayerOnly": true,
@@ -1419,14 +1482,14 @@
         [
           "climbStamina",
           "mul",
-          0.8,
+          0.9,
           "always",
           "team"
         ],
         [
           "climbStamina",
           "mul",
-          0.8,
+          0.9,
           "teammateNear",
           "self"
         ],
@@ -1452,8 +1515,8 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Passive",
-      "positive": "Healing items used on teammates remove 60% more Injury.",
-      "negative": "Healing items used on yourself remove 15% less Injury.",
+      "positive": "Healing items used on teammates remove 100% more Injury.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1461,14 +1524,7 @@
         [
           "healGiven",
           "mul",
-          1.6,
-          "always",
-          "self"
-        ],
-        [
-          "healSelfUse",
-          "mul",
-          0.85,
+          2.0,
           "always",
           "self"
         ]
@@ -1485,7 +1541,7 @@
       "rarity": "common",
       "category": "team",
       "type": "Passive",
-      "positive": "Carried scouts weigh 35% less.",
+      "positive": "Carried scouts weigh 75% less, and you pull teammates up from 20% farther away.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
@@ -1494,7 +1550,14 @@
         [
           "carryScoutWeight",
           "mul",
-          0.65,
+          0.25,
+          "always",
+          "self"
+        ],
+        [
+          "helpReach",
+          "mul",
+          1.2,
           "always",
           "self"
         ]
@@ -1511,7 +1574,7 @@
       "rarity": "common",
       "category": "team",
       "type": "Conditional passive",
-      "positive": "Huddling warms you 35% more, from 35% farther away.",
+      "positive": "Huddling warms you 75% more, from farther away, and you get cold 20% slower.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
@@ -1520,7 +1583,14 @@
         [
           "huddleStrength",
           "mul",
-          1.35,
+          1.75,
+          "always",
+          "self"
+        ],
+        [
+          "coldRate",
+          "mul",
+          0.8,
           "always",
           "self"
         ]
@@ -1690,19 +1760,19 @@
       "rarity": "rare",
       "category": "mutation",
       "type": "Acquisition and campfire triggered",
-      "positive": "Gain 30 yellow stamina now, then 20 at each later campfire.",
-      "negative": "Gain 5 Curse now, then 1 at each later campfire, up to 10 Curse in total.",
+      "positive": "Gain 40 yellow stamina now, then 30 at each later campfire.",
+      "negative": "Gain 3 Curse now, then 1 at each later campfire, up to 5 total.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [],
       "ability": "CursedCrown",
       "params": {
-        "bonusNow": 0.3,
-        "bonusFire": 0.2,
-        "curseNow": 0.05,
+        "bonusNow": 0.4,
+        "bonusFire": 0.3,
+        "curseNow": 0.03,
         "curseFire": 0.01,
-        "curseBudget": 0.1
+        "curseBudget": 0.05
       },
       "theme": "ember",
       "art": "star"

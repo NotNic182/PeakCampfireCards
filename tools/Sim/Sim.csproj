@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Card-feel simulator: compiles the mod's real Unity-free card logic (dealing, settings, modifier folding)
+       and plays whole 4-player runs against a stamina-economy model of PEAK built from the game's own constants.
+       Run with: dotnet run -c Release - -project tools/Sim (see Program.cs for flags). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>CampfireCards.Sim</AssemblyName>
+    <RootNamespace>CampfireCards.Sim</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\CampfireCards\Core\*.cs" Link="Core\%(Filename).cs" />
+    <Compile Include="..\..\src\CampfireCards\Generated\CardTable.cs" Link="Generated\CardTable.cs" />
+    <Compile Include="..\..\src\CampfireCards\Generated\ClimbStats.cs" Link="Generated\ClimbStats.cs" />
+  </ItemGroup>
+
+</Project>

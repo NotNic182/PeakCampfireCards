@@ -72,10 +72,12 @@ namespace CampfireCards.Core
             { "keep", ParamKind.Reduction },
         };
 
-        /// <summary>Card-specific exceptions: Big Lollipop Crash's cooldown spaces out its drawback, not a benefit.</summary>
+        /// <summary>Card-specific exceptions: Big Lollipop Crash's cooldown spaces out its drawback, not a benefit, and
+        /// HOLD's full hang refund is all-or-nothing ("costs no stamina" stays true on every difficulty).</summary>
         private static readonly Dictionary<string, ParamKind> ByCard = new Dictionary<string, ParamKind>
         {
             { "MomentumFiend/cooldown", ParamKind.Fixed },
+            { "QuickRecovery/refund", ParamKind.Fixed },
         };
 
         public static ParamKind KindOf(string cardKey, string param)
