@@ -253,7 +253,9 @@ A campfire lit while a pick is still running gets its own pick right after it. L
 - `Card - <Key>`: `Enabled`, every modifier value, and every parameter (thresholds, amounts, cooldowns, radii).
   Statuses and stamina use the game's units, where 0.1 is 10.
 - `Debug`: `VerboseLog`, and `DevKeys` for testing (F9 lights the current campfire, F10 warps you to it,
-  F11 shows a sample offer, F8 lets the host grant the card named in `GrantCard`).
+  F11 shows a sample offer, F8 lets the host grant the card named in `GrantCard`, F6 opens the host's card
+  tester: every card one rarity at a time, click one to add it to your build with its effects, F6 again for
+  the next rarity).
 
 ## Known limitations
 - ROOTS Survivor retains its spores resistance; your proposed Mandrake/Zombie immunity and next-biome zombie

@@ -106,9 +106,10 @@ namespace CampfireCards.Ui
 
         /// <summary>
         /// Pick = the player's campfire choice; Test = dev sample (click closes); Sacrifice = Mountain's Bargain, choose a
-        /// card to give up; Reveal = bonus cards just granted (click or wait to close).
+        /// card to give up; Reveal = bonus cards just granted (click or wait to close); Grant = dev card tester (F6, host
+        /// only): clicking a card grants it to you with its effects, and the fan stays open for more.
         /// </summary>
-        public enum Mode { Pick, Test, Sacrifice, Reveal }
+        public enum Mode { Pick, Test, Sacrifice, Reveal, Grant }
 
         private TextMeshProUGUI _title, _subtitle;
         private RectTransform _fan;
@@ -167,7 +168,7 @@ namespace CampfireCards.Ui
             backdrop.raycastTarget = true;
             backdrop.gameObject.AddComponent<BackdropClick>().OnClick = () =>
             {
-                if (isOpen && (Current == Mode.Reveal || Current == Mode.Test)) HideNow();
+                if (isOpen && (Current == Mode.Reveal || Current == Mode.Test || Current == Mode.Grant)) HideNow();
             };
 
             _title = UiKit.Text(transform, "Title", Ui_Title.Size, Ui_Title.FontSize, Ui_Title.Color, TextAlignmentOptions.Center, FontStyles.Bold | FontStyles.UpperCase);
@@ -219,11 +220,23 @@ namespace CampfireCards.Ui
             Hud.HidePrompt();
         }
 
+        /// <summary>Dev card tester (F6, host): one rarity's cards; a click grants the card to you, with its effects.</summary>
+        public void ShowGrant(byte[] cards, string title)
+        {
+            if (cards == null || cards.Length == 0) return;
+            if (isOpen && (Current == Mode.Pick || Current == Mode.Sacrifice)) return;   // never over a real choice
+            _title.text = title;
+            Open(cards, 0f, Mode.Grant);
+        }
+
+        /// <summary>The tester fan is open (Hooks F6: the next press shows the next rarity).</summary>
+        public bool GrantMenuOpen => isOpen && Current == Mode.Grant;
+
         /// <summary>Bonus cards were just added to the collection: show them (nothing to choose).</summary>
         public void ShowReveal(byte[] cards)
         {
             if (cards == null || cards.Length == 0) return;
-            if (isOpen && (Current == Mode.Pick || Current == Mode.Sacrifice)) return;   // the toast already named them
+            if (isOpen && (Current == Mode.Pick || Current == Mode.Sacrifice || Current == Mode.Grant)) return;   // the toast already named them
             _title.text = Ui_Title.BonusTitle;
             Open(cards, UiTiming.RevealSeconds, Mode.Reveal);
         }
@@ -340,6 +353,10 @@ namespace CampfireCards.Ui
                     Sfx.Play("cardPick");
                     if (cb != null) cb(id);
                     break;
+                case Mode.Grant:
+                    Sfx.Play("cardPick");
+                    PickSession.DevGrantSelf(id);
+                    break;
                 default:
                     HideNow();
                     break;
@@ -422,6 +439,10 @@ namespace CampfireCards.Ui
                     break;
                 case Mode.Test:
                     _subtitle.text = Ui_Subtitle.Text.Replace("{timeLeft}", seconds);
+                    if (CancelPressed()) HideNow();
+                    break;
+                case Mode.Grant:
+                    _subtitle.text = "Click a card to add it to your build. F6: next rarity. Click outside or press Esc to close.";
                     if (CancelPressed()) HideNow();
                     break;
                 default:

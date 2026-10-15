@@ -6,7 +6,7 @@
     <AssemblyName>CampfireCards</AssemblyName>
     <RootNamespace>CampfireCards</RootNamespace>
     <Nullable>disable</Nullable>
-    <Version>0.7.1</Version>
+    <Version>0.7.2</Version>
     <Product>Campfire Cards</Product>
     <Authors>NotNic</Authors>
     <DebugType>portable</DebugType>

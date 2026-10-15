@@ -349,11 +349,28 @@ namespace CampfireCards
             return int.MinValue;
         }
 
-        /// <summary>Testing keys (config Debug.DevKeys): F9 light the current campfire, F10 warp next to it, F11 sample offer, F8 grant a card.</summary>
+        private static int _testerRarity;
+
+        /// <summary>
+        /// Testing keys (config Debug.DevKeys): F9 light the current campfire, F10 warp next to it, F11 sample offer,
+        /// F8 grant a card, F6 the card tester (host), F7 log the active effects.
+        /// </summary>
         private static void DevKeys(Character local)
         {
             var kb = UnityEngine.InputSystem.Keyboard.current;
             if (kb == null) return;
+            // F6: the card tester, one rarity per page. Pressing it again shows the next rarity; Esc or a click outside
+            // the cards closes it. Clicking a card grants it to the host WITH its acquisition effects (PickSession).
+            if (kb.f6Key.wasPressedThisFrame && NetSend.IsHost && Deck.Ready)
+            {
+                var picker = CardPicker.Ensure();
+                int pages = (int)CardRarity.Mythic + 1;
+                _testerRarity = picker.GrantMenuOpen ? (_testerRarity + 1) % pages : 0;
+                var rarity = (CardRarity)_testerRarity;
+                var ids = new List<byte>();
+                foreach (var def in CardTable.Cards) if (def.Rarity == rarity) ids.Add(def.Id);
+                picker.ShowGrant(ids.ToArray(), $"Card tester: {Deck.RarityName(rarity)} ({_testerRarity + 1}/{pages})");
+            }
             if (kb.f9Key.wasPressedThisFrame)
             {
                 Campfire fire = null;
