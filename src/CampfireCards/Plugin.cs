@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.7.4";
+        public const string Version = "0.7.5";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -89,10 +89,11 @@ namespace CampfireCards
             BuildScreenPad = Config.Bind("Keys", "BuildScreenGamepad", Controls.Auto, "Controller button for the Current Build screen." + padNote);
             VerboseLog = Config.Bind("Debug", "VerboseLog", false, "Log every card event.");
             DevKeys = Config.Bind("Debug", "DevKeys", false,
-                "Testing keys: F9 lights the current campfire, F10 warps you next to it, F11 shows a sample offer, F8 (host) grants the cards listed in GrantCard, F7 logs the active card effects, F6 (host) opens the card tester: every card one rarity at a time, click one to add it to your build with its effects (press F6 again for the next rarity).");
-            DevGrantCard = Config.Bind("Debug", "GrantCard", "", "Cards the host grants with F8 (DevKeys on), by card key, comma separated: \"GeckoGrip, BloodBattery\" gives them to the host. Add \"; PlayerName: Key, Key\" (in-game name or player number) to give another player cards, e.g. after a rejoin. Restored cards arrive without their pick-time effects (no Curse, no new Clown penalty, no bonus draws); charges and cooldowns are whatever that player's own game remembers (fresh after a rejoin, kept when the card left and returned on the same PC). A Mythic can be returned even when the deck still counts its old owner. Re-read on every press.");
+                "Testing keys: F9 lights the current campfire, F10 warps you next to it, F11 shows a sample offer, F8 (host) restores everyone's cards from the saved run (or grants the cards listed in GrantCard when it is not empty), F7 logs the active card effects, F6 (host) opens the card tester: every card one rarity at a time, click one to add it to your build with its effects (press F6 again for the next rarity).");
+            DevGrantCard = Config.Bind("Debug", "GrantCard", "", "What the host's F8 grants (DevKeys on). LEFT EMPTY, F8 gives every player in the room their cards from the saved run back (the mod keeps everyone's cards on disk by player name, so this works after a crash, a rejoin or a relaunch). Otherwise: card keys, comma separated: \"GeckoGrip, BloodBattery\" gives them to the host; add \"; PlayerName: Key, Key\" (in-game name or player number) to give another player cards. Restored cards arrive without their pick-time effects (no Curse, no new Clown penalty, no bonus draws); charges and cooldowns are whatever that player's own game remembers. A Mythic can be returned even when the deck still counts its old owner. Re-read on every press.");
 
             CardSettings.Current = LoadSettings(Config);
+            RunMemoryFile.Subscribe();
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);

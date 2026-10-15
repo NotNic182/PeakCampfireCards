@@ -9,6 +9,12 @@ namespace CampfireCards.Cards
 {
     public static partial class Effects
     {
+        /// <summary>After a player's collection changed (add, remove or sync). Cards/RunMemoryFile mirrors the state to
+        /// disk so the host can give everyone their cards back after a crash or rejoin; tests leave it unset.</summary>
+        public static System.Action<int> CollectionChanged;
+        /// <summary>A SetAll in progress: its per-card adds report once, at the end.</summary>
+        private static bool _bulkChange;
+
         /// <summary>
         /// A card joins a player's collection. live = picked or granted right now (acquisition effects run); false = state
         /// sync. Returns false when the card was refused (unknown, or a duplicate the rules do not allow).
@@ -32,6 +38,7 @@ namespace CampfireCards.Cards
             if (live && def.Ability == "DoubleDown" && CardSettings.Current.DrawbacksEnabled) SetFlag(actor, FlagOfferOne, true);
             if (actor == NetSend.LocalActor) LocalCards.OnAcquired(def, live);
             Hud.RefreshMyCards();
+            if (!_bulkChange && CollectionChanged != null) CollectionChanged(actor);
             return true;
         }
 
@@ -43,6 +50,7 @@ namespace CampfireCards.Cards
             var def = CardSettings.Current.Card(cardId);
             if (actor == NetSend.LocalActor && def != null && !list.Contains(cardId)) LocalCards.OnRemoved(def);
             Hud.RefreshMyCards();
+            if (!_bulkChange && CollectionChanged != null) CollectionChanged(actor);
         }
 
         /// <summary>Reconcile a synced collection without resetting abilities that the local scout still owns.</summary>
@@ -58,8 +66,11 @@ namespace CampfireCards.Cards
                 }
             }
             CardsByActor[actor] = new List<byte>();
-            foreach (var id in restored) AddCard(actor, id, false);
+            _bulkChange = true;
+            try { foreach (var id in restored) AddCard(actor, id, false); }
+            finally { _bulkChange = false; }
             PickFlags[actor] = flags;
+            if (CollectionChanged != null) CollectionChanged(actor);
         }
     }
 }

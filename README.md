@@ -231,6 +231,12 @@ The host is in charge:
 
 A campfire lit while a pick is still running gets its own pick right after it. Late joiners receive everyone's cards.
 
+The mod also remembers the run on disk: everyone's cards are saved by player name as they change
+(`BepInEx/config/notnic.campfirecards.run.txt`, with the previous run kept beside it). After a crash, a rejoin or a
+relaunch, a host with `DevKeys` on presses **F8** (with `GrantCard` empty) and every scout in the room gets their
+saved cards back — without re-paying any pick-time costs. Restore promptly: the memory holds the current run and
+the one before it.
+
 ## Config
 `BepInEx/config/notnic.campfirecards.cfg`:
 
@@ -253,9 +259,9 @@ A campfire lit while a pick is still running gets its own pick right after it. L
   same version plays the same, intended cards. Settings written by versions before 0.7.4 (the 64 per-card
   sections, `Rarity Weights`, the balance knobs) are removed from the file once on launch.
 - `Debug`: `VerboseLog`, and `DevKeys` for testing (F9 lights the current campfire, F10 warps you to it,
-  F11 shows a sample offer, F8 lets the host grant the card named in `GrantCard`, F6 opens the host's card
-  tester: every card one rarity at a time, click one to add it to your build with its effects, F6 again for
-  the next rarity).
+  F11 shows a sample offer, F8 restores everyone's cards from the saved run — or grants the cards listed in
+  `GrantCard` when that entry is not empty — F6 opens the host's card tester: every card one rarity at a
+  time, click one to add it to your build with its effects, F6 again for the next rarity).
 
 ## Known limitations
 - ROOTS Survivor retains its spores resistance; your proposed Mandrake/Zombie immunity and next-biome zombie

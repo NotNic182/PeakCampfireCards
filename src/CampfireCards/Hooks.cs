@@ -97,6 +97,7 @@ namespace CampfireCards
             RunState.RunStarted = true;
             RunState.OnIsland = true;
             LocalCards.OnRunStarted(Environment.TickCount ^ (NetSend.LocalActor * 7919));
+            RunMemoryFile.OnRunStarted(LocalCards.RunSeed);
             PickSession.OnRunStarted();
             Hud.Ensure();
             if (!NetSend.IsHost) NetSend.Raise(NetHandlers.MakeHello(), Photon.Realtime.ReceiverGroup.Others);
@@ -107,6 +108,7 @@ namespace CampfireCards
         public static void OnRunEnded()
         {
             RunState.Reset();
+            RunMemoryFile.OnRunEnded();
             Hud.CloseAll();
         }
 
@@ -399,9 +401,12 @@ namespace CampfireCards
             {
                 // re-read the file so GrantCard can be edited while the game runs
                 try { Plugin.Instance.Config.Reload(); } catch (Exception e) { Plugin.Log.LogWarning("Config reload: " + e.Message); }
-                // "Key, Key" grants the host; "; Name: Key, Key" grants another player by in-game name (or player number),
-                // so a host can give everyone back their cards after a rejoin or a continued save
-                foreach (var entry in (Plugin.DevGrantCard?.Value ?? "").Split(';'))
+                string grantList = Plugin.DevGrantCard != null ? Plugin.DevGrantCard.Value : "";
+                // GrantCard empty: everyone in the room gets their cards from the saved run back (Cards/RunMemoryFile).
+                // Otherwise "Key, Key" grants the host; "; Name: Key, Key" grants another player by in-game name (or
+                // player number), so a host can give specific cards back after a rejoin or a continued save.
+                if (grantList.Trim().Length == 0) RunMemoryFile.RestoreAll();
+                else foreach (var entry in grantList.Split(';'))
                 {
                     string list = entry;
                     int actor = NetSend.LocalActor;

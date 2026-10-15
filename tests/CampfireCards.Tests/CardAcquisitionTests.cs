@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using CampfireCards.Abilities;
 using CampfireCards.Cards;
@@ -148,6 +149,24 @@ namespace CampfireCards.Tests
             Assert.DoesNotContain(dishonor.Id, Effects.CardsOf(1));
             PickSession.DevGrantSelf(dishonor.Id);
             Assert.Contains(dishonor.Id, Effects.CardsOf(1));
+        }
+
+        [Fact]
+        public void CollectionChangedFiresOncePerAddRemoveAndSync()
+        {
+            var fired = new List<int>();
+            Effects.CollectionChanged = fired.Add;
+            try
+            {
+                var gecko = Card("GeckoGrip"); var hold = Card("QuickRecovery");
+                Effects.AddCard(1, gecko.Id, live: false);
+                Assert.Equal(new[] { 1 }, fired);
+                Effects.RemoveCard(1, gecko.Id);
+                Assert.Equal(new[] { 1, 1 }, fired);
+                Effects.SetAll(2, new[] { gecko.Id, hold.Id }, 0);   // one report for the whole sync, not one per card
+                Assert.Equal(new[] { 1, 1, 2 }, fired);
+            }
+            finally { Effects.CollectionChanged = null; }
         }
 
         [Fact]
