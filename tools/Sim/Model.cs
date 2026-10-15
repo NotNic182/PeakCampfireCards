@@ -99,6 +99,19 @@ namespace CampfireCards.Sim
         public const float TeamWeight = 0.5f;
         public const int Teammates = 3;
 
+        // ---- flat utility assumptions used by single ability/channel formulas (pts/biome unless noted)
+        public const float HuddleUtilityPer100 = 25f;        // warmth on demand
+        public const float PetrifyInsurancePer100 = 25f;     // kiln-biome insurance
+        public const float SecondSpringUtility = 50f;        // a double jump on a short cooldown
+        public const float ScavengerFinds = 25f;             // marked food/heal items actually collected
+        public const float LuckyLunchMealSaved = 15f;        // one cooked meal per biome not consumed
+        public const float PocketLockCost = 20f;             // pocket three unusable
+        public const float SharedBurdenAbsorbCost = 15f;     // teammate injury taken onto yourself (capped per hit)
+        public const float BalloonBunchValue = 60f;          // Balright's one Balloon Bunch, whole run
+        public const float HealItemCredit = 0.3f;            // share of a heal item's points that matter
+        public const float PurgeAvailability = 0.5f;         // biomes where a 25+ status exists to purge
+        public const float ChoiceValuePerOption = 10f;       // each card an offer is reduced by costs this much choice
+
         /// <summary>Fraction of time each card condition holds (of the activity it gates).</summary>
         public static readonly Dictionary<Condition, float> Uptime = new Dictionary<Condition, float>
         {

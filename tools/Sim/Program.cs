@@ -27,7 +27,15 @@ namespace CampfireCards.Sim
             string outDir = Path.Combine("build", "sim");
             foreach (var a in args)
             {
-                if (a.StartsWith("runs=")) runs = int.Parse(a.Substring(5));
+                if (a.StartsWith("runs="))
+                {
+                    if (!int.TryParse(a.Substring(5), out runs) || runs < 1)
+                    {
+                        Console.Error.WriteLine("usage: dotnet run --project tools/Sim [-- runs=<n>=1> out=<dir>]");
+                        Environment.ExitCode = 2;
+                        return;
+                    }
+                }
                 if (a.StartsWith("out=")) outDir = a.Substring(4);
             }
             Directory.CreateDirectory(outDir);
@@ -76,7 +84,7 @@ namespace CampfireCards.Sim
                             stats[id].Offered++;
                             var cd = s.Card(id);
                             owned[p].Add(id);
-                            float v = BuildValue(owned[p], s) - before + 0.5f * Valuer.TeamValue(cd, s);
+                            float v = BuildValue(owned[p], s) - before + 0.5f * standalone[id].team;
                             // a draw card's future cards count at pick time (they are not in the build yet)
                             if (cd.DrawsCards) v += Valuer.AbilityValue(cd, s, 1f, drawsResolved: false) - Valuer.AbilityValue(cd, s, 1f, drawsResolved: true);
                             owned[p].RemoveAt(owned[p].Count - 1);
@@ -97,7 +105,7 @@ namespace CampfireCards.Sim
                 for (int p = 0; p < Players; p++)
                 {
                     // rank finished builds in the same currency they were drafted in: self plus half the team effect
-                    float teamPart = owned[p].Distinct().Sum(id => { var d = s.Card(id); return d == null ? 0f : 0.5f * Valuer.TeamValue(d, s); });
+                    float teamPart = owned[p].Distinct().Sum(id => 0.5f * standalone[id].team);
                     topBuilds.Add((BuildValue(owned[p], s) + teamPart, new List<byte>(owned[p])));
                 }
             }
@@ -121,7 +129,7 @@ namespace CampfireCards.Sim
             foreach (var id in CardDraw.Offer(rng, s, build, rules))
             {
                 build.Add(id);
-                stats[id].Picked++;
+                stats[id].Drawn++;   // arrived by a bonus draw, not a choice at an offer
                 var d = s.Card(id);
                 if (d != null && d.Rarity == CardRarity.Mythic) claimed.Add(id);
             }
@@ -152,7 +160,7 @@ namespace CampfireCards.Sim
 
         private sealed class CardStats
         {
-            public int Offered, Picked, BestInOffer, MarginalN;
+            public int Offered, Picked, Drawn, BestInOffer, MarginalN;
             public float MarginalSum;
         }
 
@@ -169,19 +177,20 @@ namespace CampfireCards.Sim
                 St = stats[c.Id],
             }).OrderByDescending(r => r.Headline).ToList();
 
-            var csv = new StringBuilder("key,name,rarity,selfPtsPerBiome,teamPtsPerBiome,headline,tier,offered,pickedGreedy,bestInOfferShare,avgMarginal\n");
+            var csv = new StringBuilder("key,name,rarity,selfPtsPerBiome,teamPtsPerBiome,headline,tier,offered,pickedGreedy,drawnAsBonus,bestInOfferShare,avgMarginal\n");
             foreach (var r in rows)
             {
                 float bestShare = r.St.Offered > 0 ? (float)r.St.BestInOffer / r.St.Offered : 0f;
                 float marginal = r.St.MarginalN > 0 ? r.St.MarginalSum / r.St.MarginalN : 0f;
-                csv.Append($"{r.Def.Key},\"{r.Def.Name}\",{r.Def.Rarity},{r.Self:0.0},{r.Team:0.0},{r.Headline:0.0},{TierOf(r.Headline)},{r.St.Offered},{r.St.Picked},{bestShare:0.000},{marginal:0.0}\n");
+                csv.Append($"{r.Def.Key},\"{r.Def.Name}\",{r.Def.Rarity},{r.Self:0.0},{r.Team:0.0},{r.Headline:0.0},{TierOf(r.Headline)},{r.St.Offered},{r.St.Picked},{r.St.Drawn},{bestShare:0.000},{marginal:0.0}\n");
             }
             File.WriteAllText(Path.Combine(outDir, "sim-cards.csv"), csv.ToString());
 
             offerBests.Sort();
             float Pct(double p) => offerBests[(int)(p * (offerBests.Count - 1))];
             var top = builds.OrderByDescending(b => b.value).Take(builds.Count / 4).ToList();
-            var pickRate = CardTable.Cards.ToDictionary(c => c.Id, c => Math.Max(1, stats[c.Id].Picked));
+            // presence in builds, however the card arrived: picked at an offer or drawn as a bonus
+            var pickRate = CardTable.Cards.ToDictionary(c => c.Id, c => Math.Max(1, stats[c.Id].Picked + stats[c.Id].Drawn));
             var inTop = new Dictionary<byte, int>();
             foreach (var b in top) foreach (var id in b.cards.Distinct()) inTop[id] = inTop.TryGetValue(id, out var n) ? n + 1 : 1;
             var chase = inTop.Where(kv => pickRate[kv.Key] >= builds.Count / 100)   // noise guard: picked in >=1% of builds

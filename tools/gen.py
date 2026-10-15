@@ -333,11 +333,36 @@ def gen_ui(ui):
     return '\n'.join(lines) + '\n'
 
 
+def update_readme_card_table(cards):
+    """The README's card rows come from cards.json like everything else, so the table can never drift."""
+    path = os.path.join(ROOT, 'README.md')
+    by_name = {r['name']: r for r in cards['rows']}
+    row_re = re.compile(r'^\| (.+?) \| (Common|Uncommon|Rare|Legendary|Mythic) \| ')
+    with open(path, encoding='utf-8') as f:
+        lines = f.read().split('\n')
+    changed = 0
+    for i, line in enumerate(lines):
+        m = row_re.match(line)
+        if not m or m.group(1) not in by_name:
+            continue
+        c = by_name[m.group(1)]
+        neg = c['negative'] if c['negative'] else 'No drawback'
+        new = '| %s | %s | %s | %s |' % (c['name'], c['rarity'].capitalize(), c['positive'], neg)
+        if new != line:
+            lines[i] = new
+            changed += 1
+    if changed:
+        with open(path, 'w', encoding='utf-8', newline='\n') as f:
+            f.write('\n'.join(lines))
+    return changed
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
+    cards = load('cards.json')
     outputs = {
         'ClimbStats.cs': gen_stats(load('stats.json'), load('conditions.json')),
-        'CardTable.cs': gen_cards(load('cards.json')),
+        'CardTable.cs': gen_cards(cards),
         'HarmonyHooks.cs': gen_hooks(load('hooks.json')),
         'NetEvents.cs': gen_net(load('net.json')),
         'UiLayout.cs': gen_ui(load('ui.json')),
@@ -349,6 +374,9 @@ def main():
         with open(path, 'w', encoding='utf-8', newline='\n') as f:
             f.write(text)
         print('wrote', os.path.relpath(path, ROOT), len(text.splitlines()), 'lines')
+    rows = update_readme_card_table(cards)
+    if rows:
+        print('updated', rows, 'README card row(s)')
 
 
 if __name__ == '__main__':

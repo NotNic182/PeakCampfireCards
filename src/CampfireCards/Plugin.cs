@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.7.6";
+        public const string Version = "0.7.7";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }

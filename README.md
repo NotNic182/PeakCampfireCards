@@ -131,7 +131,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Just hot. | Common | Cold builds 70% slower, and huddling warms you 30% more. | Heat builds 10% faster. |
 | Antidote Enthusiast | Uncommon | Poison builds 70% slower and wears off 50% faster. | Heat and Cold build 10% faster. |
 | ROOTS Survivor | Uncommon | Spores build 80% slower, and Poison 15% slower. | No drawback |
-| Cactus? What Cactus? | Common | New Thorns add 80% less status, thorns take 50% less time to remove, and hits that are not falls hurt 20% less. | No drawback |
+| Cactus? What Cactus? | Common | New Thorns add 80% less status (at least one thorn always counts), thorns take 50% less time to remove, and hits that are not falls hurt 20% less. | No drawback |
 | Aloe | Uncommon | Heat wears off 150% faster. | Heat builds 5% faster. |
 | Heat Pack | Uncommon | Cold wears off 150% faster. | Cold builds 5% faster. |
 | Fartberry Fitness | Rare | Above 20 Poison, climbing uses 40% less stamina. | Poison wears off 10% slower. |
@@ -176,7 +176,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Cookie Addiction | Uncommon | Gain 25 maximum stamina. | Hunger builds 15% faster. |
 | Nic of Time | Rare | Press {key} below 20 stamina to recover 30. Cooldown: 3 min. | No drawback |
 | Hasty Badge Training | Common | Sprinting uses 30% less stamina. | You get hungry 10% faster. |
-| HOLD | Common | Hanging still on a wall costs no stamina, and you slip and slide 40% less. | No drawback |
+| HOLD | Common | Hanging still on a wall costs almost no stamina, and you slip and slide 40% less. | No drawback |
 | Meditation | Uncommon | Crouch and stay still for 3s to gain 25 yellow stamina. Once per biome. | No drawback |
 | I'm getting Scoutmastered | Uncommon | Sprint 35% faster. | Lose 2.5 maximum stamina. |
 | Endurance Badge | Rare | Climb for 2s straight: climbing uses 40% less stamina for the next 2s. | No drawback |

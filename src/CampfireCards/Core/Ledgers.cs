@@ -106,8 +106,9 @@ namespace CampfireCards.Core
             return _scaled;
         }
 
-        /// <summary>Whole thorn units for the game's 0.025 status steps (a half is rounded up, so one thorn is never erased).</summary>
-        public int ScaledSteps => (int)Math.Floor(_scaled + 0.5f + 1e-4f);
+        /// <summary>Whole thorn units for the game's 0.025 status steps. A half is rounded up, and while any thorn is
+        /// stuck at least one unit always counts, so no multiplier can erase thorns outright (that power is Mythic-only).</summary>
+        public int ScaledSteps => _raw <= 0 ? 0 : Math.Max(1, (int)Math.Floor(_scaled + 0.5f + 1e-4f));
 
         public void Reset() { _raw = 0; _scaled = 0f; }
     }

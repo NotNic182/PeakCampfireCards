@@ -368,6 +368,21 @@ namespace CampfireCards.Tests
         }
 
         [Fact]
+        public void StrongMultipliersNeverEraseAStuckThornOutright()
+        {
+            // thornsRate 0.2 (the 0.7.6 Thornbreaker): one thorn scales to 0.2, which must still show as one unit
+            var l = new ThornsLedger();
+            l.Update(1, 0.2f);
+            Assert.Equal(1, l.ScaledSteps);
+            l.Update(2, 0.2f);
+            Assert.Equal(1, l.ScaledSteps);
+            l.Update(10, 0.2f);                // 10 x 0.2 = 2 units: the 80% discount holds in bulk
+            Assert.Equal(2, l.ScaledSteps);
+            l.Update(0, 0.2f);                 // all pulled out: nothing lingers
+            Assert.Equal(0, l.ScaledSteps);
+        }
+
+        [Fact]
         public void WeightRecalculationsNeverReduceThornsAgain()
         {
             var l = new ThornsLedger();
@@ -637,6 +652,16 @@ namespace CampfireCards.Tests
             var lines = BuildStats.Lines(r, r);
             Assert.Equal("none", BuildStats.Format(lines.Single(l => l.Label == "Climbing stamina cost").Now, true, null));
             Assert.DoesNotContain(lines, l => l.Label == ChannelTable.Defs[(int)Channel.invSlots].Label);
+        }
+
+        [Fact]
+        public void TwoModsOnOneChannelFromOneCardMultiplyInTheFold()
+        {
+            // Surefooted (0.7.6) is the first card stacking an always and a conditional mod on the same channel for
+            // the same target: on blue ice both apply and the fold must multiply them, not keep one
+            var s = new CardSettings();
+            var r = Fold(s, ("Surefooted", m => true));
+            Assert.Equal(0.7f * 0.5f, r[Channel.coldRate], 4);
         }
 
         [Fact]

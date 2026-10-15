@@ -22,8 +22,8 @@ namespace CampfireCards.Abilities
             if (me.input.movementInput.magnitude >= 0.1f) return;
             if (me.refs.climbing.playerSlide.sqrMagnitude > 0.01f) return;      // sliding is not hanging still
             // The game still charges a small grip cost while hanging (up to 2/s on steep walls) and that blocks normal
-            // regeneration; give it back so hanging still really recovers the card's full 4 per second.
-            me.AddStamina(P("regenPerSecond", 0.04f) * dt + spent);
+            // regeneration; give it back so hanging still really recovers the card's full regen per second.
+            me.AddStamina(P("regenPerSecond", 0.1f) * dt + spent);
         }
 
         public override void OnRemoved(Character me) => _climbSpent = 0f;
@@ -48,7 +48,7 @@ namespace CampfireCards.Abilities
             if (!d.isClimbing || d.isRopeClimbing || d.isVineClimbing) return;   // wall only
             if (me.input.movementInput.magnitude >= 0.1f) return;
             if (me.refs.climbing.playerSlide.sqrMagnitude > 0.01f) return;      // sliding is not hanging still
-            me.AddStamina(spent * P("refund", 0.75f));
+            me.AddStamina(spent * P("refund", 1f));
         }
 
         public override void OnRemoved(Character me) => _climbSpent = 0f;

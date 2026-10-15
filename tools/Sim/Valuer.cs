@@ -82,8 +82,8 @@ namespace CampfireCards.Sim
                 + (r[Channel.climbSpeed] - 1f) * Profile.ClimbPaceUtilityPer100
                 + (r[Channel.sprintSpeed] - 1f) * Profile.SprintPaceUtilityPer100
                 + (1f - r[Channel.slipForce]) * Profile.SlipUtilityPer100
-                + (r[Channel.huddleStrength] - 1f) * 25f                       // warmth on demand
-                + (1f - r[Channel.petrifyRate]) * 25f;                         // kiln-biome insurance
+                + (r[Channel.huddleStrength] - 1f) * Profile.HuddleUtilityPer100
+                + (1f - r[Channel.petrifyRate]) * Profile.PetrifyInsurancePer100;
             // helpReach and healGiven are teammate-facing: valued in TeamValue at the same half weight as auras
 
             // symmetric: reducing fall injury buys survival, raising it costs survival
@@ -153,6 +153,8 @@ namespace CampfireCards.Sim
                 case "": return 0f;
                 case "CampfireBonus": return pts(P("bonus", 0.15f)) * Y;                       // yellow at every fire (1/biome)
                 case "CursedCrown":
+                    // the curse is front-loaded (most of the budget lands at acquisition), so the whole budget is
+                    // charged as if held from biome one - the conservative end
                     return pts(P("bonusNow")) * Y / 4f + pts(P("bonusFire")) * Y
                            - pts(P("curseBudget")) / 4f * StickOf("curse") * Profile.BarValue;
                 case "LoadedDice":
@@ -171,11 +173,11 @@ namespace CampfireCards.Sim
                     return uses * pts(P("restore")) * Y * 1.2f;                                 // emergency timing premium
                 }
                 case "EmergencyPurge":
-                    return pts(P("remove")) * 0.5f /*threshold reached*/ * 0.5f * Profile.BarValue;
+                    return pts(P("remove")) * Profile.PurgeAvailability * 0.5f * Profile.BarValue;
                 case "OverhangRegen":   // the ability also refunds the grip drain the game charged while hanging
                     return pts(P("regenPerSecond")) * Profile.HangSeconds * 0.7f + Profile.HangSeconds * Profile.HangDrain;
                 case "SecondSpring":                                                            // double jump on cooldown
-                    return 50f - 2f * pts(P("drowsy")) * StickOf("drowsy") * Profile.BarValue;
+                    return Profile.SecondSpringUtility - 2f * pts(P("drowsy")) * StickOf("drowsy") * Profile.BarValue;
                 case "PulseClimber": return 0f;                                                 // its value is the conditional mod
                 case "MomentumFiend":
                     return -2f * pts(P("drowsy")) * StickOf("drowsy") * Profile.BarValue;       // crash penalty; speed is the mod
@@ -184,7 +186,7 @@ namespace CampfireCards.Sim
                     float perBiome = Profile.BiomeSeconds / Math.Max(60f, P("interval", 300f));
                     return perBiome * 25f;                                                      // avg of the three 20s powers
                 }
-                case "HoldRefund": return Profile.HangSeconds * Profile.HangDrain * P("refund", 0.75f);
+                case "HoldRefund": return Profile.HangSeconds * Profile.HangDrain * P("refund", 1f);
                 case "PhoenixClause":   // one save per run; the skipped pick is only owed when the save fires
                     return Profile.DeathCost * 0.45f / 4f - 0.45f * AvgBonusCardValue / 4f;
                 case "DelayedConsequences":
@@ -205,20 +207,20 @@ namespace CampfireCards.Sim
                 case "DoubleDown":
                     return (drawsResolved ? 0f : P("bonusCards", 2f) * AvgBonusCardValueToRare)
                            - pts(P("curse")) * StickOf("curse") * Profile.BarValue
-                           - 15f;                                                               // the reduced next offer costs choice
+                           - Math.Max(0f, s.OfferCount - (float)Math.Round(P("nextOffer", 2f))) * Profile.ChoiceValuePerOption;
                 case "CampChef":                                                                // penalty for raw cookables; benefit is the mod
                     return -0.3f * pts(P("poison")) * StickOf("poison") * Profile.BarValue;
                 case "HungryHands":
                     return Profile.MealsPerBiome * Profile.UptimeOf(Condition.injury20) * pts(P("heal")) * 0.5f * Profile.BarValue;
-                case "LuckyLunch": return 15f;                                                  // one meal per biome not consumed
+                case "LuckyLunch": return Profile.LuckyLunchMealSaved;
                 case "CleansingRitual":
                     return Profile.CurativesPerBiome * pts(P("bonus")) * 0.5f * Profile.BarValue;
-                case "PocketTradeoff": return -20f;                                             // pocket 3 locked; weight cut is the mod
-                case "CampfireSpawn": return Profile.InjuryPerHeal * 0.3f * Profile.BarValue;   // a bandage at every fire
-                case "NextCampfireSpawn": return 60f / 4f;                                      // one Balloon Bunch per run
-                case "ScavengersInstinct": return 25f;                                          // found food/heal items
+                case "PocketTradeoff": return -Profile.PocketLockCost;                          // weight cut is the mod
+                case "CampfireSpawn": return Profile.InjuryPerHeal * Profile.HealItemCredit * Profile.BarValue;   // a bandage at every fire
+                case "NextCampfireSpawn": return Profile.BalloonBunchValue / 4f;
+                case "ScavengersInstinct": return Profile.ScavengerFinds;
                 case "HelpCost": return -1.5f * pts(P("stamina"));                              // pull fee; reach is team utility
-                case "SharedBurden": return -15f;                                               // absorbed teammate injury (capped per hit)
+                case "SharedBurden": return -Profile.SharedBurdenAbsorbCost;
                 case "CampfireMeal": return Profile.Status["hunger"].load * 0.5f * Profile.BarValue;   // hunger cleared each fire
                 case "HerosArrival": return 0.3f * pts(P("bonus")) * Y;                         // you are reviver or revived in ~0.3 events/biome
                 case "EternalCampfire":                                                         // shared auto-revive leaves 40 injury
@@ -261,7 +263,7 @@ namespace CampfireCards.Sim
                 // self-target but teammate-facing: helping hands and heals used ON teammates count here, at the
                 // same half weight every aura gets, not as personal power
                 if (m.Channel == Channel.helpReach) { total += (v - 1f) * Profile.HelpReachTeamUtilityPer100 * Profile.Teammates; continue; }
-                if (m.Channel == Channel.healGiven) { total += (v - 1f) * 0.5f * Profile.InjuryPerHeal * 0.3f * Profile.BarValue; continue; }
+                if (m.Channel == Channel.healGiven) { total += (v - 1f) * 0.5f * Profile.InjuryPerHeal * Profile.HealItemCredit * Profile.BarValue; continue; }
                 if (m.Target == ModTarget.self) continue;
                 float u = Profile.UptimeOf(m.When == Condition.always ? Condition.teammateNear : m.When);
                 float eff = m.Op == ModOp.mul ? 1f + (v - 1f) * u : m.Op == ModOp.add ? v * u : v;
