@@ -66,7 +66,8 @@ namespace CampfireCards.Tests
             Effects.CardsOf(2).Add(Card("CampChoir").Id);
             Effects.CardsOf(3).Add(Card("CampChoir").Id);
             Effects.Recompute(Character.localCharacter);
-            Assert.Equal(1.15f, Effects.Local[Channel.regenRate], 5);
+            // Eternal Campfire's +35 and the Choir's +10, each counted once across the two owners
+            Assert.Equal(0.45f, Effects.Local[Channel.maxStamina], 5);
             Assert.Equal(injury.Value, Effects.Local[Channel.allInjury]);
         }
     }

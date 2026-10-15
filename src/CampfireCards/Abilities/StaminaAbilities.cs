@@ -1,5 +1,6 @@
 using CampfireCards.Cards;
 using CampfireCards.Core;
+using CampfireCards.Generated;
 using CampfireCards.Net;
 using UnityEngine;
 
@@ -55,6 +56,36 @@ namespace CampfireCards.Abilities
                 ? AbilityStatus.Ok(Line(null, "Curse budget spent: later fires are free"))
                 : AbilityStatus.Wait(Line(null, $"Curse charged so far: {Points(_charged)} of {Points(budget)}"));
         }
+    }
+
+    /// <summary>Meditation: crouch and stay still for a few seconds to gain yellow stamina, once per biome.</summary>
+    public sealed class Ability_Meditation : Ability
+    {
+        private readonly Charge _charge = new Charge(perBiome: true);
+        private float _held;
+
+        public override void Tick(Character me, float dt)
+        {
+            var d = me.data;
+            // the same crouch-and-still reading the card conditions use (Effects.Condition crouchStill)
+            bool still = !d.dead && !d.passedOut && d.isCrouching && me.input.movementInput.sqrMagnitude < 0.01f;
+            if (!still || !_charge.Available(LocalCards.Biome)) { _held = 0f; return; }
+            _held += dt;
+            float hold = P("hold", 3f);
+            if (_held < hold) return;
+            // the game clamps yellow stamina to a full bar: a grant that would vanish keeps the charge (and stays
+            // primed, so it fires the moment there is room again)
+            float before = d.extraStamina;
+            me.AddExtraStamina(P("bonus", 0.25f));
+            float gained = d.extraStamina - before;
+            if (gained <= 0.0001f) { _held = hold; return; }
+            _held = 0f;
+            _charge.TryUse(LocalCards.Biome);
+            Ui.Hud.Toast($"{Card.Name}: +{Points(gained)} extra stamina");
+        }
+
+        public override AbilityStatus Status(Character me) =>
+            BiomeCharge(_charge.Available(LocalCards.Biome), ready: Ui_AbilityBar.Ready + " (crouch and stay still)");
     }
 
     /// <summary>Loaded Dice: one roll at the start of each biome (60% bonus stamina, else Injury). The weight cut is a modifier.</summary>

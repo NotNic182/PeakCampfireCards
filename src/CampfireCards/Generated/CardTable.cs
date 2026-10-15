@@ -20,7 +20,7 @@ namespace CampfireCards.Generated
     public static class CardTable
     {
         public const int OfferCount = 3;
-        public static readonly float[] RarityWeights = new float[] { 48.0f, 32.0f, 16.5f, 3.0f, 0.5f };
+        public static readonly float[] RarityWeights = new float[] { 40.0f, 40.0f, 16.5f, 3.0f, 0.5f };
         /// <summary>Card benefit strength by difficulty: Tenderfoot-Peak, Ascent 1-3, Ascent 4-6, Ascent 7-8 (Core.DifficultyScale).</summary>
         public static readonly float[] DifficultyStrength = new float[] { 1.0f, 1.0f, 1.0f, 1.0f };
         public static readonly Rgba[] RarityColors = new Rgba[] { new Rgba(0.62f, 0.62f, 0.62f, 1.0f), new Rgba(0.36f, 0.8f, 0.36f, 1.0f), new Rgba(0.4f, 0.63f, 1.0f, 1.0f), new Rgba(0.76f, 0.5f, 1.0f, 1.0f), new Rgba(1.0f, 0.8f, 0.22f, 1.0f) };
@@ -73,12 +73,12 @@ namespace CampfireCards.Generated
             new CardDef { Id = 11, Key = "MarathonLegs", Name = "Hasty Badge Training", Rarity = CardRarity.Common, Category = "stamina", Type = "Passive", Positive = "Sprinting uses 15% less stamina.", Negative = "Climbing uses 5% more stamina.", Flavor = "", MultiplayerOnly = false, DrawsCards = false,
                 Mods = new ModDef[] { new ModDef { Channel = Channel.sprintStamina, Op = ModOp.mul, Value = 0.85f, When = Condition.always, Target = ModTarget.self }, new ModDef { Channel = Channel.climbStamina, Op = ModOp.mul, Value = 1.05f, When = Condition.always, Target = ModTarget.self } },
                 Ability = "", Params = new Dictionary<string, float> {  }, Theme = 1, Art = 7 },
-            new CardDef { Id = 12, Key = "QuickRecovery", Name = "HOLD", Rarity = CardRarity.Common, Category = "stamina", Type = "Passive", Positive = "Stamina regeneration starts 0.5s sooner.", Negative = "Lose 5 maximum stamina.", Flavor = "", MultiplayerOnly = false, DrawsCards = false,
-                Mods = new ModDef[] { new ModDef { Channel = Channel.regenDelay, Op = ModOp.add, Value = -0.5f, When = Condition.always, Target = ModTarget.self }, new ModDef { Channel = Channel.maxStamina, Op = ModOp.add, Value = -0.05f, When = Condition.always, Target = ModTarget.self } },
-                Ability = "", Params = new Dictionary<string, float> {  }, Theme = 1, Art = 7 },
-            new CardDef { Id = 13, Key = "QuietBreathing", Name = "Meditation", Rarity = CardRarity.Uncommon, Category = "stamina", Type = "Conditional passive", Positive = "Crouch and stay still to recover stamina 35% faster.", Negative = "", Flavor = "You're already crouched. Take a breather.", MultiplayerOnly = false, DrawsCards = false,
-                Mods = new ModDef[] { new ModDef { Channel = Channel.regenRate, Op = ModOp.mul, Value = 1.35f, When = Condition.crouchStill, Target = ModTarget.self } },
-                Ability = "", Params = new Dictionary<string, float> {  }, Theme = 1, Art = 7 },
+            new CardDef { Id = 12, Key = "QuickRecovery", Name = "HOLD", Rarity = CardRarity.Common, Category = "stamina", Type = "Conditional passive", Positive = "Hanging still on a wall drains 75% less stamina.", Negative = "Lose 5 maximum stamina.", Flavor = "", MultiplayerOnly = false, DrawsCards = false,
+                Mods = new ModDef[] { new ModDef { Channel = Channel.maxStamina, Op = ModOp.add, Value = -0.05f, When = Condition.always, Target = ModTarget.self } },
+                Ability = "HoldRefund", Params = new Dictionary<string, float> { { "refund", 0.75f } }, Theme = 1, Art = 7 },
+            new CardDef { Id = 13, Key = "QuietBreathing", Name = "Meditation", Rarity = CardRarity.Uncommon, Category = "stamina", Type = "Conditional passive", Positive = "Crouch and stay still for 3s to gain 25 yellow stamina. Once per biome.", Negative = "", Flavor = "You're already crouched. Take a breather.", MultiplayerOnly = false, DrawsCards = false,
+                Mods = new ModDef[] {  },
+                Ability = "Meditation", Params = new Dictionary<string, float> { { "hold", 3.0f }, { "bonus", 0.25f } }, Theme = 1, Art = 7 },
             new CardDef { Id = 14, Key = "CardioTax", Name = "I'm getting Scoutmastered", Rarity = CardRarity.Uncommon, Category = "stamina", Type = "Passive", Positive = "Sprint 25% faster.", Negative = "Lose 7.5 maximum stamina.", Flavor = "", MultiplayerOnly = false, DrawsCards = false,
                 Mods = new ModDef[] { new ModDef { Channel = Channel.sprintSpeed, Op = ModOp.mul, Value = 1.25f, When = Condition.always, Target = ModTarget.self }, new ModDef { Channel = Channel.maxStamina, Op = ModOp.add, Value = -0.075f, When = Condition.always, Target = ModTarget.self } },
                 Ability = "", Params = new Dictionary<string, float> {  }, Theme = 1, Art = 7 },
@@ -181,8 +181,8 @@ namespace CampfireCards.Generated
             new CardDef { Id = 47, Key = "SharedBurden", Name = "Take One for the Troop", Rarity = CardRarity.Rare, Category = "team", Type = "Proximity aura", Positive = "Teammates within 6 m take 30% less Injury.", Negative = "You take a quarter of the prevented Injury, up to 5 per hit.", Flavor = "", MultiplayerOnly = true, DrawsCards = false,
                 Mods = new ModDef[] { new ModDef { Channel = Channel.allInjury, Op = ModOp.mul, Value = 0.7f, When = Condition.always, Target = ModTarget.team } },
                 Ability = "SharedBurden", Params = new Dictionary<string, float> { { "radius", 6.0f }, { "absorb", 0.25f }, { "cap", 0.05f } }, Theme = 8, Art = 3 },
-            new CardDef { Id = 48, Key = "CampChoir", Name = "Friendship Bugle Choir", Rarity = CardRarity.Uncommon, Category = "team", Type = "Proximity aura", Positive = "You and teammates within 8 m recover stamina 15% faster.", Negative = "", Flavor = "", MultiplayerOnly = true, DrawsCards = false,
-                Mods = new ModDef[] { new ModDef { Channel = Channel.regenRate, Op = ModOp.mul, Value = 1.15f, When = Condition.always, Target = ModTarget.team }, new ModDef { Channel = Channel.regenRate, Op = ModOp.mul, Value = 1.15f, When = Condition.teammateNear, Target = ModTarget.self } },
+            new CardDef { Id = 48, Key = "CampChoir", Name = "Friendship Bugle Choir", Rarity = CardRarity.Uncommon, Category = "team", Type = "Proximity aura", Positive = "You and teammates within 8 m gain 10 maximum stamina.", Negative = "", Flavor = "", MultiplayerOnly = true, DrawsCards = false,
+                Mods = new ModDef[] { new ModDef { Channel = Channel.maxStamina, Op = ModOp.add, Value = 0.1f, When = Condition.always, Target = ModTarget.team }, new ModDef { Channel = Channel.maxStamina, Op = ModOp.add, Value = 0.1f, When = Condition.teammateNear, Target = ModTarget.self } },
                 Ability = "", Params = new Dictionary<string, float> { { "radius", 8.0f } }, Theme = 8, Art = 1 },
             new CardDef { Id = 49, Key = "RocketAnkles", Name = "Scout Cannon Legs", Rarity = CardRarity.Rare, Category = "mutation", Type = "Passive", Positive = "Sprint 35% faster and jump 25% higher.", Negative = "Take 25% more fall Injury.", Flavor = "", MultiplayerOnly = false, DrawsCards = false,
                 Mods = new ModDef[] { new ModDef { Channel = Channel.sprintSpeed, Op = ModOp.mul, Value = 1.35f, When = Condition.always, Target = ModTarget.self }, new ModDef { Channel = Channel.jumpHeight, Op = ModOp.mul, Value = 1.25f, When = Condition.always, Target = ModTarget.self }, new ModDef { Channel = Channel.fallInjury, Op = ModOp.mul, Value = 1.25f, When = Condition.always, Target = ModTarget.self } },

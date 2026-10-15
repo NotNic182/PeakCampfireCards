@@ -21,8 +21,8 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
 
 | Rarity | Colour | Weight |
 |---|---|---|
-| Common | gray | 48.0 |
-| Uncommon | green | 32.0 |
+| Common | gray | 40.0 |
+| Uncommon | green | 40.0 |
 | Rare | blue | 16.5 |
 | Legendary | purple | 3.0 |
 | Mythic | gold | 0.5 |
@@ -31,9 +31,9 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
   player per run.
 - Percentage effects stack by multiplying. Flat maximum-stamina changes add up.
 - Since the 0.7.1 rebalance the cards play at full strength on every difficulty (all four tiers default to 100%). The
-  tiers remain available (cards.json difficultyStrength, the card sheet's Difficulty tab, or the CardStrength config
-  entries): below 100% weakens benefits, above amplifies them, and the card text shows the number in play. Drawbacks
-  and Mythics never scale.
+  tiers remain in the design sheets (cards.json difficultyStrength, the card sheet's Difficulty tab): below 100%
+  weakens benefits, above amplifies them, and the card text shows the number in play. Drawbacks and Mythics never
+  scale.
   When a card's numbers multiply into one benefit (amount x cooldown), the strength is shared between them.
 - Stamina-cost discounts from normal cards have a soft cap at 60%: past it, extra discounts still help but at reduced
   strength (a stack worth 80% off gives about 72%). Normal cards cannot pull maximum stamina below 50.
@@ -176,8 +176,8 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Cookie Addiction | Uncommon | Gain 25 maximum stamina. | Hunger builds 15% faster. |
 | Nic of Time | Rare | Press {key} below 20 stamina to recover 30. Cooldown: 3 min. | No drawback |
 | Hasty Badge Training | Common | Sprinting uses 15% less stamina. | Climbing uses 5% more stamina. |
-| HOLD | Common | Stamina regeneration starts 0.5s sooner. | Lose 5 maximum stamina. |
-| Meditation | Uncommon | Crouch and stay still to recover stamina 35% faster. | No drawback |
+| HOLD | Common | Hanging still on a wall drains 75% less stamina. | Lose 5 maximum stamina. |
+| Meditation | Uncommon | Crouch and stay still for 3s to gain 25 yellow stamina. Once per biome. | No drawback |
 | I'm getting Scoutmastered | Uncommon | Sprint 25% faster. | Lose 7.5 maximum stamina. |
 | Endurance Badge | Rare | Climb for 2s straight: climbing uses 40% less stamina for the next 2s. | No drawback |
 | Marshmallow Morale | Common | Each new campfire clears your Hunger. | Cooked food removes 10% less Hunger. |
@@ -206,7 +206,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Otto-Matic Clutch | Rare | First teammate revive by feeding or statue each biome: both gain 100 yellow stamina. | No drawback |
 | You're alright, you're alright | Common | Pull teammates up from 30% farther away. | Starting a pull costs a base 5 stamina, once per continuous reach. |
 | Take One for the Troop | Rare | Teammates within 6 m take 30% less Injury. | You take a quarter of the prevented Injury, up to 5 per hit. |
-| Friendship Bugle Choir | Uncommon | You and teammates within 8 m recover stamina 15% faster. | No drawback |
+| Friendship Bugle Choir | Uncommon | You and teammates within 8 m gain 10 maximum stamina. | No drawback |
 
 ### Wildcard
 
@@ -222,7 +222,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 ## Playing together
 Co-op for up to 4, exactly like PEAK: host a game and invite friends through Steam. Every player needs the same
 version of the mod with the same card settings. When they differ, both sides get a warning that names what differs
-(for example "rarity weights" or "cards: Piton Fingers"). Sound, key and debug settings are your own and never count.
+(for example "offer count" or "cards: Piton Fingers"). Sound, key and debug settings are your own and never count.
 
 The host is in charge:
 - It deals the offers and checks every pick: a card must come from your own offer, in the current session, once.
@@ -242,16 +242,16 @@ A campfire lit while a pick is still running gets its own pick right after it. L
     gives you that long to choose before the host takes a random card of your offer (minimum 5 seconds).
     **Set it to `0` for unlimited time**: no countdown, automatic pick or reading-time cutoff. In Turns mode,
     everyone waits until the current scout chooses; in Simultaneous mode, each scout can choose independently.
-    Version 0.5.1 upgrades an existing 30-second default to 60 once, preserving other durations. To deliberately
-    use 30 seconds, set it after that first launch. Sacrifice choices follow the same host timer.
+    Sacrifice choices follow the same host timer.
   - `PickMode`: `Simultaneous` (default) or `Turns`. The host's choice applies to everyone.
 - `Keys`: `SecondWind` (V), `EmergencyPurge` (K), `BloodBattery` (B), `SafetyNet` (N), `BuildScreen` (J).
 - `Cards`: `OfferCount` (3; 1 to 10 cards per pick), `Drawbacks` (false = cards keep only their benefits),
-  `AllowDuplicates`, `MythicsEnabled`, `StaminaCostReductionCapPercent` (60, a soft cap), `MaxStaminaFloor` (50),
-  `CardStrength...Percent` (the four difficulty tiers).
-- `Rarity Weights`: one weight per rarity.
-- `Card - <Key>`: `Enabled`, every modifier value, and every parameter (thresholds, amounts, cooldowns, radii).
-  Statuses and stamina use the game's units, where 0.1 is 10.
+  `AllowDuplicates`, `MythicsEnabled`, and `DisabledCards` (cards that are never offered, comma separated, by the
+  name on the card; for the three names that themselves contain a comma, use the card key from
+  `design/editable/card-editing.csv` instead, e.g. `LuckyLunch` for Cook It, Keep It). That is the whole card config on purpose: card numbers, rarity weights and the balance
+  internals are not configurable — they come from the design sheets compiled into the mod, so every player on the
+  same version plays the same, intended cards. Settings written by versions before 0.7.4 (the 64 per-card
+  sections, `Rarity Weights`, the balance knobs) are removed from the file once on launch.
 - `Debug`: `VerboseLog`, and `DevKeys` for testing (F9 lights the current campfire, F10 warps you to it,
   F11 shows a sample offer, F8 lets the host grant the card named in `GrantCard`, F6 opens the host's card
   tester: every card one rarity at a time, click one to add it to your build with its effects, F6 again for
@@ -262,8 +262,7 @@ A campfire lit while a pick is still running gets its own pick right after it. L
   spawn need verification against 2.6.b assets. See [the review](docs/card-edit-review.md).
 - BingBong's native Low Gravity power floats; it does not provide unrestricted flight.
 - Bing Bong's Baggage blocks new items in your third pocket while keeping existing items retrievable.
-  Fresh configs enable the card; previous `Enabled=false` choices remain. Set `[Card - PackRat] Enabled = true`
-  to re-enable it after upgrading. Balance version 3 refreshes numerical card defaults once.
+  Since 0.7.4 a card is only ever off while it is listed in `DisabledCards`.
 - New source-specific hooks and native buff behavior still need a multiplayer playtest on PEAK 2.6.b.
 - Cook It, Keep It keeps the food in hand. Food that leaves a peel spawns no peel that time.
 - Tara scales the Injury healed by items, the Healing Amulet, the Remedy Fungus puff and mushrooms. First Aid Badge's

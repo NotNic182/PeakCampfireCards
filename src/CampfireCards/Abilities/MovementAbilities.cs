@@ -30,6 +30,31 @@ namespace CampfireCards.Abilities
     }
 
     /// <summary>
+    /// HOLD: most of the grip drain charged while hanging still on a wall (not a rope or vine) is given back. The refund
+    /// mirrors Ability_OverhangRegen: Hooks.Movement notes each climb cost and the next tick returns its share only when
+    /// that tick is still hanging still, so a climb jump out of the rest is billed at full price and never discounted.
+    /// </summary>
+    public sealed class Ability_HoldRefund : Ability
+    {
+        private static float _climbSpent;
+        public static void NoteClimbCost(float usage) { if (usage > 0f && LocalCards.Get<Ability_HoldRefund>() != null) _climbSpent += usage; }
+
+        public override void Tick(Character me, float dt)
+        {
+            float spent = _climbSpent;
+            _climbSpent = 0f;
+            if (spent <= 0f) return;
+            var d = me.data;
+            if (!d.isClimbing || d.isRopeClimbing || d.isVineClimbing) return;   // wall only
+            if (me.input.movementInput.magnitude >= 0.1f) return;
+            if (me.refs.climbing.playerSlide.sqrMagnitude > 0.01f) return;      // sliding is not hanging still
+            me.AddStamina(spent * P("refund", 0.75f));
+        }
+
+        public override void OnRemoved(Character me) => _climbSpent = 0f;
+    }
+
+    /// <summary>
     /// Second Spring: one extra midair jump on a cooldown. The game consumes the grounded jump first, so a normal jump
     /// never uses it. Using it adds Drowsy and starts the cooldown; it cannot refresh itself.
     /// </summary>

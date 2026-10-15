@@ -45,6 +45,8 @@ PARAMS = {
     'bonusFire': (POINTS, 100.0, 'Yellow stamina at each later campfire'),
     'bonusNow': (POINTS, 100.0, 'Yellow stamina when picked'),
     'boost': (SECONDS, 1.0, 'Boost length'),
+    'hold': (SECONDS, 1.0, 'Time to stay still'),
+    'refund': (PERCENT, 100.0, 'Share of the drain given back'),
     'buildup': (SECONDS, 1.0, 'Time before it kicks in'),
     'cap': (POINTS, 100.0, 'Most Injury you take per hit'),
     'chance': (PERCENT, 100.0, 'Chance of a lucky roll'),
@@ -80,6 +82,9 @@ CARD_LABELS = {
     ('HerosArrival', 'bonus'): 'Yellow stamina for both scouts',
     ('LoadedDice', 'bonus'): 'Yellow stamina on a lucky roll',
     ('BloodBattery', 'bonus'): 'Yellow stamina per use',
+    ('QuietBreathing', 'bonus'): 'Yellow stamina gained',
+    ('QuietBreathing', 'hold'): 'Crouch time required',
+    ('QuickRecovery', 'refund'): 'Hanging drain refunded',
     ('PulseClimber', 'buildup'): 'Climbing time before the boost',
     ('MomentumFiend', 'buildup'): 'Sprint time before the speed-up',
     ('SecondSpring', 'cooldown'): 'Double jump cooldown',
@@ -451,7 +456,7 @@ def apply(path, check=False):
 
 
 def bump_balance_version():
-    """Saved configs keep old card numbers; a new balance version refreshes them once (Enabled choices are kept)."""
+    """Mark a numbers change in the shipped balance (a revision marker; card values are not in the config)."""
     src = PLUGIN.read_text(encoding='utf-8')
     m = re.search(r'public const int CardBalanceVersion = (\d+);', src)
     if not m:
@@ -461,7 +466,7 @@ def bump_balance_version():
     src = src.replace(m.group(0), f'public const int CardBalanceVersion = {n};')
     src = re.sub(r'(/// 1 = 0\.3\.0[^\n]*?)\.\n', lambda x: x.group(1) + f', {n} = card sheet edit.\n', src, count=1)
     PLUGIN.write_text(src, encoding='utf-8')
-    print(f'Balance version -> {n} (saved card numbers refresh once on next launch)')
+    print(f'Balance revision -> {n}')
 
 
 def main():

@@ -27,8 +27,8 @@
   ],
   "offerCount": 3,
   "rarityWeights": {
-    "common": 48.0,
-    "uncommon": 32.0,
+    "common": 40.0,
+    "uncommon": 40.0,
     "rare": 16.5,
     "legendary": 3.0,
     "mythic": 0.5
@@ -613,20 +613,13 @@
       "name": "HOLD",
       "rarity": "common",
       "category": "stamina",
-      "type": "Passive",
-      "positive": "Stamina regeneration starts 0.5s sooner.",
+      "type": "Conditional passive",
+      "positive": "Hanging still on a wall drains 75% less stamina.",
       "negative": "Lose 5 maximum stamina.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [
-        [
-          "regenDelay",
-          "add",
-          -0.5,
-          "always",
-          "self"
-        ],
         [
           "maxStamina",
           "add",
@@ -635,8 +628,10 @@
           "self"
         ]
       ],
-      "ability": "",
-      "params": {},
+      "ability": "HoldRefund",
+      "params": {
+        "refund": 0.75
+      },
       "theme": "pine",
       "art": "wind"
     },
@@ -647,22 +642,17 @@
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Conditional passive",
-      "positive": "Crouch and stay still to recover stamina 35% faster.",
+      "positive": "Crouch and stay still for 3s to gain 25 yellow stamina. Once per biome.",
       "negative": "",
       "flavor": "You're already crouched. Take a breather.",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "regenRate",
-          "mul",
-          1.35,
-          "crouchStill",
-          "self"
-        ]
-      ],
-      "ability": "",
-      "params": {},
+      "mods": [],
+      "ability": "Meditation",
+      "params": {
+        "hold": 3,
+        "bonus": 0.25
+      },
       "theme": "pine",
       "art": "wind"
     },
@@ -1625,23 +1615,23 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "You and teammates within 8 m recover stamina 15% faster.",
+      "positive": "You and teammates within 8 m gain 10 maximum stamina.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
       "mods": [
         [
-          "regenRate",
-          "mul",
-          1.15,
+          "maxStamina",
+          "add",
+          0.1,
           "always",
           "team"
         ],
         [
-          "regenRate",
-          "mul",
-          1.15,
+          "maxStamina",
+          "add",
+          0.1,
           "teammateNear",
           "self"
         ]

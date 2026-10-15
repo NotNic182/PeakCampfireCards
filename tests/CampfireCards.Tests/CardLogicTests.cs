@@ -77,7 +77,7 @@ namespace CampfireCards.Tests
         [Fact]
         public void DefaultRarityWeightsMatchSpec()
         {
-            Assert.Equal(new[] { 48f, 32f, 16.5f, 3f, 0.5f }, CardTable.RarityWeights);
+            Assert.Equal(new[] { 40f, 40f, 16.5f, 3f, 0.5f }, CardTable.RarityWeights);
             Assert.Equal(3, CardTable.OfferCount);
         }
     }
@@ -205,8 +205,8 @@ namespace CampfireCards.Tests
             var counts = new int[5];
             const int n = 400000;
             for (int i = 0; i < n; i++) counts[(int)CardDraw.RollRarity(rng, S, all)]++;
-            Assert.InRange(counts[0] / (double)n, 0.475, 0.485);
-            Assert.InRange(counts[1] / (double)n, 0.315, 0.325);
+            Assert.InRange(counts[0] / (double)n, 0.395, 0.405);
+            Assert.InRange(counts[1] / (double)n, 0.395, 0.405);
             Assert.InRange(counts[2] / (double)n, 0.160, 0.170);
             Assert.InRange(counts[3] / (double)n, 0.027, 0.033);
             Assert.InRange(counts[4] / (double)n, 0.004, 0.006);

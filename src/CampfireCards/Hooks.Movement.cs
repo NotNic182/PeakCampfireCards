@@ -60,7 +60,7 @@ namespace CampfireCards
             if (usage <= 0f || !Mine(__instance)) return true;
             bool climbing = _climbCtx == __instance && _climbDepth > 0;
             usage *= Core.StatComposites.StaminaCost(Effects.Local, climbing);
-            if (climbing) Ability_OverhangRegen.NoteClimbCost(usage);
+            if (climbing) { Ability_OverhangRegen.NoteClimbCost(usage); Ability_HoldRefund.NoteClimbCost(usage); }
             if (usage <= 0f)
             {
                 __result = true;

@@ -16,14 +16,14 @@ namespace CampfireCards
 {
     /// <summary>
     /// Campfire Cards: a BepInEx 5 plugin for PEAK. Every climber picks a card on the beach and at every lit campfire;
-    /// cards change how they climb, eat, fall and recover. 64 cards, five rarities, all values in the config.
+    /// cards change how they climb, eat, fall and recover. 64 cards, five rarities, all values from the design sheets.
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.7.2";
+        public const string Version = "0.7.4";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -72,10 +72,6 @@ namespace CampfireCards
                     new AcceptableValueRange<float>(0f, UiTiming.MaxUiScale)));
             PickTimeoutSeconds = Config.Bind("General", "PickTimeoutSeconds", UiTiming.PickTimeoutSeconds,
                 "Seconds to choose a card (default 60). Set to 0 for unlimited time, with no automatic pick. Positive values have a minimum of 5. The host's value is used for everyone.");
-            var timerVersion = Config.Bind("General", "PickTimerSettingsVersion", 0,
-                "Tracks the one-time upgrade from the old 30-second default to 60 seconds. Leave this value as it is.");
-            PickTimeoutSeconds.Value = PickTiming.UpgradeLegacyDefault(PickTimeoutSeconds.Value, timerVersion.Value);
-            timerVersion.Value = 1;
             PickModeSetting = Config.Bind("General", "PickMode", PickMode.Simultaneous,
                 "Simultaneous: everyone chooses at the same time (the last to reach the fire is still dealt first and listed first). " +
                 "Turns: one player at a time, last to the fire first. The host's choice is used for everyone.");
@@ -106,77 +102,68 @@ namespace CampfireCards
             Log.LogInfo($"{Name} {Version} loaded.");
         }
 
-        /// <summary>Every tunable number of the card system, from the config (defaults come from design/cards.json).</summary>
         /// <summary>
-        /// The card balance this build ships. A config written for an older balance gets every card's numbers (modifier
-        /// values and parameters) reset to the new defaults once; Enabled choices and every other setting are kept.
-        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min), 6 = 0.6.6 (Daddy reach x1.4), 7 = 0.7.1 full rebalance.
+        /// The balance revision the design sheets carry (tools/card_sheet.py bumps it when a sheet edit changes numbers).
+        /// Card values are not configurable: the sheets compiled into the mod are the single source of truth, so this is
+        /// a revision marker, not a config key.
+        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min), 6 = 0.6.6 (Daddy reach x1.4), 7 = 0.7.1 full rebalance, 8 = 0.7.3 (regen benefits reworked, rarity weights 40/40).
         /// </summary>
-        public const int CardBalanceVersion = 7;
+        public const int CardBalanceVersion = 8;
 
+        /// <summary>
+        /// The lobby options. Card numbers, rarity weights and the balance internals (cost cap, stamina floor, difficulty
+        /// strengths) are deliberately NOT configurable: they come from the design sheets compiled into the mod, so every
+        /// player on the same version plays the same, intended cards. Entries older versions wrote into the file (the 64
+        /// per-card sections, Rarity Weights, the balance knobs) are removed once below.
+        /// </summary>
         public static CardSettings LoadSettings(ConfigFile cfg)
         {
             var s = new CardSettings();
-            var balance = cfg.Bind("Cards", "BalanceVersion", 0,
-                "The card balance the card values below were written for. When the mod's balance changes, card values are reset to the new defaults once (Enabled is kept). Leave it as it is.");
-            bool resetCards = balance.Value < CardBalanceVersion;
-            bool saveOnSet = cfg.SaveOnConfigSet;
-            if (resetCards) cfg.SaveOnConfigSet = false;
-            s.OfferCount = Mathf.Clamp(cfg.Bind("Cards", "OfferCount", CardTable.OfferCount, "Cards offered at each pick (choose 1), from 1 to 10.").Value, 1, CardSettings.MaxOfferCount);
+            s.OfferCount = Mathf.Clamp(cfg.Bind("Cards", "OfferCount", CardTable.OfferCount,
+                "Cards offered at each pick (choose 1), from 1 to 10. The host's value is used for everyone.").Value, 1, CardSettings.MaxOfferCount);
             s.DrawbacksEnabled = cfg.Bind("Cards", "Drawbacks", true,
                 "false = cards lose their drawbacks for the whole lobby: drawback stats do not apply and there are no Curse, Drowsy, Poison or Injury costs, no Clown Luggage penalty, no skipped pick, no pull cost. Benefits are untouched.").Value;
             s.AllowDuplicates = cfg.Bind("Cards", "AllowDuplicates", false, "Allow a player to own the same card more than once (Mythics never repeat).").Value;
             s.MythicsEnabled = cfg.Bind("Cards", "MythicsEnabled", true, "Mythic cards can appear (each at most once per run, for the whole team).").Value;
-            s.StaminaCostCap = Mathf.Clamp01(cfg.Bind("Cards", "StaminaCostReductionCapPercent", 60f,
-                "Soft cap: once normal cards together lower a stamina cost by this many percent, further discounts count at reduced strength (80% off becomes about 72%). Mythics ignore the cap.").Value / 100f);
-            s.MaxStaminaFloor = Mathf.Clamp01(cfg.Bind("Cards", "MaxStaminaFloor", 50f,
-                "Normal cards combined cannot pull maximum stamina below this (100 = a full bar).").Value / 100f);
+            var disabled = cfg.Bind("Cards", "DisabledCards", "",
+                "Cards that are never offered, comma separated, by the name on the card. Example: \"BingBong, Fine Print\". " +
+                "For a name that itself contains a comma, use the card key from design/editable/card-editing.csv instead.");
 
-            string[] tierKeys = { "CardStrengthTenderfootPeakPercent", "CardStrengthAscent1to3Percent", "CardStrengthAscent4to6Percent", "CardStrengthAscent7to8Percent" };
-            for (int t = 0; t < tierKeys.Length && t < s.DifficultyStrength.Length; t++)
-                s.DifficultyStrength[t] = Mathf.Clamp(Current(cfg.Bind("Cards", tierKeys[t], CardTable.DifficultyStrength[t] * 100f,
-                    "How strong card benefits are on " + DifficultyScale.TierNames[t] + ", in percent: 100 = as the cards say, below weakens them, above amplifies them. Drawbacks and Mythics are never scaled."), resetCards), 5f, 150f) / 100f;
-
-            var names = Enum.GetNames(typeof(CardRarity));
-            for (int r = 0; r < names.Length && r < s.RarityWeights.Length; r++)
-                s.RarityWeights[r] = Mathf.Max(0f, cfg.Bind("Rarity Weights", names[r], CardTable.RarityWeights[r],
-                    "Relative chance that an offered card is " + names[r] + ".").Value);
-
-            var cards = CardTable.Cards;
-            for (int i = 0; i < cards.Length; i++)
+            // Everything this build reads is bound above or in Awake (LoadSettings runs last), so any other entry in the
+            // file was written by an older version and would sit in config editors as a setting this build never reads.
+            // A card someone had turned off in the old per-card sections stays off: it moves into DisabledCards.
+            try
             {
-                var c = cards[i];
-                string section = "Card - " + c.Key;
-                s.Enabled[i] = cfg.Bind(section, "Enabled", true, $"{c.Name} ({c.Rarity}) can be offered.").Value;
-                var seen = new Dictionary<string, int>();
-                for (int m = 0; m < c.Mods.Length; m++)
+                var orphans = Traverse.Create(cfg).Property("OrphanedEntries").GetValue() as Dictionary<ConfigDefinition, string>;
+                if (orphans != null && orphans.Count > 0)
                 {
-                    var mod = c.Mods[m];
-                    string key = mod.Channel.ToString();
-                    int n;
-                    seen[key] = seen.TryGetValue(key, out n) ? n + 1 : 1;
-                    if (seen[key] > 1) key += "_" + seen[key];
-                    string desc = $"{mod.Op} {mod.Channel} when {mod.When} for {mod.Target}. Multipliers: 1 = no change; flat stamina: 0.1 = 10 stamina.";
-                    s.ModValues[i][m] = Current(cfg.Bind(section, key, mod.Value, desc), resetCards);
+                    var kept = new List<string>();
+                    foreach (var kv in orphans)
+                        if (kv.Key.Section.StartsWith("Card - ") && kv.Key.Key == "Enabled" && string.Equals(kv.Value.Trim(), "false", StringComparison.OrdinalIgnoreCase))
+                            kept.Add(kv.Key.Section.Substring("Card - ".Length));
+                    if (kept.Count > 0)
+                    {
+                        if (disabled.Value.Trim().Length > 0) kept.Insert(0, disabled.Value.Trim());
+                        disabled.Value = string.Join(", ", kept);
+                    }
+                    Log.LogInfo($"Config: removed {orphans.Count} setting(s) written by older versions" +
+                        (kept.Count > 0 ? $"; kept {kept.Count} disabled card(s) in DisabledCards." : "."));
+                    orphans.Clear();
+                    cfg.Save();
                 }
-                foreach (var kv in c.Params)
-                    s.Params[i][kv.Key] = Current(cfg.Bind(section, "Param_" + kv.Key, kv.Value, "Card parameter (statuses and stamina: 0.1 = 10)."), resetCards);
             }
-            if (resetCards)
+            catch (Exception e) { Log.LogWarning("Stale config cleanup: " + e.Message); }
+
+            foreach (var token in disabled.Value.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                if (balance.Value > 0) Log.LogWarning($"Card balance updated to version {CardBalanceVersion}: every card value in the config was reset to the new defaults (Enabled choices kept).");
-                balance.Value = CardBalanceVersion;
-                cfg.Save();
-                cfg.SaveOnConfigSet = saveOnSet;
+                string t = token.Trim();
+                if (t.Length == 0) continue;
+                int idx = Array.FindIndex(CardTable.Cards, c =>
+                    string.Equals(c.Key, t, StringComparison.OrdinalIgnoreCase) || string.Equals(c.Name, t, StringComparison.OrdinalIgnoreCase));
+                if (idx >= 0) s.Enabled[idx] = false;
+                else Log.LogWarning($"DisabledCards: no card called \"{t}\"");
             }
             return s;
-        }
-
-        /// <summary>A card value from the config, first put back to its default when the balance changed.</summary>
-        private static float Current(ConfigEntry<float> entry, bool reset)
-        {
-            if (reset && Math.Abs(entry.Value - (float)entry.DefaultValue) > 1e-6f) entry.Value = (float)entry.DefaultValue;
-            return entry.Value;
         }
 
         private void Update()

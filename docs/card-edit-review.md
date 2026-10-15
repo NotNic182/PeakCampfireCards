@@ -50,7 +50,7 @@ The candidate keeps ROOTS Survivor's **35% spores resistance**. It does not appl
 
 ## Upgrade notes
 
-Balance version 3 refreshes numerical card configuration defaults once so previous modifier values do not override this redesign. Existing `Enabled` choices remain. If an earlier version disabled Bing Bong's Baggage, set **`[Card - PackRat] Enabled = true`** to include its now-working weight/locked-pocket design. Restart after editing the config, and match card settings across the lobby.
+Card numbers are no longer configurable (since 0.7.4 they ship in the design sheets compiled into the mod), so this redesign applies to everyone on the same version automatically. If an earlier version disabled Bing Bong's Baggage, that choice was carried into the config's `DisabledCards` list — remove it from that list to include its now-working weight/locked-pocket design. Restart after editing the config.
 
 Ability cooldowns and native buff instances still follow the existing local ability lifecycle. Rebuilding abilities through reconnect/state restoration does not preserve their elapsed cooldowns; the random permanent penalty and successful Balloon Bunch flag are explicitly included in synced state. Quicksaved runs still start without cards.
 

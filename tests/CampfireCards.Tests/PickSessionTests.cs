@@ -223,14 +223,6 @@ namespace CampfireCards.Tests
             Assert.Equal(PickVerdict.NotInSession, PickSession.Turns.CheckRequest(id, 1, 1));
         }
 
-        [Theory]
-        [InlineData(30f, 0, 60f)]
-        [InlineData(30f, 1, 30f)]
-        [InlineData(90f, 0, 90f)]
-        [InlineData(0f, 0, 0f)]
-        public void TimerMigrationOnlyChangesTheLegacyDefault(float before, int version, float after)
-            => Assert.Equal(after, PickTiming.UpgradeLegacyDefault(before, version));
-
         [Fact]
         public void InvalidTimersAreFiniteAndZeroSurvivesTheWire()
         {

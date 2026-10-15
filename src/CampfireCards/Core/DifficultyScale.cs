@@ -66,6 +66,9 @@ namespace CampfireCards.Core
             { "bonusFire", ParamKind.Amount }, { "regenPerSecond", ParamKind.Amount }, { "heal", ParamKind.Amount },
             { "remove", ParamKind.Amount }, { "duration", ParamKind.Amount }, { "boost", ParamKind.Amount },
             { "cooldown", ParamKind.Wait }, { "interval", ParamKind.Wait }, { "buildup", ParamKind.Wait },
+            // Meditation's "hold" is a requirement, not a pacing factor (the bonus is once per biome regardless), and
+            // HOLD's "refund" is the benefit share itself: the default Fixed and Amount do the right thing.
+            { "refund", ParamKind.Amount },
             { "keep", ParamKind.Reduction },
         };
 

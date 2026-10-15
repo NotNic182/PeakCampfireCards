@@ -14,9 +14,5 @@ namespace CampfireCards.Core
         }
 
         public static bool HasExpired(float seconds, float elapsed) => seconds > 0f && elapsed >= seconds;
-
-        /// <summary>Only the old shipped default is migrated; custom durations and an untimed pick are preserved.</summary>
-        public static float UpgradeLegacyDefault(float seconds, int settingsVersion) =>
-            settingsVersion < 1 && seconds == 30f ? DefaultSeconds : seconds;
     }
 }
