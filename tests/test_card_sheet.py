@@ -52,28 +52,28 @@ class CardSheetTests(unittest.TestCase):
         self.assertEqual(before, self.cards.read_text(encoding='utf-8'))
 
     def test_percent_seconds_and_points_convert_back(self):
-        self.edit(numbers={('Daddy', 'Wall-grab reach'): 50, ('Bing BOING', 'Double jump cooldown'): 10,
-                           ('Bing BOING', 'Drowsy added'): 5, ('Piton Fingers', 'Climbing stamina cost'): -20},
-                  cards={'Daddy': {4: 'Grab walls from 50% farther away.'}})
+        self.edit(numbers={('Daddy Long Arms', 'Wall-grab reach'): 50, ('Bing Double Boing', 'Double jump cooldown'): 10,
+                           ('Bootleg Scoutmaster Bugle', 'Injury per use'): 10, ('Piton Fingers', 'Climbing stamina cost'): -20},
+                  cards={'Daddy Long Arms': {4: 'Grab walls from 50% farther away.'}})
         changes, warnings, numbers = sheet_tool.apply(self.xlsx)
         self.assertTrue(numbers)
-        self.assertEqual(1.5, self.card('Daddy')['mods'][0][2])
-        self.assertEqual(10, self.card('Bing BOING')['params']['cooldown'])
-        self.assertAlmostEqual(0.05, self.card('Bing BOING')['params']['drowsy'])
+        self.assertEqual(1.5, self.card('Daddy Long Arms')['mods'][0][2])
+        self.assertEqual(10, self.card('Bing Double Boing')['params']['cooldown'])
+        self.assertAlmostEqual(0.1, self.card('Bootleg Scoutmaster Bugle')['params']['injury'])
         self.assertAlmostEqual(0.8, self.card('Piton Fingers')['mods'][0][2])
-        self.assertEqual('Grab walls from 50% farther away.', self.card('Daddy')['positive'])
-        self.assertFalse(any('Daddy' in w for w in warnings))
-        self.assertTrue(any('Piton Fingers' in w for w in warnings))   # text still says 12%
+        self.assertEqual('Grab walls from 50% farther away.', self.card('Daddy Long Arms')['positive'])
+        self.assertFalse(any('Daddy Long Arms' in w for w in warnings))
+        self.assertTrue(any('Piton Fingers' in w for w in warnings))   # text still says 25%
         self.assertIn('CardBalanceVersion', self.plugin.read_text(encoding='utf-8'))
 
     def test_balance_version_goes_up_only_when_a_number_changes(self):
         import re
         version = lambda: int(re.search(r'CardBalanceVersion = (\d+);', self.plugin.read_text(encoding='utf-8')).group(1))
         start = version()
-        self.edit(cards={'Daddy': {6: 'A flavor line.'}})
+        self.edit(cards={'Daddy Long Arms': {6: 'A flavor line.'}})
         sheet_tool.apply(self.xlsx)
         self.assertEqual(start, version())
-        self.edit(numbers={('Daddy', 'Wall-grab reach'): 45})
+        self.edit(numbers={('Daddy Long Arms', 'Wall-grab reach'): 45})
         sheet_tool.apply(self.xlsx)
         self.assertEqual(start + 1, version())
 
@@ -87,7 +87,7 @@ class CardSheetTests(unittest.TestCase):
 
     def test_check_only_writes_nothing(self):
         before = self.cards.read_text(encoding='utf-8')
-        self.edit(numbers={('Daddy', 'Wall-grab reach'): 60})
+        self.edit(numbers={('Daddy Long Arms', 'Wall-grab reach'): 60})
         changes, _, _ = sheet_tool.apply(self.xlsx, check=True)
         self.assertEqual(1, len(changes))
         self.assertEqual(before, self.cards.read_text(encoding='utf-8'))
@@ -95,17 +95,17 @@ class CardSheetTests(unittest.TestCase):
     def test_bad_values_are_refused_before_anything_is_written(self):
         before = self.cards.read_text(encoding='utf-8')
         for bad in (-150, 'lots', None):
-            self.edit(numbers={('Daddy', 'Wall-grab reach'): bad})
+            self.edit(numbers={('Daddy Long Arms', 'Wall-grab reach'): bad})
             with self.assertRaises(ValueError):
                 sheet_tool.apply(self.xlsx)
         self.assertEqual(before, self.cards.read_text(encoding='utf-8'))
 
     def test_bad_rarity_and_empty_name_are_refused(self):
-        self.edit(cards={'Daddy': {2: 'Epic'}})
+        self.edit(cards={'Daddy Long Arms': {2: 'Epic'}})
         with self.assertRaises(ValueError):
             sheet_tool.apply(self.xlsx)
         sheet_tool.export(self.xlsx)
-        self.edit(cards={'Daddy': {1: ''}})
+        self.edit(cards={'Daddy Long Arms': {1: ''}})
         with self.assertRaises(ValueError):
             sheet_tool.apply(self.xlsx)
 

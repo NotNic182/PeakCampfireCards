@@ -123,7 +123,7 @@
     },
     {
       "id": "Ui",
-      "class": "CampfireCards.Ui.CardPicker + CampfireCards.Ui.Hud + CampfireCards.Ui.BuildScreen",
+      "class": "CampfireCards.Ui.CardPicker + CampfireCards.Ui.CardFace + CampfireCards.Ui.Hud + CampfireCards.Ui.DeckScreen + CampfireCards.Ui.ItemChooser",
       "owns": "ui.json (Generated/UiLayout.cs)",
       "responsibility": "card fan with rarity frame and label, green benefit and red drawback; sacrifice and bonus-reveal modes; waiting banner with pick order, card list, Current Build screen, ability bar, prompt, toasts, Scavenger markers; controller navigation, pending-pick state, Current Build pages, screen-size fitting",
       "dependsOn": "Deck,Art,Sfx",

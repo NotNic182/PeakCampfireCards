@@ -11,7 +11,7 @@ namespace CampfireCards.Abilities
 {
     /// <summary>
     /// Phoenix Clause: once per run, a fall that would knock you out (or a kill plane) is cancelled; you are moved to a
-    /// recent safe foothold without extra Injury and skip your next campfire pick.
+    /// recent safe foothold without extra Injury.
     /// </summary>
     public sealed class Ability_PhoenixClause : Ability
     {
@@ -58,12 +58,7 @@ namespace CampfireCards.Abilities
             _charge.TryUse(0);
             _shieldUntil = Time.time + 4f;
             Revival.TeleportTo(me, pos, -1f); // prevents this fall; does not add or clear unrelated Injury
-            if (S.DrawbacksEnabled)
-            {
-                NetSend.Raise(new SkipNextPick { actor = NetSend.LocalActor }, Photon.Realtime.ReceiverGroup.All);
-                Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! Back on safe ground. You skip your next card pick.");
-            }
-            else Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! Back on safe ground.");
+            Ui.Hud.Toast(Card.Name.ToUpperInvariant() + "! Back on safe ground.");
             return true;
         }
 

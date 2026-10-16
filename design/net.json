@@ -1,455 +1,459 @@
 {
- "_sheet": "Network events between the players of one PEAK lobby. One row = one Photon RaiseEvent code the mod sends. Generated/NetEvents.cs gets a struct per row with Write/Read (BinaryWriter/BinaryReader, little endian) built from the fields column.",
- "_columns": {
-  "code": "Photon event code, byte. PEAK uses 1,2,3,4,18; PUN reserves 200+; the mod owns 90-119",
-  "name": "struct name",
-  "sender": "who sends it",
-  "receivers": "Photon ReceiverGroup or 'target' (TargetActors)",
-  "reliable": "SendReliable",
-  "fields": "ordered list of {name, type}; types: byte, bool, int, float, double, string, byte[], int[]",
-  "purpose": "one line",
-  "handler": "method in CampfireCards.Net that the dispatcher calls with the decoded struct and the sender actor number"
- },
- "rows": [
-  {
-   "code": 90,
-   "name": "Hello",
-   "sender": "anyone entering a room",
-   "receivers": "Others (the host answers the sender with its own Hello, targeted)",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "modVersion",
-     "type": "string"
-    },
-    {
-     "name": "cardCount",
-     "type": "int"
-    },
-    {
-     "name": "deckHash",
-     "type": "int"
-    },
-    {
-     "name": "rules",
-     "type": "int[]"
-    },
-    {
-     "name": "weights",
-     "type": "int[]"
-    },
-    {
-     "name": "cards",
-     "type": "int[]"
-    }
-   ],
-   "purpose": "announce the mod version and the settings fingerprint (Core.SettingsFingerprint: global rules, rarity weights x10000, one hash per card) so players with different versions or card settings are told exactly what differs",
-   "handler": "OnHello"
+  "_sheet": "Network events between the players of one PEAK lobby. One row = one Photon RaiseEvent code the mod sends. Generated/NetEvents.cs gets a struct per row with Write/Read (BinaryWriter/BinaryReader, little endian) built from the fields column.",
+  "_columns": {
+    "code": "Photon event code, byte. PEAK uses 1,2,3,4,18; PUN reserves 200+; the mod owns 90-119",
+    "name": "struct name",
+    "sender": "who sends it",
+    "receivers": "Photon ReceiverGroup or 'target' (TargetActors)",
+    "reliable": "SendReliable",
+    "fields": "ordered list of {name, type}; types: byte, bool, int, float, double, string, byte[], int[]",
+    "purpose": "one line",
+    "handler": "method in CampfireCards.Net that the dispatcher calls with the decoded struct and the sender actor number"
   },
-  {
-   "code": 91,
-   "name": "PickSessionStart",
-   "sender": "host",
-   "receivers": "All",
-   "reliable": true,
-   "fields": [
+  "rows": [
     {
-     "name": "sessionId",
-     "type": "int"
+      "code": 90,
+      "name": "Hello",
+      "sender": "anyone entering a room",
+      "receivers": "Others (the host answers the sender with its own Hello, targeted)",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "modVersion",
+          "type": "string"
+        },
+        {
+          "name": "cardCount",
+          "type": "int"
+        },
+        {
+          "name": "deckHash",
+          "type": "int"
+        },
+        {
+          "name": "rules",
+          "type": "int[]"
+        },
+        {
+          "name": "weights",
+          "type": "int[]"
+        },
+        {
+          "name": "cards",
+          "type": "int[]"
+        }
+      ],
+      "purpose": "announce the mod version and the settings fingerprint (Core.SettingsFingerprint: global rules, rarity weights x10000, one hash per card) so players with different versions or card settings are told exactly what differs",
+      "handler": "OnHello"
     },
     {
-     "name": "reason",
-     "type": "byte"
+      "code": 91,
+      "name": "PickSessionStart",
+      "sender": "host",
+      "receivers": "All",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "sessionId",
+          "type": "int"
+        },
+        {
+          "name": "reason",
+          "type": "byte"
+        },
+        {
+          "name": "order",
+          "type": "int[]"
+        },
+        {
+          "name": "hands",
+          "type": "byte[]"
+        },
+        {
+          "name": "handSize",
+          "type": "byte"
+        },
+        {
+          "name": "timeoutSeconds",
+          "type": "float"
+        },
+        {
+          "name": "mode",
+          "type": "byte"
+        },
+        {
+          "name": "segment",
+          "type": "byte"
+        }
+      ],
+      "purpose": "a pick session begins: pick order (actor numbers, last to the fire first; also the dealing order), each player's dealt hand (handSize card ids per player, in order), the host's timer and mode (Core.PickMode: 0 everyone chooses at once, 1 one at a time). reason: 0 opening, 1 campfire; segment: the campfire segment (255 = opening), so every client knows which session started and a new host can continue the queue; timeoutSeconds = 0 means unlimited time; ghosts are excluded from the order",
+      "handler": "OnPickSessionStart"
     },
     {
-     "name": "order",
-     "type": "int[]"
+      "code": 92,
+      "name": "PickMade",
+      "sender": "host",
+      "receivers": "All",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "sessionId",
+          "type": "int"
+        },
+        {
+          "name": "actor",
+          "type": "int"
+        },
+        {
+          "name": "cardId",
+          "type": "byte"
+        },
+        {
+          "name": "auto",
+          "type": "bool"
+        }
+      ],
+      "purpose": "the host accepted a pick (a player's PickRequest, or its own timeout pick): everyone checks it against the session (id, player, hand, not picked yet) and adds the card",
+      "handler": "OnPickMade"
     },
     {
-     "name": "hands",
-     "type": "byte[]"
+      "code": 93,
+      "name": "StateSync",
+      "sender": "host",
+      "receivers": "target",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "actors",
+          "type": "int[]"
+        },
+        {
+          "name": "counts",
+          "type": "byte[]"
+        },
+        {
+          "name": "cards",
+          "type": "byte[]"
+        },
+        {
+          "name": "pickFlags",
+          "type": "byte[]"
+        },
+        {
+          "name": "sessionId",
+          "type": "int"
+        },
+        {
+          "name": "penaltyCounts",
+          "type": "byte[]"
+        },
+        {
+          "name": "penaltyVariants",
+          "type": "byte[]"
+        }
+      ],
+      "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is reduced, bit 4 Balright's one-time item spawned, bit 8 Book of Bones spawned (Double Down); penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants)",
+      "handler": "OnStateSync"
     },
     {
-     "name": "handSize",
-     "type": "byte"
+      "code": 94,
+      "name": "Arrival",
+      "sender": "each player",
+      "receivers": "MasterClient",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "segment",
+          "type": "byte"
+        },
+        {
+          "name": "time",
+          "type": "double"
+        }
+      ],
+      "purpose": "this player first came within the campfire's rest radius: time is PhotonNetwork.Time so the host can order picks last-arrival-first",
+      "handler": "OnArrival"
     },
     {
-     "name": "timeoutSeconds",
-     "type": "float"
+      "code": 95,
+      "name": "StateRequest",
+      "sender": "a player who has no state yet",
+      "receivers": "MasterClient",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "modVersion",
+          "type": "string"
+        }
+      ],
+      "purpose": "ask the host for StateSync",
+      "handler": "OnStateRequest"
     },
     {
-     "name": "mode",
-     "type": "byte"
+      "code": 96,
+      "name": "CardsGranted",
+      "sender": "host",
+      "receivers": "All",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "sessionId",
+          "type": "int"
+        },
+        {
+          "name": "actor",
+          "type": "int"
+        },
+        {
+          "name": "cards",
+          "type": "byte[]"
+        },
+        {
+          "name": "reason",
+          "type": "byte"
+        }
+      ],
+      "purpose": "bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection; reason 9 = the host F8 restore, added without acquisition effects (live:false) and exempt from the repeat check; reason 10 = the host F6 card tester, added with acquisition effects and exempt from the repeat check",
+      "handler": "OnCardsGranted"
     },
     {
-     "name": "segment",
-     "type": "byte"
+      "code": 97,
+      "name": "SessionEnd",
+      "sender": "host",
+      "receivers": "All",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "sessionId",
+          "type": "int"
+        }
+      ],
+      "purpose": "all turns done or timed out: close waiting banners",
+      "handler": "OnSessionEnd"
+    },
+    {
+      "code": 98,
+      "name": "CardSacrificed",
+      "sender": "the owner",
+      "receivers": "All",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "actor",
+          "type": "int"
+        },
+        {
+          "name": "cardId",
+          "type": "byte"
+        }
+      ],
+      "purpose": "Mountain's Bargain: the owner gave up this card; everyone removes it from that player's collection",
+      "handler": "OnCardSacrificed"
+    },
+    {
+      "code": 99,
+      "name": "SkipNextPick",
+      "sender": "the owner",
+      "receivers": "All",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "actor",
+          "type": "int"
+        }
+      ],
+      "purpose": "Phoenix Clause fired: this player skips their next campfire pick",
+      "handler": "OnSkipNextPick"
+    },
+    {
+      "code": 100,
+      "name": "ReviveRequest",
+      "sender": "the downed scout",
+      "receivers": "MasterClient",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "ownerActor",
+          "type": "int"
+        },
+        {
+          "name": "biome",
+          "type": "int"
+        },
+        {
+          "name": "incapEvent",
+          "type": "int"
+        }
+      ],
+      "purpose": "ask the host to spend an Eternal Campfire owner's per-biome revive on this scout",
+      "handler": "OnReviveRequest"
+    },
+    {
+      "code": 101,
+      "name": "ReviveGranted",
+      "sender": "host",
+      "receivers": "target",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "ownerActor",
+          "type": "int"
+        },
+        {
+          "name": "incapEvent",
+          "type": "int"
+        }
+      ],
+      "purpose": "the host approved the revive; the downed scout revives itself",
+      "handler": "OnReviveGranted"
+    },
+    {
+      "code": 102,
+      "name": "InjuryShare",
+      "sender": "the protected scout",
+      "receivers": "target",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "amount",
+          "type": "float"
+        }
+      ],
+      "purpose": "Shared Burden: the card owner takes this much Injury (never re-shared)",
+      "handler": "OnInjuryShare"
+    },
+    {
+      "code": 103,
+      "name": "BonusStamina",
+      "sender": "any scout",
+      "receivers": "target",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "amount",
+          "type": "float"
+        },
+        {
+          "name": "reason",
+          "type": "byte"
+        }
+      ],
+      "purpose": "grant bonus stamina to another scout (Hero's Arrival); the receiver applies it to itself",
+      "handler": "OnBonusStamina"
+    },
+    {
+      "code": 104,
+      "name": "SpawnItem",
+      "sender": "the card owner",
+      "receivers": "MasterClient",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "item",
+          "type": "byte"
+        },
+        {
+          "name": "segment",
+          "type": "byte"
+        }
+      ],
+      "purpose": "A card owner asks the host for an item by a lit fire: Scoutmaster's Care Package (every fire, plus its random food and item), Book of Broken Bones (once per run) and Balright's chosen mythic item (once per run). The host validates the card, the item and the once-flags before spawning.",
+      "handler": "OnSpawnItem"
+    },
+    {
+      "code": 105,
+      "name": "RevivedBy",
+      "sender": "the revived scout",
+      "receivers": "target",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "victimActor",
+          "type": "int"
+        }
+      ],
+      "purpose": "tell the scout who fed you back on your feet that they revived you (Hero's Arrival)",
+      "handler": "OnRevivedBy"
+    },
+    {
+      "code": 106,
+      "name": "PickRequest",
+      "sender": "the picking player",
+      "receivers": "MasterClient",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "sessionId",
+          "type": "int"
+        },
+        {
+          "name": "cardId",
+          "type": "byte"
+        }
+      ],
+      "purpose": "a player asks to take a card from their offer; the host validates it (session, turn, hand, not picked or claimed yet) and answers everyone with PickMade",
+      "handler": "OnPickRequest"
+    },
+    {
+      "code": 107,
+      "name": "PickSkipped",
+      "sender": "host",
+      "receivers": "All",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "sessionId",
+          "type": "int"
+        },
+        {
+          "name": "actor",
+          "type": "int"
+        }
+      ],
+      "purpose": "the host removes a scout who died before choosing; every client advances the session without granting a card; stale and repeated skips do nothing",
+      "handler": "OnPickSkipped"
+    },
+    {
+      "code": 108,
+      "name": "CardPenalty",
+      "sender": "the card owner",
+      "receivers": "All",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "actor",
+          "type": "int"
+        },
+        {
+          "name": "slot",
+          "type": "byte"
+        },
+        {
+          "name": "variant",
+          "type": "byte"
+        }
+      ],
+      "purpose": "Clown Luggage Special rolls one permanent penalty per acquisition; slot = how many the owner already had, so a replayed message cannot reroll or duplicate it. Included in state sync; sacrificing the card keeps it.",
+      "handler": "OnCardPenalty"
+    },
+    {
+      "code": 109,
+      "name": "CardRewardUsed",
+      "sender": "host",
+      "receivers": "All",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "actor",
+          "type": "int"
+        },
+        {
+          "name": "flag",
+          "type": "byte"
+        }
+      ],
+      "purpose": "The host spawned a one-time card reward (Balloon Bunch / mythic choice, or the Book of Bones); retain the used bit (flag) in pickFlags for state sync and host migration.",
+      "handler": "OnCardRewardUsed"
     }
-   ],
-   "purpose": "a pick session begins: pick order (actor numbers, last to the fire first; also the dealing order), each player's dealt hand (handSize card ids per player, in order), the host's timer and mode (Core.PickMode: 0 everyone chooses at once, 1 one at a time). reason: 0 opening, 1 campfire; segment: the campfire segment (255 = opening), so every client knows which session started and a new host can continue the queue; timeoutSeconds = 0 means unlimited time; ghosts are excluded from the order",
-   "handler": "OnPickSessionStart"
-  },
-  {
-   "code": 92,
-   "name": "PickMade",
-   "sender": "host",
-   "receivers": "All",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "sessionId",
-     "type": "int"
-    },
-    {
-     "name": "actor",
-     "type": "int"
-    },
-    {
-     "name": "cardId",
-     "type": "byte"
-    },
-    {
-     "name": "auto",
-     "type": "bool"
-    }
-   ],
-   "purpose": "the host accepted a pick (a player's PickRequest, or its own timeout pick): everyone checks it against the session (id, player, hand, not picked yet) and adds the card",
-   "handler": "OnPickMade"
-  },
-  {
-   "code": 93,
-   "name": "StateSync",
-   "sender": "host",
-   "receivers": "target",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "actors",
-     "type": "int[]"
-    },
-    {
-     "name": "counts",
-     "type": "byte[]"
-    },
-    {
-     "name": "cards",
-     "type": "byte[]"
-    },
-    {
-     "name": "pickFlags",
-     "type": "byte[]"
-    },
-    {
-     "name": "sessionId",
-     "type": "int"
-    },
-    {
-     "name": "penaltyCounts",
-     "type": "byte[]"
-    },
-    {
-     "name": "penaltyVariants",
-     "type": "byte[]"
-    }
-   ],
-   "purpose": "full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is reduced (Double Down); penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants)",
-   "handler": "OnStateSync"
-  },
-  {
-   "code": 94,
-   "name": "Arrival",
-   "sender": "each player",
-   "receivers": "MasterClient",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "segment",
-     "type": "byte"
-    },
-    {
-     "name": "time",
-     "type": "double"
-    }
-   ],
-   "purpose": "this player first came within the campfire's rest radius: time is PhotonNetwork.Time so the host can order picks last-arrival-first",
-   "handler": "OnArrival"
-  },
-  {
-   "code": 95,
-   "name": "StateRequest",
-   "sender": "a player who has no state yet",
-   "receivers": "MasterClient",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "modVersion",
-     "type": "string"
-    }
-   ],
-   "purpose": "ask the host for StateSync",
-   "handler": "OnStateRequest"
-  },
-  {
-   "code": 96,
-   "name": "CardsGranted",
-   "sender": "host",
-   "receivers": "All",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "sessionId",
-     "type": "int"
-    },
-    {
-     "name": "actor",
-     "type": "int"
-    },
-    {
-     "name": "cards",
-     "type": "byte[]"
-    },
-    {
-     "name": "reason",
-     "type": "byte"
-    }
-   ],
-   "purpose": "bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection; reason 9 = the host F8 restore, added without acquisition effects (live:false) and exempt from the repeat check; reason 10 = the host F6 card tester, added with acquisition effects and exempt from the repeat check",
-   "handler": "OnCardsGranted"
-  },
-  {
-   "code": 97,
-   "name": "SessionEnd",
-   "sender": "host",
-   "receivers": "All",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "sessionId",
-     "type": "int"
-    }
-   ],
-   "purpose": "all turns done or timed out: close waiting banners",
-   "handler": "OnSessionEnd"
-  },
-  {
-   "code": 98,
-   "name": "CardSacrificed",
-   "sender": "the owner",
-   "receivers": "All",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "actor",
-     "type": "int"
-    },
-    {
-     "name": "cardId",
-     "type": "byte"
-    }
-   ],
-   "purpose": "Mountain's Bargain: the owner gave up this card; everyone removes it from that player's collection",
-   "handler": "OnCardSacrificed"
-  },
-  {
-   "code": 99,
-   "name": "SkipNextPick",
-   "sender": "the owner",
-   "receivers": "All",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "actor",
-     "type": "int"
-    }
-   ],
-   "purpose": "Phoenix Clause fired: this player skips their next campfire pick",
-   "handler": "OnSkipNextPick"
-  },
-  {
-   "code": 100,
-   "name": "ReviveRequest",
-   "sender": "the downed scout",
-   "receivers": "MasterClient",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "ownerActor",
-     "type": "int"
-    },
-    {
-     "name": "biome",
-     "type": "int"
-    },
-    {
-     "name": "incapEvent",
-     "type": "int"
-    }
-   ],
-   "purpose": "ask the host to spend an Eternal Campfire owner's per-biome revive on this scout",
-   "handler": "OnReviveRequest"
-  },
-  {
-   "code": 101,
-   "name": "ReviveGranted",
-   "sender": "host",
-   "receivers": "target",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "ownerActor",
-     "type": "int"
-    },
-    {
-     "name": "incapEvent",
-     "type": "int"
-    }
-   ],
-   "purpose": "the host approved the revive; the downed scout revives itself",
-   "handler": "OnReviveGranted"
-  },
-  {
-   "code": 102,
-   "name": "InjuryShare",
-   "sender": "the protected scout",
-   "receivers": "target",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "amount",
-     "type": "float"
-    }
-   ],
-   "purpose": "Shared Burden: the card owner takes this much Injury (never re-shared)",
-   "handler": "OnInjuryShare"
-  },
-  {
-   "code": 103,
-   "name": "BonusStamina",
-   "sender": "any scout",
-   "receivers": "target",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "amount",
-     "type": "float"
-    },
-    {
-     "name": "reason",
-     "type": "byte"
-    }
-   ],
-   "purpose": "grant bonus stamina to another scout (Hero's Arrival); the receiver applies it to itself",
-   "handler": "OnBonusStamina"
-  },
-  {
-   "code": 104,
-   "name": "SpawnItem",
-   "sender": "the card owner",
-   "receivers": "MasterClient",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "item",
-     "type": "byte"
-    },
-    {
-     "name": "segment",
-     "type": "byte"
-    }
-   ],
-   "purpose": "ask the host for a card's campfire item (Rope Baron, Supply Scout) for the fire lit for this segment; the host checks the card, the item and that the fire was lit, places it next to that fire itself, and spawns it once per card per fire",
-   "handler": "OnSpawnItem"
-  },
-  {
-   "code": 105,
-   "name": "RevivedBy",
-   "sender": "the revived scout",
-   "receivers": "target",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "victimActor",
-     "type": "int"
-    }
-   ],
-   "purpose": "tell the scout who fed you back on your feet that they revived you (Hero's Arrival)",
-   "handler": "OnRevivedBy"
-  },
-  {
-   "code": 106,
-   "name": "PickRequest",
-   "sender": "the picking player",
-   "receivers": "MasterClient",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "sessionId",
-     "type": "int"
-    },
-    {
-     "name": "cardId",
-     "type": "byte"
-    }
-   ],
-   "purpose": "a player asks to take a card from their offer; the host validates it (session, turn, hand, not picked or claimed yet) and answers everyone with PickMade",
-   "handler": "OnPickRequest"
-  },
-  {
-   "code": 107,
-   "name": "PickSkipped",
-   "sender": "host",
-   "receivers": "All",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "sessionId",
-     "type": "int"
-    },
-    {
-     "name": "actor",
-     "type": "int"
-    }
-   ],
-   "purpose": "the host removes a scout who died before choosing; every client advances the session without granting a card; stale and repeated skips do nothing",
-   "handler": "OnPickSkipped"
-  },
-  {
-   "code": 108,
-   "name": "CardPenalty",
-   "sender": "the card owner",
-   "receivers": "All",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "actor",
-     "type": "int"
-    },
-    {
-     "name": "slot",
-     "type": "byte"
-    },
-    {
-     "name": "variant",
-     "type": "byte"
-    }
-   ],
-   "purpose": "Clown Luggage Special rolls one permanent penalty per acquisition; slot = how many the owner already had, so a replayed message cannot reroll or duplicate it. Included in state sync; sacrificing the card keeps it.",
-   "handler": "OnCardPenalty"
-  },
-  {
-   "code": 109,
-   "name": "CardRewardUsed",
-   "sender": "host",
-   "receivers": "All",
-   "reliable": true,
-   "fields": [
-    {
-     "name": "actor",
-     "type": "int"
-    }
-   ],
-   "purpose": "The host spawned the one-time Balloon Bunch; retain the used bit in pickFlags for state sync and host migration.",
-   "handler": "OnCardRewardUsed"
-  }
- ]
+  ]
 }

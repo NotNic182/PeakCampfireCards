@@ -58,8 +58,8 @@ namespace CampfireCards.Abilities
     }
 
     /// <summary>
-    /// Cleansing Ritual: a curative item used on you also removes 7.5 from your worst status it did not treat. Curse,
-    /// Weight and Hunger are never the "worst other status".
+    /// Cleansing Ritual: a curative item or any food also removes a random amount (min..max) from your worst status it
+    /// did not treat. Curse, Weight and Hunger are never the "worst other status".
     /// </summary>
     public sealed class Ability_CleansingRitual : Ability
     {
@@ -68,13 +68,23 @@ namespace CampfireCards.Abilities
             CharacterAfflictions.STATUSTYPE.Injury, CharacterAfflictions.STATUSTYPE.Poison, CharacterAfflictions.STATUSTYPE.Cold,
             CharacterAfflictions.STATUSTYPE.Hot, CharacterAfflictions.STATUSTYPE.Drowsy, CharacterAfflictions.STATUSTYPE.Spores
         };
+        private static readonly HashSet<CharacterAfflictions.STATUSTYPE> FoodCured =
+            new HashSet<CharacterAfflictions.STATUSTYPE> { CharacterAfflictions.STATUSTYPE.Hunger };
+        /// <summary>A curative that also counts as food fires both hooks in one use; cleanse only once per frame.</summary>
+        private float _lastCleanse = -1f;
 
-        public override void OnCurativeUsed(Character me, CurativeEvent cure)
+        public override void OnCurativeUsed(Character me, CurativeEvent cure) => Cleanse(me, cure.Cured);
+
+        public override void OnFoodEaten(Character me, FoodEvent food) => Cleanse(me, FoodCured);
+
+        private void Cleanse(Character me, HashSet<CharacterAfflictions.STATUSTYPE> treated)
         {
+            if (Time.unscaledTime == _lastCleanse) return;
             CharacterAfflictions.STATUSTYPE pick;
-            if (CurativeSelection.TryHighestOther(Candidates, cure.Cured, t => CardStatus.Get(me, t), out pick))
+            if (CurativeSelection.TryHighestOther(Candidates, treated, t => CardStatus.Get(me, t), out pick))
             {
-                float amount = P("bonus", 0.075f);
+                _lastCleanse = Time.unscaledTime;
+                float amount = UnityEngine.Random.Range(P("min", 0.025f), P("max", 0.125f));
                 CardStatus.Remove(me, pick, amount);
                 Hud.Toast($"{Card.Name}: -{Points(amount)} {StatusName(pick)}");
             }
@@ -94,8 +104,9 @@ namespace CampfireCards.Abilities
     }
 
     /// <summary>
-    /// Rope Baron / Supply Scout: an item for you next to every newly lit campfire. The owner only names the item and the
-    /// fire; the host checks the card, spawns it once per fire and places it next to that fire (net.json SpawnItem).
+    /// Scoutmaster's Care Package: an item for you next to every newly lit campfire. The owner only names the item and
+    /// the fire; the host checks the card, spawns it once per fire and places it next to that fire (net.json SpawnItem),
+    /// and rides a random food and a random item along with the bandage.
     /// </summary>
     public sealed class Ability_CampfireSpawn : Ability
     {

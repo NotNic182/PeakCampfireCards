@@ -40,12 +40,13 @@ namespace CampfireCards.Tests
             Assert.Equal(1.05f, s.ModValue(daddy, Mod(daddy, Channel.staminaUsage)), 4);     // drawback unchanged
             Assert.Equal(1.4f, s.RawModValue(daddy, Mod(daddy, Channel.grabReach)), 4);
             var piton = Card("GeckoGrip");
-            Assert.Equal(1f - 0.12f * 0.6f, s.ModValue(piton, Mod(piton, Channel.climbStamina)), 4);   // -12% -> -7.2%
-            Assert.Equal(1.05f, s.ModValue(piton, Mod(piton, Channel.sprintStamina)), 4);
+            Assert.Equal(1f - 0.18f * 0.6f, s.ModValue(piton, Mod(piton, Channel.climbStamina)), 4);   // -18% -> -10.8%
+            Assert.Equal(1.1f, s.ModValue(piton, Mod(piton, Channel.sprintStamina)), 4);
             var lungs = Card("DeepLungs");
-            Assert.Equal(0.15f, s.ModValue(lungs, Mod(lungs, Channel.maxStamina)), 4);       // +25 -> +15
+            Assert.Equal(0.18f, s.ModValue(lungs, Mod(lungs, Channel.maxStamina)), 4);       // +30 -> +18
             var tax = Card("CardioTax");
-            Assert.Equal(-0.025f, s.ModValue(tax, Mod(tax, Channel.maxStamina)), 4);         // the -2.5 drawback stays
+            Assert.Equal(-1, Mod(tax, Channel.maxStamina));                                  // 0.8.0 removed the -2.5 max-stamina drawback outright
+            Assert.Equal(1.21f, s.ModValue(tax, Mod(tax, Channel.sprintSpeed)), 4);          // its +35% sprint benefit still scales: -> +21%
         }
 
         [Fact]
@@ -56,8 +57,9 @@ namespace CampfireCards.Tests
             for (int i = 0; i < heir.Mods.Length; i++) Assert.Equal(s.RawModValue(heir, i), s.ModValue(heir, i));
             var eternal = Card("EternalCampfire");
             Assert.Equal(15f, s.Param(eternal, "radius"), 4);
-            var bones = Card("CurseBargain");
-            Assert.Equal(0f, s.ModValue(bones, Mod(bones, Channel.reviveCurse)));   // "Reviving does not add Curse" stays true
+            var gas = Card("ToxicAdaptation");
+            Assert.Equal(0.02f, s.Param(gas, "gasThreshold"), 4);   // gas immunity is all-or-nothing on every difficulty
+            Assert.Equal(1.2f, s.Param(gas, "hit"), 4);             // and its poison-hit drawback never scales
         }
 
         [Fact]
@@ -67,24 +69,24 @@ namespace CampfireCards.Tests
             Assert.Equal(25f, s.Param(Card("SecondSpring"), "cooldown"), 3);          // 15 s -> 25 s
             float half = (float)Math.Sqrt(0.6);                                         // amount x cooldown share the 60%
             Assert.Equal(0.3f * half, s.Param(Card("SecondWind"), "restore"), 4);     // 30 -> 23.2
-            Assert.Equal(180f / half, s.Param(Card("SecondWind"), "cooldown"), 1);    // 3 min -> 3.9 min
-            Assert.Equal(0.2f, s.Param(Card("SecondWind"), "threshold"), 4);          // condition unchanged
+            Assert.Equal(300f / half, s.Param(Card("SecondWind"), "cooldown"), 1);    // 5 min -> 6.5 min
+            Assert.False(Card("SecondWind").Params.ContainsKey("threshold"));         // 0.8.0: no low-stamina gate any more
             Assert.Equal(300f / half, s.Param(Card("BonePlating"), "interval"), 1);   // 5 min -> 6.5 min
-            Assert.Equal(60f, s.Param(Card("MomentumFiend"), "cooldown"), 3);         // spaces out a drawback: unchanged
+            Assert.False(Card("MomentumFiend").Params.ContainsKey("cooldown"));       // 0.8.0: the stop-Drowsy penalty (and its spacing) is gone
             Assert.Equal(0.88f, s.Param(Card("DelayedConsequences"), "keep"), 4);     // saves 12% of the delayed share, not 20%
             Assert.Equal(8f, s.Param(Card("BelayBuddy"), "radius"), 4);
-            Assert.Equal(0.05f, s.Param(Card("SecondSpring"), "drowsy"), 4);          // drawback unchanged
+            Assert.False(Card("SecondSpring").Params.ContainsKey("drowsy"));          // 0.8.0: the double-jump Drowsy drawback is gone
         }
 
         [Fact]
         public void NumbersThatMultiplyIntoOneBenefitShareTheStrength()
         {
             // Endurance Badge: discount x boost length / build-up time; each number gets 0.6^(1/3), so the duty-cycle
-            // math lands the whole card's value near, not exactly at, 60%
+            // math lands the whole card's value near, not exactly at, 60% (with the 3.5s boost: ~74%)
             var s = At(0.6f);
             var c = Card("PulseClimber");
             float discount = 1f - s.ModValue(c, Mod(c, Channel.climbStamina)), boost = s.Param(c, "boost"), buildup = s.Param(c, "buildup");
-            float full = 0.4f * 2f / (2f + 2f), now = discount * boost / (buildup + boost);
+            float full = 0.4f * 3.5f / (2f + 3.5f), now = discount * boost / (buildup + boost);
             Assert.InRange(now / full, 0.6f, 0.76f);
             Assert.Equal(1.24f, s.ModValue(Card("LedgeDancer"), 0), 4);   // a single benefit still gets exactly 60%
         }
@@ -97,7 +99,7 @@ namespace CampfireCards.Tests
             Assert.Equal(1.6f, s.ModValue(daddy, Mod(daddy, Channel.grabReach)), 4);        // +40% -> +60%
             Assert.Equal(1.05f, s.ModValue(daddy, Mod(daddy, Channel.staminaUsage)), 4);    // drawback still untouched
             var lungs = Card("DeepLungs");
-            Assert.Equal(0.375f, s.ModValue(lungs, Mod(lungs, Channel.maxStamina)), 4);     // +25 -> +37.5
+            Assert.Equal(0.45f, s.ModValue(lungs, Mod(lungs, Channel.maxStamina)), 4);      // +30 -> +45
             Assert.Equal(10f, s.Param(Card("SecondSpring"), "cooldown"), 3);                // waits shrink: 15 s -> 10 s
             var heir = Card("MountainsHeir");
             for (int i = 0; i < heir.Mods.Length; i++) Assert.Equal(s.RawModValue(heir, i), s.ModValue(heir, i));   // Mythics never scale
@@ -129,13 +131,13 @@ namespace CampfireCards.Tests
         [Theory]
         [InlineData("LedgeDancer", "Grab walls from 24% farther away.")]
         [InlineData("SecondSpring", "Jump again in mid-air for a double jump. Cooldown: 25s.")]
-        [InlineData("SecondWind", "Press {key} below 20 stamina to recover 23.2. Cooldown: 3.9 min.")]
+        [InlineData("SecondWind", "Press {key} to recover 23.2 stamina. Cooldown: 6.5 min.")]
         [InlineData("BonePlating", "Every 6.5 min alive: a random 15.5s burst of Infinite Stamina, Invincibility or Low Gravity.")]
         [InlineData("DelayedConsequences", "Take 25% of a fall's Injury now and 66% after 20s: 9% less in total.")]
-        [InlineData("BelayBuddy", "You and teammates within 8 m use 6% less climbing stamina.")]
+        [InlineData("BelayBuddy", "You and teammates within 8 m use 12% less climbing stamina.")]
         [InlineData("HeatHuddle", "Huddling warms you 45% more, from farther away, and you get cold 12% slower.")]
-        [InlineData("OverhangArtist", "Hang still on a wall to recover 6 stamina per second.")]
-        [InlineData("GeckoGrip", "Climbing uses 7.2% less stamina.")]
+        [InlineData("OverhangArtist", "Hang still on a wall to recover 3 stamina per second.")]
+        [InlineData("GeckoGrip", "Climbing uses 10.8% less stamina.")]
         public void CardTextShowsTheNumbersThisDifficultyUses(string key, string expected)
         {
             var c = Card(key);
@@ -146,7 +148,8 @@ namespace CampfireCards.Tests
         [Fact]
         public void EveryScaledCardTextIsRewrittenOrFlagged()
         {
-            // a card whose benefit scales but whose text has no number to rewrite gets the "Benefits at N%" note
+            // a card whose benefit scales but whose text has no number to rewrite gets the "Benefits at N%" note;
+            // the 0.8.0 text pass deliberately sends the "full bar" and no-number cards down that note path
             var s = At(0.6f);
             var flagged = new List<string>();
             foreach (var c in CardTable.Cards.Where(c => c.Rarity != CardRarity.Mythic))
@@ -155,7 +158,7 @@ namespace CampfireCards.Tests
                 if (!complete) flagged.Add(c.Key);
                 else Assert.DoesNotContain("NaN", text);
             }
-            Assert.Empty(flagged);
+            Assert.Equal(new[] { "QuietBreathing", "CleansingRitual", "HerosArrival", "CursedCrown", "BloodBattery" }, flagged);   // full-bar texts carry no number to rewrite
         }
     }
 }

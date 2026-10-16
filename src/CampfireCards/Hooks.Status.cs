@@ -89,6 +89,12 @@ namespace CampfireCards
 
                 bool fall = statusType == CharacterAfflictions.STATUSTYPE.Injury && _fallDepth > 0;
                 amount *= Effects.StatusGainMultiplier(statusType, fall);
+                // Fartberry Fitness: the drip (gas, poison-over-time ticks) never lands; real hits pay the drawback
+                if (statusType == CharacterAfflictions.STATUSTYPE.Poison && amount > 0f)
+                    amount *= Ability_GasImmunity.PoisonFactor(before);
+                // TechTara: falls hurt less for each bandage carried
+                if (fall && amount > 0f)
+                    amount *= Ability_BandageBrace.FallFactor(ch);
                 if (statusType == CharacterAfflictions.STATUSTYPE.Injury && _dynamiteBlast)
                     amount *= Effects.Local[Channel.dynamiteInjury];
 

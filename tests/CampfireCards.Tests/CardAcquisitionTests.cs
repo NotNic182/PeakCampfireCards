@@ -44,55 +44,60 @@ namespace CampfireCards.Tests
         }
 
         [Fact]
-        public void DuplicateClownPicksEachPayOnceThroughTheRealAcquisitionAndBonusDealPath()
+        public void DuplicateClownPicksEachDealBonusCardsOnceAndNeverRollAPenalty()
         {
             CardSettings.Current.AllowDuplicates = true;
             var clown = Card("DoubleDeal");
             var first = Choose(101, clown.Id);
             var instance = LocalCards.Get<Ability_DoubleDeal>();
-            UnityEngine.Random.Next = 4;
             var second = Choose(102, clown.Id);
 
             Assert.Equal(2, Effects.CardsOf(1).Count(id => id == clown.Id));
             Assert.Same(instance, LocalCards.Get<Ability_DoubleDeal>());
-            Assert.Equal(new byte[] { 1, 4 }, Effects.Penalties.Of(1));
-            Assert.Equal(new byte[] { 0, 1 }, NetSend.Sent.OfType<CardPenalty>().Select(p => p.slot));
+            Assert.Empty(Effects.Penalties.Of(1));   // 0.8.0: the Clown no longer rolls a permanent penalty
+            Assert.Empty(NetSend.Sent.OfType<CardPenalty>());
             Assert.Equal(2, NetSend.Sent.OfType<CardsGranted>().Count());
             Assert.Equal(6, Effects.CardsOf(1).Count); // two accepted Clowns, two bonus cards per pick
 
             PickSession.OnPick(first); PickSession.OnPick(second);
             foreach (var grant in NetSend.Sent.OfType<CardsGranted>().ToArray()) PickSession.OnCardsGranted(grant);
-            foreach (var penalty in NetSend.Sent.OfType<CardPenalty>().ToArray())
-                Effects.Penalties.TrySet(penalty.actor, penalty.slot, penalty.variant);
             Assert.Equal(6, Effects.CardsOf(1).Count);
-            Assert.Equal(new byte[] { 1, 4 }, Effects.Penalties.Of(1));
-            Assert.Equal(2, NetSend.Sent.OfType<CardPenalty>().Count());
+            Assert.Empty(Effects.Penalties.Of(1));
+            Assert.Empty(NetSend.Sent.OfType<CardPenalty>());
+
+            // the plumbing stays for net compatibility: a penalty another actor's client raised is still stored
+            Assert.True(Effects.Penalties.TrySet(2, 0, 4));
+            Assert.Equal(new byte[] { 4 }, Effects.Penalties.Of(2));
         }
 
         [Fact]
-        public void DefaultDuplicateRuleRefusesAnotherClownWithoutChargingIt()
+        public void DefaultDuplicateRuleRefusesAnotherClownAndNeverRollsAPenalty()
         {
             var clown = Card("DoubleDeal");
             Assert.False(CardSettings.Current.AllowDuplicates);
             Assert.True(Effects.AddCard(1, clown.Id, true));
             Assert.False(Effects.AddCard(1, clown.Id, true));
-            Assert.Single(Effects.CardsOf(1)); Assert.Single(Effects.Penalties.Of(1));
-            Assert.Single(NetSend.Sent.OfType<CardPenalty>());
+            Assert.Single(Effects.CardsOf(1));
+            Assert.Empty(Effects.Penalties.Of(1));   // 0.8.0: acquisition rolls nothing, and the refusal changes nothing
+            Assert.Empty(NetSend.Sent.OfType<CardPenalty>());
         }
 
         [Fact]
-        public void SacrificeThenReacquireClownKeepsOldPenaltyAndPaysAnother()
+        public void SacrificeThenReacquireClownRollsNoPenaltyAndKeepsNetArrivedOnes()
         {
             var clown = Card("DoubleDeal");
             Choose(101, clown.Id);
             var instance = LocalCards.Get<Ability_DoubleDeal>();
+            Assert.Empty(Effects.Penalties.Of(1));   // 0.8.0: acquiring the Clown rolls nothing
+            // a penalty rolled on another actor's client arrives over the net: stored, and permanent across sacrifices
+            Assert.True(Effects.Penalties.TrySet(2, 0, 1));
             Effects.RemoveCard(1, clown.Id);
             Assert.Null(LocalCards.Get<Ability_DoubleDeal>());
-            Assert.Equal(new byte[] { 1 }, Effects.Penalties.Of(1));
-            UnityEngine.Random.Next = 3;
+            Assert.Equal(new byte[] { 1 }, Effects.Penalties.Of(2));
             Choose(102, clown.Id);
             Assert.Same(instance, LocalCards.Get<Ability_DoubleDeal>());
-            Assert.Equal(new byte[] { 1, 3 }, Effects.Penalties.Of(1));
+            Assert.Empty(Effects.Penalties.Of(1));   // reacquiring pays nothing either
+            Assert.Empty(NetSend.Sent.OfType<CardPenalty>());
             Assert.Equal(2, NetSend.Sent.OfType<CardsGranted>().Count());
         }
 
@@ -108,7 +113,8 @@ namespace CampfireCards.Tests
             Assert.Single(Effects.CardsOf(1));
             Effects.RemoveCard(1, clown.Id);
             Assert.Null(LocalCards.Get<Ability_DoubleDeal>());
-            Assert.Equal(2, Effects.Penalties.Count(1));
+            Assert.Equal(0, Effects.Penalties.Count(1));   // two live acquisitions and no penalty: the roll is gone in 0.8.0
+            Assert.Empty(NetSend.Sent.OfType<CardPenalty>());
         }
 
         [Fact]
@@ -239,17 +245,20 @@ namespace CampfireCards.Tests
             me.data.currentStamina = .1f; Assert.True(windAbility.Activate(me)); me.data.currentStamina = .1f;
             me.Statuses[CharacterAfflictions.STATUSTYPE.Poison] = .5f; Assert.True(purgeAbility.Activate(me));
             me.Statuses[CharacterAfflictions.STATUSTYPE.Poison] = .5f;
+            Assert.True(Effects.Penalties.TrySet(2, 0, 3));   // a net-arrived penalty for another actor
             Effects.SetAll(1, new[] { clown.Id, wind.Id, purge.Id, (byte)1 }, 1);
             Effects.SetAll(1, Effects.CardsOf(1), 1); // aliases current collection as a real replay could
             Assert.Same(windAbility, LocalCards.Get<Ability_SecondWind>());
             Assert.Same(purgeAbility, LocalCards.Get<Ability_EmergencyPurge>());
             Assert.Same(clownAbility, LocalCards.Get<Ability_DoubleDeal>());
             Assert.False(windAbility.Activate(me)); Assert.False(purgeAbility.Activate(me));
-            Assert.Single(Effects.Penalties.Of(1)); Assert.Single(NetSend.Sent.OfType<CardPenalty>());
+            Assert.Empty(Effects.Penalties.Of(1)); Assert.Empty(NetSend.Sent.OfType<CardPenalty>());   // 0.8.0: never rolled locally
+            Assert.Equal(new byte[] { 3 }, Effects.Penalties.Of(2));   // and a sync neither rerolls nor drops a stored one
             Assert.Equal(1, Effects.Flags(1));
             Effects.SetAll(1, new[] { clown.Id }, 0);
             Assert.Null(LocalCards.Get<Ability_SecondWind>()); Assert.Null(LocalCards.Get<Ability_EmergencyPurge>());
             Assert.Same(clownAbility, LocalCards.Get<Ability_DoubleDeal>());
+            Assert.Equal(new byte[] { 3 }, Effects.Penalties.Of(2));
         }
 
         [Fact]
@@ -282,8 +291,8 @@ namespace CampfireCards.Tests
             Assert.False(windAbility.Activate(me)); Assert.False(purgeAbility.Activate(me));
             LocalCards.OnBiomeStarted(me, 1);
             Assert.True(purgeAbility.Activate(me));
-            UnityEngine.Time.time = 179.9f; Assert.False(windAbility.Activate(me));
-            UnityEngine.Time.time = 180f; Assert.True(windAbility.Activate(me));
+            UnityEngine.Time.time = 299.9f; Assert.False(windAbility.Activate(me));
+            UnityEngine.Time.time = 300f; Assert.True(windAbility.Activate(me));
         }
 
         [Fact]

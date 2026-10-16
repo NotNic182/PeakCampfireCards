@@ -389,15 +389,27 @@ namespace CampfireCards
         {
             if (!PhotonNetwork.IsMasterClient && !PhotonNetwork.OfflineMode) return;
             bool owns = false;
-            bool once = false;
+            bool carePackage = false;
+            byte onceFlag = 0;
             foreach (var id in Effects.CardsOf(sender))
             {
                 var def = Core.CardSettings.Current.Card(id);
-                if (def != null && def.Ability == "CampfireSpawn" && Mathf.RoundToInt(Core.CardSettings.Current.Param(def, "item", -1f)) == m.item) owns = true;
-                if (def != null && def.Ability == "NextCampfireSpawn" && Mathf.RoundToInt(Core.CardSettings.Current.Param(def, "item", -1f)) == m.item)
+                if (def == null) continue;
+                int wants = Mathf.RoundToInt(Core.CardSettings.Current.Param(def, "item", -1f));
+                if (def.Ability == "CampfireSpawn" && wants == m.item) { owns = true; carePackage = true; break; }
+                if (def.Ability == "BoneBook" && wants == m.item)
                 {
-                    once = true;
-                    owns = (Effects.Flags(sender) & Effects.FlagBalloonUsed) == 0;
+                    onceFlag = Effects.FlagBoneBook;
+                    owns = (Effects.Flags(sender) & onceFlag) == 0;
+                    break;   // first match decides: a later card must never overwrite this claim's flag or verdict
+                }
+                // Balright: any item of the mythic pool, once per run
+                if (def.Ability == "MythicChoice" && m.item < CardTable.SpawnItems.Length
+                    && System.Array.IndexOf(CardTable.MythicItems, CardTable.SpawnItems[m.item]) >= 0)
+                {
+                    onceFlag = Effects.FlagBalloonUsed;
+                    owns = (Effects.Flags(sender) & onceFlag) == 0;
+                    break;
                 }
             }
             if (m.item >= CardTable.SpawnItems.Length) owns = false;
@@ -406,20 +418,34 @@ namespace CampfireCards
 
             Campfire fire;
             if (!_litFires.TryGetValue(m.segment, out fire) || fire == null) { Plugin.Log.LogWarning($"Item {m.item}: fire {m.segment} is gone"); return; }
-            string name = CardTable.SpawnItems[m.item];
+            var spawned = SpawnByFire(fire, CardTable.SpawnItems[m.item], sender * 3 + m.item);
+            if (spawned != null && onceFlag != 0)
+            {
+                Effects.SetFlag(sender, onceFlag, true);
+                NetSend.Raise(new CardRewardUsed { actor = sender, flag = onceFlag }, Photon.Realtime.ReceiverGroup.All);
+            }
+            // Scoutmaster's Care Package: the bandage claim brings a random food and a random item along
+            if (spawned != null && carePackage)
+            {
+                string food = Abilities.CarePackageRolls.RandomItemName(foodOnly: true);
+                if (food != null) SpawnByFire(fire, food, sender * 3 + m.item + 101);
+                string any = Abilities.CarePackageRolls.RandomItemName(foodOnly: false);
+                if (any != null) SpawnByFire(fire, any, sender * 3 + m.item + 202);
+            }
+        }
+
+        /// <summary>Host: spawn one item prefab next to the fire (the shared path for claims and care-package extras).</summary>
+        private static Item SpawnByFire(Campfire fire, string name, int salt)
+        {
             Item prefab;
-            if (!ItemDatabase.TryGetItem(name, out prefab)) { Plugin.Log.LogWarning("Unknown item prefab " + name); return; }
+            if (!ItemDatabase.TryGetItem(name, out prefab)) { Plugin.Log.LogWarning("Unknown item prefab " + name); return null; }
             Vector3 pos;
-            if (!SpawnSpot(fire, sender * 3 + m.item, out pos)) { Plugin.Log.LogWarning($"Item {name} for actor {sender}: no room next to the fire"); return; }
+            if (!SpawnSpot(fire, salt, out pos)) { Plugin.Log.LogWarning($"Item {name}: no room next to the fire"); return null; }
             var go = PhotonNetwork.InstantiateItemRoom(name, pos + Vector3.up * 0.25f, Quaternion.identity);
             var spawned = go != null ? go.GetComponent<Item>() : null;
             if (spawned != null) spawned.SetKinematicNetworked(true, pos + Vector3.up * 0.25f, Quaternion.identity);
-            if (spawned != null && once)
-            {
-                Effects.SetFlag(sender, Effects.FlagBalloonUsed, true);
-                NetSend.Raise(new CardRewardUsed { actor = sender }, Photon.Realtime.ReceiverGroup.All);
-            }
-            Plugin.Verbose($"Spawned {name} for {sender} at {pos} (fire {m.segment})");
+            Plugin.Verbose($"Spawned {name} at {pos}");
+            return spawned;
         }
 
         /// <summary>Host: a ground spot by the fire (the search the owner used to run), never further than MaxSpawnDistance.</summary>

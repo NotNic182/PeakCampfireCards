@@ -24,11 +24,11 @@ namespace CampfireCards.Cards
     /// </summary>
     public static partial class Effects
     {
-        public const byte FlagSkipNext = 1, FlagOfferOne = 2, FlagBalloonUsed = 4;
+        public const byte FlagSkipNext = 1, FlagOfferOne = 2, FlagBalloonUsed = 4, FlagBoneBook = 8;
         public static readonly PenaltyLedger Penalties = new PenaltyLedger();
 
         public static readonly Dictionary<int, List<byte>> CardsByActor = new Dictionary<int, List<byte>>();
-        /// <summary>Per player: bits 1 skip next pick, 2 next offer is reduced (Double Down), 4 one-time Balloon Bunch already spawned.</summary>
+        /// <summary>Per player: bits 1 skip next pick, 2 next offer is reduced, 4 Balright's one-time item spawned, 8 Book of Bones spawned.</summary>
         public static readonly Dictionary<int, byte> PickFlags = new Dictionary<int, byte>();
 
         /// <summary>Folded modifiers for the local scout, refreshed every frame.</summary>

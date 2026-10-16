@@ -76,6 +76,13 @@ PARAMS = {
     'threshold': (POINTS, 100.0, 'Threshold'),
     'nextOffer': (COUNT, 1.0, 'Cards in your next offer'),
     'curseBudget': (POINTS, 100.0, 'Most Curse this card can ever add'),
+    'min': (POINTS, 100.0, 'Least removed'),
+    'max': (POINTS, 100.0, 'Most removed'),
+    'base': (PERCENT, 100.0, 'Fall damage reduced'),
+    'perBandage': (PERCENT, 100.0, 'Extra reduction per bandage'),
+    'limit': ('bandages', 1.0, 'Bandages counted at most'),
+    'gasThreshold': (POINTS, 100.0, 'Poison below this is gas'),
+    'hit': (PERCENT_CHANGE, None, 'Poison hits hurt'),
 }
 CARD_LABELS = {
     ('CleansingRitual', 'bonus'): 'Extra status removed',
@@ -114,7 +121,7 @@ def load(path):
 
 
 def save_cards(sheet):
-    CARDS.write_text(json.dumps(sheet, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+    CARDS.write_text(json.dumps(sheet, indent=2, ensure_ascii=False) + '\n', encoding='utf-8', newline='\n')
 
 
 def tidy(v):

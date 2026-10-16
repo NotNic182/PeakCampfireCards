@@ -237,26 +237,45 @@ namespace CampfireCards.Generated
         public const string Separator = "  ·  ";
     }
 
-    /// <summary>one line per card: a square in the card's rarity colour, its name, and its rarity name in small letter-spaced capitals in that colour; a last line names the Current Build key (or controller button); on a dark rounded panel fitted to the text so it stays readable over snow and sky. visible on the island when the player holds any card; hidden in menus</summary>
-    public static class Ui_MyCardsHud
+    /// <summary>your deck as a little pile of card backs: up to MaxShown mini cards, newest on top, each framed in its card's rarity colour, cascading up-right with a small alternating tilt; a count chip in the accent colour on the pile's top-right corner; under the pile, ALL CARDS ADDED UP on a dark rounded panel: the always-on combined effects with + / - markers (up to MaxLines, then '+N more'), a situational-effects count, and a last line naming the deck key (or controller button). visible on the island when the player holds any card; rebuilt when the collection changes, never per frame. The totals come from the always-on fold only, so they never flicker with conditions; conditional and aura effects are counted as situational instead. The pile is a button: clicking it (whenever a cursor is visible) or pressing the Deck key opens the DeckScreen.</summary>
+    public static class Ui_DeckHud
     {
         public const string Parent = "root";
         public static readonly Vector2 Size = new Vector2(360f, 300f);
         public const string Anchor = "bottom left, x=20, y=200 (clear of the status icons above the stamina bar)";
-        public const string Text = "{myCards}";
+        public const string Text = "{deck}";
         public const string SoundOn = "none";
-        public const float FontSize = 20.0f;
-        public static readonly Color Color = new Color(1f, 1f, 1f, 0.9f);
-        public const string Header = "YOUR CARDS";
-        public const string HintTemplate = "[{0}] Current Build";
-        public static readonly Color Panel = new Color(0.06f, 0.036f, 0.024f, 0.75f);
-        public const float Padding = 12.0f;
-        public static readonly Color HintColor = new Color(0.8f, 0.74f, 0.68f, 1f);
-        public const float MinFontSize = 14.0f;
-        public const float LineHeight = 1.2f;
         public const float X = 20.0f;
         public const float Y = 200.0f;
-        public const float RaritySizePercent = 70.0f;
+        public const float CardW = 84.0f;
+        public const float CardH = 118.0f;
+        public const float OffsetX = 7.0f;
+        public const float OffsetY = 5.0f;
+        public const float TiltDegrees = 4.0f;
+        public const float MaxShown = 5.0f;
+        public const float FrameWidth = 4.0f;
+        public const float BackPpu = 2.0f;
+        public static readonly Color BackColor = new Color(0.045f, 0.03f, 0.02f, 0.88f);
+        public const float CountChipSize = 34.0f;
+        public const float CountFontSize = 18.0f;
+        public static readonly Color CountChipColor = new Color(1f, 0.86f, 0.55f, 1f);
+        public static readonly Color CountTextColor = new Color(0.07f, 0.045f, 0.03f, 1f);
+        public const string TotalsHeader = "ALL CARDS ADDED UP";
+        public static readonly Color HeaderColor = new Color(1f, 0.86f, 0.55f, 1f);
+        public const float FontSize = 18.0f;
+        public const float MinFontSize = 13.0f;
+        public const float LineHeight = 1.2f;
+        public static readonly Color Color = new Color(1f, 1f, 1f, 0.9f);
+        public static readonly Color HintColor = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public static readonly Color Panel = new Color(0.06f, 0.036f, 0.024f, 0.75f);
+        public const float Padding = 12.0f;
+        public const float Width = 340.0f;
+        public const float MaxLines = 5.0f;
+        public const string MoreTemplate = "+{0} more";
+        public const string SituationalOne = "1 situational effect";
+        public const string SituationalMany = "{0} situational effects";
+        public const string HintTemplate = "[{0}] Open your deck";
+        public const float PileGap = 12.0f;
     }
 
     /// <summary>dark panel, white text. toastSeconds notices; warnings that ask the players to act (settings or version mismatch) stay warningToastSeconds</summary>
@@ -341,64 +360,117 @@ namespace CampfireCards.Generated
         public const string GiveUpLaterTemplate = "{0}: after this pick, you give up one of your cards.";
     }
 
-    /// <summary>dark panel with the title; left column: every owned card (rarity square and name in the rarity colour, green benefit, red drawback, each conditional modifier marked active or inactive, its charge or cooldown); right column: combined stats (now, and always-on when a condition or aura changes it) and teammates' auras affecting you; both columns open with a header (YOUR CARDS, COMBINED EFFECTS) on the same line; a card's detail lines hang DetailIndent in, so wrapped lines stay under their marker; every combined-effect line carries the same + / - marker as the cards; Team view (after your build's last page, only with teammates): every other player's name, card count and state (passed out / ghost), then each card they picked in pick order (rarity square, name, rarity, green benefit, red drawback) and any Clown Luggage penalties; teammates are spread over both columns. toggled with the BuildScreen key on the island (closed by the key, a pick, or leaving the run); a non-blocking overlay refreshed 4 times a second; text that does not fit is split into pages at FontSize (no shrinking), the key steps through the pages, then (with teammates) through the Team view's pages, and closes after the last; numbers come from the live Effects fold and Core.BuildStats, never recomputed in the UI</summary>
-    public static class Ui_BuildScreen
+    /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop: YOUR DECK. The deck expands from a pile into a fan of full card faces (rows of up to Fan.MaxPerRow, scaled to fit the band between the subtitle and the totals panel); under the fan, ALL CARDS ADDED UP on a dark panel: the combined stats from the live Effects fold in two balanced columns, with + / - markers, on-now and off-now marks, the difficulty strength line, and FROM TEAMMATES auras. Clicking a card pulls it out: the card enlarged on the left, a detail panel on the right (rarity and name, benefit, drawback, every conditional modifier marked active or not right now, its charge or cooldown, aura reach, when it was picked, flavour), with < and > arrows that flip through the deck. The Deck key steps to TEAM CARDS: every other player's name, card count and state (passed out / ghost), their cards as small card faces in pick order, and Clown Luggage penalties. opened with the Deck key on the island (or by clicking the DeckHud pile); the key then steps to TEAM CARDS (with teammates in the run) and closes after it; Esc backs out of a pulled card first, then closes; a click on the backdrop does the same. Closed by a pick fan opening or leaving the run. The fan expands from the pile centre over expandSeconds with cardStaggerSeconds between cards. Totals and the pulled card's detail refresh 4 times a second from the live Effects fold and Core.BuildStats, never recomputed in the UI. Controller: the first card is selected on open, grid navigation between cards, confirm pulls one out, < and > flip, cancel backs out.</summary>
+    public static class Ui_DeckScreen
     {
         public const string Parent = "root";
-        public static readonly Vector2 Size = new Vector2(1560f, 860f);
-        public const string Anchor = "center; at most Size, and never closer than safeMargin to a screen edge";
-        public const string Text = "{cards} | {stats}";
-        public const string SoundOn = "none";
-        public static readonly Color Panel = new Color(0.045f, 0.03f, 0.02f, 0.88f);
-        public const string Title = "CURRENT BUILD";
-        public const float TitleFontSize = 34.0f;
-        public const float FontSize = 20.0f;
-        public const float MinFontSize = 14.0f;
+        public static readonly Vector2 Size = new Vector2(1920f, 1080f);
+        public const string Anchor = "stretch";
+        public const string Text = "{deck}";
+        public const string SoundOn = "cardsAppear";
+        public static readonly Color Backdrop = new Color(0.04f, 0.025f, 0.015f, 0.72f);
+        public const string Title = "YOUR DECK";
+        public const string TeamTitle = "TEAM CARDS";
+        public const float TitleFontSize = 56.0f;
+        public const float TitleMinFontSize = 32.0f;
+        public const float TitleY = -70.0f;
+        public static readonly Color TitleColor = new Color(1f, 1f, 1f, 1f);
+        public const float SubtitleFontSize = 24.0f;
+        public const float SubtitleY = -150.0f;
+        public static readonly Color SubtitleColor = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public const string FanHint = "Click a card to pull it out.";
+        public const string FanHintPad = "Pick a card with confirm to pull it out.";
+        public const string NavTeamHint = "[{0}] team cards · Esc: close.";
+        public const string NavCloseHint = "Esc: close.";
+        public const string NavBackHint = "[{0}] your deck · Esc: close.";
+        public const string PulledTemplate = "Card {0} of {1} · flip with < and > · Esc: back to the fan.";
+        public const string NoCards = "No cards yet. You pick one at the next campfire.";
+        public const string StatsHeader = "ALL CARDS ADDED UP";
+        public const string AurasHeader = "FROM TEAMMATES";
         public static readonly Color HeaderColor = new Color(1f, 0.86f, 0.55f, 1f);
         public static readonly Color ActiveColor = new Color(0.62f, 0.92f, 0.45f, 1f);
         public static readonly Color InactiveColor = new Color(0.7f, 0.64f, 0.58f, 1f);
-        public const string StatsHeader = "COMBINED EFFECTS";
-        public const string AurasHeader = "FROM TEAMMATES";
-        public const string Hint = "Green helps you, red hurts you. \"On now\" and \"off now\" mark effects that depend on a condition or a nearby teammate.";
-        public const float LineHeight = 1.25f;
-        public const float HintFontSize = 16.0f;
-        public const float HeaderSizePercent = 115.0f;
+        public const string GoodMark = "+ ";
+        public const string BadMark = "- ";
+        public const float FontSize = 19.0f;
+        public const float MinFontSize = 13.0f;
+        public const float LineHeight = 1.2f;
+        public const float HeaderSizePercent = 112.0f;
         public const float MetaSizePercent = 80.0f;
-        public const string CloseHint = "Press {0} to close.";
-        public const string NextPageHint = "Page {1} of {2}. Press {0} for the next page.";
-        public const string LastPageHint = "Page {1} of {2}. Press {0} to close.";
-        public const float ColumnGap = 40.0f;
-        public const float LeftShare = 0.56f;
+        public const float FanBandTop = 200.0f;
+        public const float TotalsWidth = 1400.0f;
+        public const float TotalsHeight = 232.0f;
+        public const float TotalsY = 36.0f;
+        public static readonly Color TotalsPanel = new Color(0.045f, 0.03f, 0.02f, 0.88f);
+        public const float TotalsPad = 18.0f;
+        public const float TotalsColGap = 36.0f;
+        public const string StrengthLine = "{1}: card benefits at {0}% (drawbacks and Mythics at full strength).";
+        public const string FullStrengthLine = "{0}: card benefits at full strength.";
+        public const string DrawbacksOffLine = "Drawbacks are OFF: cards keep only their benefits.";
+        public const string StrengthLineNoDrawbacks = "{1}: card benefits at {0}% (Mythics at full strength).";
         public const string OnNow = "(on now)";
         public const string OffNow = "(off now)";
         public const string Otherwise = "Otherwise: ";
         public const string NoChange = "no change";
-        public const string NoCards = "No cards yet. You pick one at the next campfire.";
         public const string NothingNow = "Your cards change nothing right now.";
         public const string TeammatesTemplate = "Teammates within {0} m: {1}";
+        public const float ExpandSeconds = 0.3f;
+        public const float PulledScale = 1.35f;
+        public const float PulledX = -430.0f;
+        public const float PulledY = -40.0f;
+        public const float DetailX = 110.0f;
+        public const float DetailWidth = 640.0f;
+        public const float DetailHeight = 620.0f;
+        public const float DetailFontSize = 20.0f;
+        public const float DetailMinFontSize = 14.0f;
+        public static readonly Color DetailPanel = new Color(0.045f, 0.03f, 0.02f, 0.88f);
+        public const float DetailPad = 20.0f;
         public const float DetailIndent = 24.0f;
-        public const float PadX = 30.0f;
-        public const float ColumnsTop = 84.0f;
-        public const float ColumnsBottom = 56.0f;
-        public const float TitleY = -18.0f;
-        public const float TitleHeight = 50.0f;
-        public const float HintY = 14.0f;
-        public const float HintHeight = 36.0f;
         public const float DetailSizePercent = 88.0f;
-        public const string TeamTitle = "TEAM CARDS";
-        public const string TeamHint = "Your teammates' cards in the order they picked them: benefit in green, drawback in red.";
-        public const string ToTeamHint = "Press {0} for your teammates' cards.";
-        public const string ToTeamPageHint = "Page {1} of {2}. Press {0} for your teammates' cards.";
+        public const float ArrowSize = 72.0f;
+        public const float ArrowFontSize = 44.0f;
+        public static readonly Color ArrowColor = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public const float ArrowGap = 24.0f;
+        public const string PickedTemplate = "Picked {0} of {1} this run.";
+        public const float TeamCardScale = 0.5f;
+        public const float TeamNameFontSize = 24.0f;
+        public const float TeamRowGap = 20.0f;
+        public const float TeamBandTop = 190.0f;
+        public const float TeamMaxPerRow = 8.0f;
         public const string TeamNoCards = "No cards yet.";
         public const string CardCountOne = "1 card";
         public const string CardCountMany = "{0} cards";
         public const string Ghost = "ghost";
         public const string Down = "passed out";
         public const string PenaltyLabel = "Clown Luggage penalty: ";
-        public const string StrengthLine = "{1}: card benefits at {0}% (drawbacks and Mythics at full strength).";
-        public const string FullStrengthLine = "{0}: card benefits at full strength.";
-        public const string DrawbacksOffLine = "Drawbacks are OFF: cards keep only their benefits.";
-        public const string StrengthLineNoDrawbacks = "{1}: card benefits at {0}% (Mythics at full strength).";
+        public const string PullSound = "cardPick";
+        public const string FlipSound = "cardSwitch";
+        public const float MaxTotalLines = 22.0f;
+        public const string MoreTotalsTemplate = "+{0} more - pull a card out for its details";
+    }
+
+    /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop and a small centred panel: a title naming the card, one button per choosable item (only items the ItemDatabase can spawn are listed), and a hint line. Used by Balright to pick the mythic item its campfire delivers.. opened after the card fan closes at a campfire where the owner still has the choice; a click sends the pick to the host (SpawnItem) and closes; Esc or cancel postpones to the next campfire. Controller: the first button is selected, up/down moves, confirm chooses.</summary>
+    public static class Ui_ItemChooser
+    {
+        public const string Parent = "root";
+        public static readonly Vector2 Size = new Vector2(560f, 420f);
+        public const string Anchor = "center";
+        public const string Text = "{title}";
+        public const string SoundOn = "cardsAppear";
+        public static readonly Color Backdrop = new Color(0.04f, 0.025f, 0.015f, 0.72f);
+        public static readonly Color Panel = new Color(0.045f, 0.03f, 0.02f, 0.88f);
+        public const string Title = "{0}: CHOOSE YOUR ITEM";
+        public const float TitleFontSize = 30.0f;
+        public static readonly Color TitleColor = new Color(1f, 1f, 1f, 1f);
+        public const float FontSize = 24.0f;
+        public static readonly Color TextColor = new Color(1f, 1f, 1f, 1f);
+        public static readonly Color ButtonColor = new Color(0.06f, 0.036f, 0.024f, 0.75f);
+        public const float ButtonWidth = 460.0f;
+        public const float ButtonHeight = 56.0f;
+        public const float ButtonGap = 12.0f;
+        public const string Hint = "Click an item to spawn it by the fire. Esc: decide at the next campfire.";
+        public const float HintFontSize = 16.0f;
+        public static readonly Color HintColor = new Color(0.8f, 0.74f, 0.68f, 1f);
     }
 
 }

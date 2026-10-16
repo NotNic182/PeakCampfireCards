@@ -82,17 +82,17 @@ namespace CampfireCards.Tests
         {
             var c = new Character();
             var a = Recovery("SecondWind");
-            c.data.currentStamina = .2f;
-            Assert.Contains("needs stamina below 20", a.Status(c).Text);
+            c.data.currentStamina = .9f;   // no low-stamina requirement any more: ready even near a full bar
+            Assert.EndsWith("ready", a.Status(c).Text); Assert.True(a.Status(c).Ready);
             c.data.currentStamina = .1f; c.MaxStamina = .1f;
             Assert.Contains("no room to recover", a.Status(c).Text);
             c.MaxStamina = 1f;
             Assert.EndsWith("ready", a.Status(c).Text); Assert.True(a.Status(c).Ready);
             Assert.True(a.Activate(c));
-            Assert.Contains("cooldown 3:00", a.Status(c).Text);
-            UnityEngine.Time.time = 179.5f;
+            Assert.Contains("cooldown 5:00", a.Status(c).Text);
+            UnityEngine.Time.time = 299.5f;
             Assert.Contains("cooldown 0:01", a.Status(c).Text);
-            UnityEngine.Time.time = 180f; c.data.currentStamina = .1f;
+            UnityEngine.Time.time = 300f; c.data.currentStamina = .1f;
             Assert.EndsWith("ready", a.Status(c).Text); Assert.True(a.Status(c).Ready);
             c.data.dead = true;
             Assert.Contains("unavailable while down", a.Status(c).Text);
@@ -123,13 +123,13 @@ namespace CampfireCards.Tests
             var cure = Recovery("EmergencyPurge");
             int nicIndex = Array.FindIndex(CardTable.Cards, c => c.Key == "SecondWind");
             int cureIndex = Array.FindIndex(CardTable.Cards, c => c.Key == "EmergencyPurge");
-            CardSettings.Current.Params[nicIndex]["threshold"] = .1f;
+            CardSettings.Current.Params[nicIndex]["threshold"] = .1f;   // stale setting: Nic of Time has no stamina gate
             CardSettings.Current.Params[cureIndex]["threshold"] = .4f;
             var c = new Character(); c.data.currentStamina = .15f;
             c.Statuses[CharacterAfflictions.STATUSTYPE.Poison] = .35f;
-            Assert.Contains("below 10", nic.Status(c).Text);
+            Assert.EndsWith("ready", nic.Status(c).Text);               // a leftover threshold cannot re-create the gate
             Assert.Contains("needs 40+", cure.Status(c).Text);
-            Assert.False(nic.Activate(c));
+            Assert.True(nic.Activate(c));
             Assert.False(cure.Activate(c));
         }
     }

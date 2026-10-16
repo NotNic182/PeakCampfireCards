@@ -16,20 +16,6 @@ namespace CampfireCards.Abilities
         }
     }
 
-    public sealed class Ability_NextCampfireSpawn : Ability
-    {
-        public override void OnCampfireLit(Character me, bool acquiredThisFire)
-        {
-            if (acquiredThisFire || me.data.dead || (Effects.Flags(NetSend.LocalActor) & Effects.FlagBalloonUsed) != 0) return;
-            var fire = LocalCards.LastCampfire;
-            int item = Mathf.RoundToInt(P("item", 2f));
-            if (fire == null || item < 0 || item >= CardTable.SpawnItems.Length) return;
-            NetSend.RaiseToMaster(new SpawnItem { item = (byte)item, segment = (byte)fire.advanceToSegment });
-        }
-        public override AbilityStatus Status(Character me) => AbilityStatus.Wait(Line(null,
-            (Effects.Flags(NetSend.LocalActor) & Effects.FlagBalloonUsed) == 0 ? "Balloon Bunch at next fire" : "Balloon Bunch received"));
-    }
-
     public sealed class Ability_HelpCost : Ability
     {
         /// <summary>Character.UseStamina is internal: (usage, useBonusStamina, ignoreAscents).</summary>

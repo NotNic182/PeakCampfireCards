@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.7.7";
+        public const string Version = "0.8.0";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -79,14 +79,14 @@ namespace CampfireCards
             SecondWindKey = Config.Bind("Keys", "SecondWind", Key.V, "Activates Nic of Time below its stamina threshold (five-minute cooldown).");
             EmergencyPurgeKey = Config.Bind("Keys", "EmergencyPurge", Key.K, "Activates Discount Cure-All at 35+ Poison, Spores or Drowsy (once per biome).");
             SafetyNetKey = Config.Bind("Keys", "SafetyNet", Key.N, "Places the Budget Checkpoint Flag anchor (when you own it).");
-            BuildScreenKey = Config.Bind("Keys", "BuildScreen", Key.J, "Opens and closes the Current Build screen (your cards and their combined effects).");
+            BuildScreenKey = Config.Bind("Keys", "BuildScreen", Key.J, "Opens and closes your deck: your cards as a fan, everything added up, and your teammates' cards.");
             const string padNote = " auto: the first of D-pad up, down, left, right, View/Select, left or right stick click that no PEAK action uses. " +
                                    "none: no controller button. Or an Input System path, for example <Gamepad>/dpad/left.";
             BloodBatteryPad = Config.Bind("Keys", "BloodBatteryGamepad", Controls.Auto, "Controller button for Bootleg Scoutmaster Bugle." + padNote);
             SecondWindPad = Config.Bind("Keys", "SecondWindGamepad", Controls.Auto, "Controller button for Nic of Time." + padNote);
             EmergencyPurgePad = Config.Bind("Keys", "EmergencyPurgeGamepad", Controls.Auto, "Controller button for Discount Cure-All." + padNote);
             SafetyNetPad = Config.Bind("Keys", "SafetyNetGamepad", Controls.Auto, "Controller button for the Budget Checkpoint Flag anchor." + padNote);
-            BuildScreenPad = Config.Bind("Keys", "BuildScreenGamepad", Controls.Auto, "Controller button for the Current Build screen." + padNote);
+            BuildScreenPad = Config.Bind("Keys", "BuildScreenGamepad", Controls.Auto, "Controller button for the deck screen." + padNote);
             VerboseLog = Config.Bind("Debug", "VerboseLog", false, "Log every card event.");
             DevKeys = Config.Bind("Debug", "DevKeys", false,
                 "Testing keys: F9 lights the current campfire, F10 warps you next to it, F11 shows a sample offer, F8 (host) restores everyone's cards from the saved run (or grants the cards listed in GrantCard when it is not empty), F7 logs the active card effects, F6 (host) opens the card tester: every card one rarity at a time, click one to add it to your build with its effects (press F6 again for the next rarity).");
@@ -107,9 +107,9 @@ namespace CampfireCards
         /// The balance revision the design sheets carry (tools/card_sheet.py bumps it when a sheet edit changes numbers).
         /// Card values are not configurable: the sheets compiled into the mod are the single source of truth, so this is
         /// a revision marker, not a config key.
-        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min), 6 = 0.6.6 (Daddy reach x1.4), 7 = 0.7.1 full rebalance, 8 = 0.7.3 (regen benefits reworked, rarity weights 40/40), 9 = 0.7.6 simulation-driven rebalance (20 cards).
+        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min), 6 = 0.6.6 (Daddy reach x1.4), 7 = 0.7.1 full rebalance, 8 = 0.7.3 (regen benefits reworked, rarity weights 40/40), 9 = 0.7.6 simulation-driven rebalance (20 cards), 10 = 0.8.0 player card overhaul, 11 = benefit midpoints, 12 = full bars and small bumps kept.
         /// </summary>
-        public const int CardBalanceVersion = 9;
+        public const int CardBalanceVersion = 12;
 
         /// <summary>
         /// The lobby options. Card numbers, rarity weights and the balance internals (cost cap, stamina floor, difficulty

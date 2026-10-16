@@ -19,8 +19,8 @@ namespace CampfireCards.Tests
         }
 
         [Theory]
-        [InlineData(CardRarity.Common, 15)]
-        [InlineData(CardRarity.Uncommon, 24)]
+        [InlineData(CardRarity.Common, 14)]
+        [InlineData(CardRarity.Uncommon, 25)]
         [InlineData(CardRarity.Rare, 16)]
         [InlineData(CardRarity.Legendary, 7)]
         [InlineData(CardRarity.Mythic, 2)]
@@ -158,8 +158,10 @@ namespace CampfireCards.Tests
         [Fact]
         public void CampfireSpawnCardsPointAtRealItems()
         {
-            Assert.Equal(new[] { "RopeSpool", "Bandages", "BalloonBunch" }, CardTable.SpawnItems);
-            foreach (var c in CardTable.Cards.Where(c => c.Ability == "CampfireSpawn" || c.Ability == "NextCampfireSpawn"))
+            Assert.Equal(new[] { "RopeSpool", "Bandages", "BalloonBunch", "BookOfBones",
+                "Cure-All", "Bugle_Magic", "PandorasBox", "Lantern_Faerie", "Bugle_Scoutmaster Variant" }, CardTable.SpawnItems);
+            foreach (var m in CardTable.MythicItems) Assert.Contains(m, CardTable.SpawnItems);   // Balright's pool must be spawnable
+            foreach (var c in CardTable.Cards.Where(c => c.Ability == "CampfireSpawn" || c.Ability == "BoneBook"))
             {
                 int item = (int)Math.Round(c.Param("item", -1f));
                 Assert.InRange(item, 0, CardTable.SpawnItems.Length - 1);

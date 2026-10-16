@@ -157,7 +157,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is reduced (Double Down); penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants). Sender: host. Receivers: target.</summary>
+    /// <summary>full card state for a late joiner or reconnecting player (counts[i] cards for actors[i], flattened in cards; pickFlags[i] = bit 1 skip next pick, bit 2 next offer is reduced, bit 4 Balright's one-time item spawned, bit 8 Book of Bones spawned (Double Down); penaltyCounts[i] Clown Luggage penalties for actors[i], flattened in penaltyVariants). Sender: host. Receivers: target.</summary>
     public struct StateSync : INetEvent
     {
         public const byte Code = 93;
@@ -499,7 +499,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>ask the host for a card's campfire item (Rope Baron, Supply Scout) for the fire lit for this segment; the host checks the card, the item and that the fire was lit, places it next to that fire itself, and spawns it once per card per fire. Sender: the card owner. Receivers: MasterClient.</summary>
+    /// <summary>A card owner asks the host for an item by a lit fire: Scoutmaster's Care Package (every fire, plus its random food and item), Book of Broken Bones (once per run) and Balright's chosen mythic item (once per run). The host validates the card, the item and the once-flags before spawning.. Sender: the card owner. Receivers: MasterClient.</summary>
     public struct SpawnItem : INetEvent
     {
         public const byte Code = 104;
@@ -649,7 +649,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>The host spawned the one-time Balloon Bunch; retain the used bit in pickFlags for state sync and host migration.. Sender: host. Receivers: All.</summary>
+    /// <summary>The host spawned a one-time card reward (Balloon Bunch / mythic choice, or the Book of Bones); retain the used bit (flag) in pickFlags for state sync and host migration.. Sender: host. Receivers: All.</summary>
     public struct CardRewardUsed : INetEvent
     {
         public const byte Code = 109;
@@ -657,11 +657,13 @@ namespace CampfireCards.Net
         public const bool Reliable = true;
         public const string Receivers = "All";
         public int actor;
+        public byte flag;
         public byte[] Write()
         {
             using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
             {
                 w.Write(actor);
+                w.Write(flag);
                 w.Flush(); return ms.ToArray();
             }
         }
@@ -671,6 +673,7 @@ namespace CampfireCards.Net
             using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
             {
                 v.actor = r.ReadInt32();
+                v.flag = r.ReadByte();
             }
             return v;
         }

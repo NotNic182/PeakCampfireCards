@@ -92,6 +92,8 @@ def gen_cards(cards):
     lines.append('        public static readonly float[] DifficultyStrength = new float[] { %s };' % ', '.join(cs_float(tiers.get(k, 1.0)) for k in DIFFICULTY_TIERS))
     lines.append('        public static readonly Rgba[] RarityColors = new Rgba[] { %s };' % ', '.join(cs_rgba(cards['rarityColors'][r]) for r in RARITIES))
     lines.append('        public static readonly string[] SpawnItems = new string[] { %s };' % ', '.join(cs_str(x) for x in cards['spawnItems']))
+    lines.append('        /// <summary>cards.json mythicItems: what Balright lets the owner choose from (each must be a SpawnItems entry).</summary>')
+    lines.append('        public static readonly string[] MythicItems = new string[] { %s };' % ', '.join(cs_str(i) for i in cards.get('mythicItems', [])))
     lines.append('        public static readonly ThemeDef[] Themes = new ThemeDef[]')
     lines.append('        {')
     for t in themes:
@@ -334,23 +336,38 @@ def gen_ui(ui):
 
 
 def update_readme_card_table(cards):
-    """The README's card rows come from cards.json like everything else, so the table can never drift."""
+    """The README's card rows come from cards.json like everything else, so the table can never drift.
+    A renamed card's row is found again through its benefit/drawback text; a row that matches nothing,
+    or a card with no row, is warned about instead of silently skipped."""
     path = os.path.join(ROOT, 'README.md')
     by_name = {r['name']: r for r in cards['rows']}
-    row_re = re.compile(r'^\| (.+?) \| (Common|Uncommon|Rare|Legendary|Mythic) \| ')
+    by_text = {}
+    for r in cards['rows']:
+        by_text.setdefault((r['positive'], r['negative'] or 'No drawback'), []).append(r)
+    row_re = re.compile(r'^\| (.+?) \| (Common|Uncommon|Rare|Legendary|Mythic) \| (.+?) \| (.+?) \|$')
     with open(path, encoding='utf-8') as f:
         lines = f.read().split('\n')
-    changed = 0
+    changed, matched = 0, set()
     for i, line in enumerate(lines):
         m = row_re.match(line)
-        if not m or m.group(1) not in by_name:
+        if not m:
             continue
-        c = by_name[m.group(1)]
+        c = by_name.get(m.group(1))
+        if c is None:
+            candidates = [r for r in by_text.get((m.group(3), m.group(4)), []) if r['key'] not in matched]
+            c = candidates[0] if len(candidates) == 1 else None
+        if c is None:
+            print('WARNING: README card row "| %s | ..." matches no card by name or text; fix it by hand' % m.group(1))
+            continue
+        matched.add(c['key'])
         neg = c['negative'] if c['negative'] else 'No drawback'
         new = '| %s | %s | %s | %s |' % (c['name'], c['rarity'].capitalize(), c['positive'], neg)
         if new != line:
             lines[i] = new
             changed += 1
+    for r in cards['rows']:
+        if r['key'] not in matched:
+            print('WARNING: README card table has no row for %s; add it by hand' % r['name'])
     if changed:
         with open(path, 'w', encoding='utf-8', newline='\n') as f:
             f.write('\n'.join(lines))

@@ -69,6 +69,8 @@ namespace CampfireCards.Core
             // Meditation's "hold" is a requirement, not a pacing factor (the bonus is once per biome regardless), and
             // HOLD's "refund" is the benefit share itself: the default Fixed and Amount do the right thing.
             { "refund", ParamKind.Amount },
+            { "min", ParamKind.Amount }, { "max", ParamKind.Amount },
+            { "base", ParamKind.Amount }, { "perBandage", ParamKind.Amount },
             { "keep", ParamKind.Reduction },
         };
 

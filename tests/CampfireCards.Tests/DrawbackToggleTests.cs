@@ -34,14 +34,14 @@ namespace CampfireCards.Tests
         {
             var s = new CardSettings { DrawbacksEnabled = false };
             var piton = Card("GeckoGrip");
-            Assert.Equal(0.88f, s.ModValue(piton, Mod(piton, Channel.climbStamina)), 4);   // benefit untouched
+            Assert.Equal(0.82f, s.ModValue(piton, Mod(piton, Channel.climbStamina)), 4);   // benefit untouched
             Assert.Equal(1f, s.ModValue(piton, Mod(piton, Channel.sprintStamina)), 4);     // drawback gone
             var tax = Card("CardioTax");
-            Assert.Equal(0f, s.ModValue(tax, Mod(tax, Channel.maxStamina)), 4);            // the -2.5 max stamina is gone
+            Assert.Equal(-1, Mod(tax, Channel.maxStamina));                                // 0.8.0 removed the max-stamina drawback from the card itself
+            Assert.Equal(1.35f, s.ModValue(tax, Mod(tax, Channel.sprintSpeed)), 4);        // its benefit stays
             var goat = Card("MountainGoat");
             Assert.Equal(1f, s.ModValue(goat, Mod(goat, Channel.fallInjury)), 4);
-            var bones = Card("CurseBargain");
-            Assert.Equal(0f, s.ModValue(bones, Mod(bones, Channel.reviveCurse)), 4);       // "no revive Curse" is a benefit: kept
+            Assert.Empty(Card("CurseBargain").Mods);                                       // 0.8.0: the Book of Bones is an item grant, nothing to toggle
             var heir = Card("MountainsHeir");
             for (int i = 0; i < heir.Mods.Length; i++) Assert.Equal(s.RawModValue(heir, i), s.ModValue(heir, i));
         }

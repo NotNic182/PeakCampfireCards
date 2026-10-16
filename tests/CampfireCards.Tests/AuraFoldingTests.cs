@@ -33,14 +33,14 @@ namespace CampfireCards.Tests
         public void SharedBurdenChoosesNearestOwnerDespiteDictionaryOrderAndUpdatesAsScoutsMove()
         {
             var shared = Card("SharedBurden");
-            var farther = Owner(2, 5f, shared.Id); var nearer = Owner(3, 2f, shared.Id);
+            var farther = Owner(2, 7f, shared.Id); var nearer = Owner(3, 2f, shared.Id); // 7 m is outside the old 6 m radius, inside the new 8 m
             Effects.Recompute(Character.localCharacter);
             Assert.Equal(3, Effects.SharedBurdenOwner);
-            Assert.Equal(.7f, Effects.SharedBurdenFactor, 5);
+            Assert.Equal(.5f, Effects.SharedBurdenFactor, 5);
             Assert.Equal(1f, Effects.Local[Channel.allInjury]); // applied once separately by the status hook
-            farther.Center = new Vector3(1f, 0f, 0f); nearer.Center = new Vector3(4f, 0f, 0f);
+            farther.Center = new Vector3(1f, 0f, 0f); nearer.Center = new Vector3(8f, 0f, 0f);
             Effects.Recompute(Character.localCharacter);
-            Assert.Equal(2, Effects.SharedBurdenOwner); Assert.Equal(.7f, Effects.SharedBurdenFactor, 5);
+            Assert.Equal(2, Effects.SharedBurdenOwner); Assert.Equal(.5f, Effects.SharedBurdenFactor, 5);
         }
 
         [Fact]

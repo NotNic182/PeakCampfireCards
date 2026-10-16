@@ -22,7 +22,7 @@ namespace CampfireCards.Tests
         private static Ability Recovery(string key) => AbilityRegistry.Create(CardTable.Cards.Single(c => c.Key == key));
 
         [Fact]
-        public void NicOfTimeWaitsForInputAndHasAThreeMinuteCooldownAcrossBiomes()
+        public void NicOfTimeWaitsForInputAndHasAFiveMinuteCooldownAcrossBiomes()
         {
             var c = new Character(); c.data.currentStamina = .1f;
             var a = Recovery("SecondWind");
@@ -34,22 +34,20 @@ namespace CampfireCards.Tests
             c.data.currentStamina = .1f;
             LocalCards.Biome = 1;
             a.OnBiomeStarted(c, 1);
-            UnityEngine.Time.time = 179.9f;
+            UnityEngine.Time.time = 299.9f;
             Assert.False(a.Activate(c));
-            UnityEngine.Time.time = 180f;
+            UnityEngine.Time.time = 300f;
             Assert.True(a.Activate(c));
         }
 
         [Fact]
         public void FailedNicOfTimeAttemptsDoNotStartCooldownAndRecoveryClamps()
         {
-            var c = new Character(); c.data.currentStamina = .2f;
+            var c = new Character(); c.data.currentStamina = .2f; c.MaxStamina = .2f;
             var a = Recovery("SecondWind");
-            Assert.False(a.Activate(c)); // below 20, not 20 or below
-            c.data.currentStamina = .19f; c.MaxStamina = .19f;
-            Assert.False(a.Activate(c)); // afflictions have left no recoverable space
+            Assert.False(a.Activate(c)); // afflictions have left no recoverable space: the only failure mode left
             c.MaxStamina = .3f;
-            Assert.True(a.Activate(c));
+            Assert.True(a.Activate(c)); // no low-stamina gate any more, and the failed attempt started no cooldown
             Assert.Equal(.3f, c.data.currentStamina);
         }
 
@@ -167,8 +165,10 @@ namespace CampfireCards.Tests
             r.Fold(defs.SelectMany(c => c.Mods.Select((m, i) => new ActiveMod
             { CardId = c.Id, ModIndex = i, Channel = m.Channel, Op = m.Op, Value = m.Value, Rarity = c.Rarity })), s);
             // Four ordinary weight units, two held (including a bag shell), ten inside the bag, eight scout, one stuck item.
-            Assert.Equal((4f + 2f * .55f + 10f * 1.05f + 8f + 1f) * .5f,
+            Assert.Equal((4f + 2f * .55f + 10f * 1.05f + 8f + 1f) * .4f,
                 StatComposites.CarriedWeight(r, 4f, 2f, 10f, 8f, 1f), 5);
+            var nomad = CardTable.Cards.Single(c => c.Key == "PacklessNomad");
+            Assert.DoesNotContain(nomad.Mods, m => m.When == Condition.wearingBackpack);   // the rebalance removed the wearing-a-backpack sprint tax
         }
 
         [Fact]

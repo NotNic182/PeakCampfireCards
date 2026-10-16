@@ -74,7 +74,13 @@
   "spawnItems": [
     "RopeSpool",
     "Bandages",
-    "BalloonBunch"
+    "BalloonBunch",
+    "BookOfBones",
+    "Cure-All",
+    "Bugle_Magic",
+    "PandorasBox",
+    "Lantern_Faerie",
+    "Bugle_Scoutmaster Variant"
   ],
   "themes": {
     "ember": {
@@ -286,8 +292,8 @@
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
-      "positive": "Climbing uses 12% less stamina.",
-      "negative": "Sprinting uses 5% more stamina.",
+      "positive": "Climbing uses 18% less stamina.",
+      "negative": "Sprinting uses 10% more stamina.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -295,14 +301,14 @@
         [
           "climbStamina",
           "mul",
-          0.88,
+          0.82,
           "always",
           "self"
         ],
         [
           "sprintStamina",
           "mul",
-          1.05,
+          1.1,
           "always",
           "self"
         ]
@@ -320,7 +326,7 @@
       "category": "climbing",
       "type": "Passive",
       "positive": "Jump 30% higher.",
-      "negative": "Take 15% more fall Injury.",
+      "negative": "Take 5% more fall Injury.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -335,7 +341,7 @@
         [
           "fallInjury",
           "mul",
-          1.15,
+          1.05,
           "always",
           "self"
         ]
@@ -385,7 +391,7 @@
       "rarity": "rare",
       "category": "climbing",
       "type": "Conditional passive",
-      "positive": "Hang still on a wall to recover 10 stamina per second.",
+      "positive": "Hang still on a wall to recover 5 stamina per second.",
       "negative": "Climb 10% slower.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -401,7 +407,7 @@
       ],
       "ability": "OverhangRegen",
       "params": {
-        "regenPerSecond": 0.1
+        "regenPerSecond": 0.05
       },
       "theme": "stone",
       "art": "rope"
@@ -409,20 +415,19 @@
     {
       "id": 5,
       "key": "SecondSpring",
-      "name": "Bing BOING",
+      "name": "Bing Double Boing",
       "rarity": "rare",
       "category": "climbing",
       "type": "Active movement ability",
       "positive": "Jump again in mid-air for a double jump. Cooldown: 15s.",
-      "negative": "Each double jump adds 5 Drowsy.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [],
       "ability": "SecondSpring",
       "params": {
-        "cooldown": 15,
-        "drowsy": 0.05
+        "cooldown": 15
       },
       "theme": "stone",
       "art": "spring"
@@ -435,7 +440,7 @@
       "category": "climbing",
       "type": "Passive",
       "positive": "Climb 30% faster.",
-      "negative": "Climbing uses 20% more stamina.",
+      "negative": "Climbing uses 10% more stamina.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -450,7 +455,7 @@
         [
           "climbStamina",
           "mul",
-          1.2,
+          1.1,
           "always",
           "self"
         ]
@@ -463,7 +468,7 @@
     {
       "id": 7,
       "key": "Featherfall",
-      "name": "Tenderfoot Insurance",
+      "name": "Tendiefoot",
       "rarity": "uncommon",
       "category": "climbing",
       "type": "Passive",
@@ -496,7 +501,7 @@
     {
       "id": 8,
       "key": "LedgeDancer",
-      "name": "Daddy",
+      "name": "Daddy Long Arms",
       "rarity": "common",
       "category": "climbing",
       "type": "Passive",
@@ -533,7 +538,7 @@
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Passive",
-      "positive": "Gain 25 maximum stamina.",
+      "positive": "Gain 30 maximum stamina.",
       "negative": "Hunger builds 15% faster.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -542,7 +547,7 @@
         [
           "maxStamina",
           "add",
-          0.25,
+          0.3,
           "always",
           "self"
         ],
@@ -566,7 +571,7 @@
       "rarity": "rare",
       "category": "stamina",
       "type": "Manually activated ability",
-      "positive": "Press {key} below 20 stamina to recover 30. Cooldown: 3 min.",
+      "positive": "Press {key} to recover 30 stamina. Cooldown: 5 min.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -574,9 +579,8 @@
       "mods": [],
       "ability": "SecondWind",
       "params": {
-        "threshold": 0.2,
         "restore": 0.3,
-        "cooldown": 180
+        "cooldown": 300
       },
       "theme": "pine",
       "art": "star"
@@ -584,7 +588,7 @@
     {
       "id": 11,
       "key": "MarathonLegs",
-      "name": "Hasty Badge Training",
+      "name": "Leg Day Skip",
       "rarity": "common",
       "category": "stamina",
       "type": "Passive",
@@ -617,7 +621,7 @@
     {
       "id": 12,
       "key": "QuickRecovery",
-      "name": "HOLD",
+      "name": "HOOOOLLLD",
       "rarity": "common",
       "category": "stamina",
       "type": "Conditional passive",
@@ -649,7 +653,7 @@
       "rarity": "uncommon",
       "category": "stamina",
       "type": "Conditional passive",
-      "positive": "Crouch and stay still for 3s to gain 25 yellow stamina. Once per biome.",
+      "positive": "Crouch and stay still for 3s to gain a full bar of yellow stamina. Once per biome.",
       "negative": "",
       "flavor": "You're already crouched. Take a breather.",
       "multiplayerOnly": false,
@@ -658,7 +662,7 @@
       "ability": "Meditation",
       "params": {
         "hold": 3,
-        "bonus": 0.25
+        "bonus": 1.0
       },
       "theme": "pine",
       "art": "wind"
@@ -671,7 +675,7 @@
       "category": "stamina",
       "type": "Passive",
       "positive": "Sprint 35% faster.",
-      "negative": "Lose 2.5 maximum stamina.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -680,13 +684,6 @@
           "sprintSpeed",
           "mul",
           1.35,
-          "always",
-          "self"
-        ],
-        [
-          "maxStamina",
-          "add",
-          -0.025,
           "always",
           "self"
         ]
@@ -703,7 +700,7 @@
       "rarity": "rare",
       "category": "stamina",
       "type": "Cyclic conditional passive",
-      "positive": "Climb for 2s straight: climbing uses 40% less stamina for the next 2s.",
+      "positive": "Climb for 2s straight: climbing uses 40% less stamina for the next 3.5s.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -720,7 +717,7 @@
       "ability": "PulseClimber",
       "params": {
         "buildup": 2,
-        "boost": 2
+        "boost": 3.5
       },
       "theme": "pine",
       "art": "rope"
@@ -728,24 +725,16 @@
     {
       "id": 16,
       "key": "HalfTank",
-      "name": "Marshmallow Morale",
+      "name": "Campfire++",
       "rarity": "common",
       "category": "stamina",
       "type": "Campfire-triggered passive",
       "positive": "Each new campfire clears your Hunger.",
-      "negative": "Cooked food removes 10% less Hunger.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "cookedFoodHunger",
-          "mul",
-          0.9,
-          "always",
-          "self"
-        ]
-      ],
+      "mods": [],
       "ability": "CampfireMeal",
       "params": {},
       "theme": "pine",
@@ -885,7 +874,7 @@
       "rarity": "uncommon",
       "category": "environment",
       "type": "Passive",
-      "positive": "Spores build 80% slower, and Poison 15% slower.",
+      "positive": "Spores build 80% slower, and Poison 45% slower.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -901,7 +890,7 @@
         [
           "poisonRate",
           "mul",
-          0.85,
+          0.55,
           "always",
           "self"
         ]
@@ -914,11 +903,11 @@
     {
       "id": 21,
       "key": "Thornbreaker",
-      "name": "Cactus? What Cactus?",
+      "name": "Almost Climbable Cactus",
       "rarity": "common",
       "category": "environment",
       "type": "Passive",
-      "positive": "New Thorns add 80% less status (at least one thorn always counts), thorns take 50% less time to remove, and hits that are not falls hurt 20% less.",
+      "positive": "Thorns hurt 80% less, and can be removed 50% faster.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -935,13 +924,6 @@
           "thornRemovalTime",
           "mul",
           0.5,
-          "always",
-          "self"
-        ],
-        [
-          "nonFallInjury",
-          "mul",
-          0.8,
           "always",
           "self"
         ]
@@ -1024,37 +1006,25 @@
       "rarity": "rare",
       "category": "environment",
       "type": "Conditional passive",
-      "positive": "Above 20 Poison, climbing uses 40% less stamina.",
-      "negative": "Poison wears off 10% slower.",
+      "positive": "Poison that builds up over time (gas, venom, vile food) doesn't affect you.",
+      "negative": "Instant poison hits hurt 20% more.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "climbStamina",
-          "mul",
-          0.6,
-          "poisonAbove20",
-          "self"
-        ],
-        [
-          "poisonDecay",
-          "mul",
-          0.9,
-          "always",
-          "self"
-        ]
-      ],
-      "ability": "",
-      "params": {},
+      "mods": [],
+      "ability": "GasImmunity",
+      "params": {
+        "gasThreshold": 0.02,
+        "hit": 1.2
+      },
       "theme": "glacier",
       "art": "droplet"
     },
     {
       "id": 25,
       "key": "BonePlating",
-      "name": "BingBong",
-      "rarity": "common",
+      "name": "Bing Boing",
+      "rarity": "uncommon",
       "category": "survival",
       "type": "Passive",
       "positive": "Every 5 min alive: a random 20s burst of Infinite Stamina, Invincibility or Low Gravity.",
@@ -1075,26 +1045,22 @@
     {
       "id": 26,
       "key": "EfficientMedic",
-      "name": "Tara",
+      "name": "TechTara",
       "rarity": "uncommon",
       "category": "survival",
       "type": "Passive",
-      "positive": "Healing removes 60% more Injury from you.",
+      "positive": "Reduces fall damage by 20% and every bandage in your inventory reduces it by 20% more. (Limit 3)",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "healReceived",
-          "mul",
-          1.6,
-          "always",
-          "self"
-        ]
-      ],
-      "ability": "",
-      "params": {},
+      "mods": [],
+      "ability": "BandageBrace",
+      "params": {
+        "base": 0.2,
+        "perBandage": 0.2,
+        "limit": 3
+      },
       "theme": "berry",
       "art": "cross"
     },
@@ -1105,7 +1071,7 @@
       "rarity": "uncommon",
       "category": "survival",
       "type": "Conditional passive",
-      "positive": "At 20+ Injury, climbing and sprinting use 25% less stamina.",
+      "positive": "At 20+ Injury, climbing and sprinting use 35% less stamina.",
       "negative": "Take 5% more Injury.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1114,14 +1080,14 @@
         [
           "climbStamina",
           "mul",
-          0.75,
+          0.65,
           "injury20",
           "self"
         ],
         [
           "sprintStamina",
           "mul",
-          0.75,
+          0.65,
           "injury20",
           "self"
         ],
@@ -1167,7 +1133,7 @@
       "category": "survival",
       "type": "Automatic revival",
       "positive": "Once per run, cancel a fatal fall and return to safe ground.",
-      "negative": "Using it skips your next card pick.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1180,11 +1146,11 @@
     {
       "id": 30,
       "key": "IronStomach",
-      "name": "Gourmand's Gut",
+      "name": "Perma-Cooking",
       "rarity": "common",
       "category": "survival",
       "type": "Consumption-triggered passive",
-      "positive": "Food removes 20% more Hunger.",
+      "positive": "Food removes 25% more Hunger.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1193,7 +1159,7 @@
         [
           "foodHunger",
           "mul",
-          1.2,
+          1.25,
           "always",
           "self"
         ]
@@ -1210,22 +1176,16 @@
       "rarity": "rare",
       "category": "survival",
       "type": "Passive",
-      "positive": "Reviving does not add Curse.",
+      "positive": "You receive a Book of Bones right now.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
-      "mods": [
-        [
-          "reviveCurse",
-          "mul",
-          0,
-          "always",
-          "self"
-        ]
-      ],
-      "ability": "",
-      "params": {},
+      "mods": [],
+      "ability": "BoneBook",
+      "params": {
+        "item": 3
+      },
       "theme": "berry",
       "art": "star"
     },
@@ -1236,7 +1196,7 @@
       "rarity": "uncommon",
       "category": "survival",
       "type": "Item-use triggered",
-      "positive": "Medical items also remove 7.5 from your highest other status.",
+      "positive": "Medical and food items also remove a random amount from your highest other negative status.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1244,7 +1204,8 @@
       "mods": [],
       "ability": "CleansingRitual",
       "params": {
-        "bonus": 0.075
+        "min": 0.025,
+        "max": 0.125
       },
       "theme": "berry",
       "art": "cross"
@@ -1256,7 +1217,7 @@
       "rarity": "rare",
       "category": "inventory",
       "type": "Passive",
-      "positive": "All carried weight is 50% lighter, including backpacks and scouts.",
+      "positive": "All carried weight is 60% lighter, including backpacks and scouts.",
       "negative": "Your third pocket cannot hold new items.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1265,7 +1226,7 @@
         [
           "totalWeight",
           "mul",
-          0.5,
+          0.4,
           "always",
           "self"
         ]
@@ -1311,11 +1272,11 @@
     {
       "id": 35,
       "key": "OneHandedScout",
-      "name": "Idol Hands",
+      "name": "Super Idol Hands",
       "rarity": "common",
       "category": "inventory",
       "type": "Passive",
-      "positive": "Held items weigh 65% less, and climbing with an item in hand uses 15% less stamina.",
+      "positive": "Held items weigh 75% less.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1324,15 +1285,8 @@
         [
           "heldItemWeight",
           "mul",
-          0.35,
+          0.25,
           "always",
-          "self"
-        ],
-        [
-          "climbStamina",
-          "mul",
-          0.85,
-          "climbingWithItem",
           "self"
         ]
       ],
@@ -1348,7 +1302,7 @@
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Consumption-triggered",
-      "positive": "Cooked food fills you up 30% more, and once per biome your first cooked meal is not consumed.",
+      "positive": "Cooked food fills you up 40% more, and once per biome your first cooked meal is not consumed.",
       "negative": "Uncooked food removes 15% less Hunger.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1357,7 +1311,7 @@
         [
           "cookedFoodHunger",
           "mul",
-          1.3,
+          1.4,
           "always",
           "self"
         ],
@@ -1377,12 +1331,12 @@
     {
       "id": 37,
       "key": "CampChef",
-      "name": "Cooking Badge Deluxe",
+      "name": "Cooked",
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Consumption-triggered passive",
-      "positive": "Cooked food removes 50% more Hunger.",
-      "negative": "Eating cookable food raw adds 5 Poison.",
+      "positive": "Cooked food removes 60% more Hunger.",
+      "negative": "Eating uncooked food adds 5 Poison.",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1390,7 +1344,7 @@
         [
           "cookedFoodHunger",
           "mul",
-          1.5,
+          1.6,
           "always",
           "self"
         ]
@@ -1409,16 +1363,14 @@
       "rarity": "rare",
       "category": "inventory",
       "type": "Campfire-triggered",
-      "positive": "Get one Balloon Bunch at the next campfire. Once per run.",
+      "positive": "Get a mythic item (of your choice) at the next campfire. Once per run.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [],
-      "ability": "NextCampfireSpawn",
-      "params": {
-        "item": 2
-      },
+      "ability": "MythicChoice",
+      "params": {},
       "theme": "sun",
       "art": "rope"
     },
@@ -1429,7 +1381,7 @@
       "rarity": "uncommon",
       "category": "inventory",
       "type": "Campfire-triggered",
-      "positive": "Get a Bandage at each new campfire after picking this card.",
+      "positive": "Get a bandage, random food item, and a random item at each new campfire after picking this card.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1449,19 +1401,15 @@
       "rarity": "legendary",
       "category": "inventory",
       "type": "One-time acquisition",
-      "positive": "Immediately gain 2 random bonus cards.",
-      "negative": "One permanent random penalty: climbing or sprinting cost +10%, Injury +10%, or Hunger buildup +10%. It stays even if you give this card up.",
+      "positive": "Immediately gain 2 random bonus cards right now.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": true,
       "mods": [],
       "ability": "DoubleDeal",
       "params": {
-        "bonusCards": 2,
-        "climbPenalty": 1.1,
-        "sprintPenalty": 1.1,
-        "injuryPenalty": 1.1,
-        "hungerPenalty": 1.1
+        "bonusCards": 2
       },
       "theme": "sun",
       "art": "star"
@@ -1473,7 +1421,7 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "You and teammates within 8 m use 10% less climbing stamina.",
+      "positive": "You and teammates within 8 m use 20% less climbing stamina.",
       "negative": "With no teammate within 8 m, climbing uses 5% more stamina.",
       "flavor": "",
       "multiplayerOnly": true,
@@ -1482,14 +1430,14 @@
         [
           "climbStamina",
           "mul",
-          0.9,
+          0.8,
           "always",
           "team"
         ],
         [
           "climbStamina",
           "mul",
-          0.9,
+          0.8,
           "teammateNear",
           "self"
         ],
@@ -1515,7 +1463,7 @@
       "rarity": "uncommon",
       "category": "team",
       "type": "Passive",
-      "positive": "Healing items used on teammates remove 100% more Injury.",
+      "positive": "Healing items used on teammates and yourself remove 100% more Injury.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
@@ -1523,6 +1471,13 @@
       "mods": [
         [
           "healGiven",
+          "mul",
+          2.0,
+          "always",
+          "self"
+        ],
+        [
+          "healSelfUse",
           "mul",
           2.0,
           "always",
@@ -1537,7 +1492,7 @@
     {
       "id": 43,
       "key": "RescueHarness",
-      "name": "Human Carry-On",
+      "name": "Carry-On Scout",
       "rarity": "common",
       "category": "team",
       "type": "Passive",
@@ -1570,7 +1525,7 @@
     {
       "id": 44,
       "key": "HeatHuddle",
-      "name": "Happy Camper Huddle",
+      "name": "Ascent 5+",
       "rarity": "common",
       "category": "team",
       "type": "Conditional passive",
@@ -1607,7 +1562,7 @@
       "rarity": "rare",
       "category": "team",
       "type": "Revival-triggered",
-      "positive": "First teammate revive by feeding or statue each biome: both gain 100 yellow stamina.",
+      "positive": "First teammate revive by feeding or statue each biome: both gain a full bar of yellow stamina.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": true,
@@ -1627,7 +1582,7 @@
       "rarity": "common",
       "category": "team",
       "type": "Passive",
-      "positive": "Pull teammates up from 30% farther away.",
+      "positive": "Pull teammates up from 40% farther away.",
       "negative": "Starting a pull costs a base 5 stamina, once per continuous reach.",
       "flavor": "",
       "multiplayerOnly": true,
@@ -1636,7 +1591,7 @@
         [
           "helpReach",
           "mul",
-          1.3,
+          1.4,
           "always",
           "self"
         ]
@@ -1655,8 +1610,8 @@
       "rarity": "rare",
       "category": "team",
       "type": "Proximity aura",
-      "positive": "Teammates within 6 m take 30% less Injury.",
-      "negative": "You take a quarter of the prevented Injury, up to 5 per hit.",
+      "positive": "Teammates within 8 m take 50% less Injury.",
+      "negative": "You take a tiny amount of the prevented Injury, up to 5 per hit.",
       "flavor": "",
       "multiplayerOnly": true,
       "drawsCards": false,
@@ -1664,15 +1619,15 @@
         [
           "allInjury",
           "mul",
-          0.7,
+          0.5,
           "always",
           "team"
         ]
       ],
       "ability": "SharedBurden",
       "params": {
-        "radius": 6,
-        "absorb": 0.25,
+        "radius": 8,
+        "absorb": 0.1,
         "cap": 0.05
       },
       "theme": "sky",
@@ -1681,7 +1636,7 @@
     {
       "id": 48,
       "key": "CampChoir",
-      "name": "Friendship Bugle Choir",
+      "name": "Friendship Bugles",
       "rarity": "uncommon",
       "category": "team",
       "type": "Proximity aura",
@@ -1760,7 +1715,7 @@
       "rarity": "rare",
       "category": "mutation",
       "type": "Acquisition and campfire triggered",
-      "positive": "Gain 40 yellow stamina now, then 30 at each later campfire.",
+      "positive": "Gain a full bar of yellow stamina now, then again at each later campfire.",
       "negative": "Gain 3 Curse now, then 1 at each later campfire, up to 5 total.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1768,8 +1723,8 @@
       "mods": [],
       "ability": "CursedCrown",
       "params": {
-        "bonusNow": 0.4,
-        "bonusFire": 0.3,
+        "bonusNow": 1.0,
+        "bonusFire": 1.0,
         "curseNow": 0.03,
         "curseFire": 0.01,
         "curseBudget": 0.05
@@ -1780,12 +1735,12 @@
     {
       "id": 51,
       "key": "LoadedDice",
-      "name": "Pandora's Pocket Gamble",
+      "name": "Pandora's HotPocket",
       "rarity": "uncommon",
       "category": "mutation",
       "type": "Random biome-triggered passive",
-      "positive": "Inventory items weigh 10% less. Each biome: 65% chance of 25 yellow stamina.",
-      "negative": "A failed roll adds 7.5 Injury instead.",
+      "positive": "Inventory items weigh 25% less, and you gain 37.5 yellow stamina at each new biome.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1793,16 +1748,15 @@
         [
           "itemWeight",
           "mul",
-          0.9,
+          0.75,
           "always",
           "self"
         ]
       ],
       "ability": "LoadedDice",
       "params": {
-        "chance": 0.65,
-        "bonus": 0.25,
-        "injury": 0.075
+        "chance": 1.0,
+        "bonus": 0.375
       },
       "theme": "ember",
       "art": "rock"
@@ -1814,7 +1768,7 @@
       "rarity": "legendary",
       "category": "mutation",
       "type": "Manually activated ability",
-      "positive": "Press {key} to gain 60 yellow stamina. Once per biome.",
+      "positive": "Press {key} to gain a full bar of yellow stamina. Once per biome.",
       "negative": "Each use adds 15 Injury.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1822,7 +1776,7 @@
       "mods": [],
       "ability": "BloodBattery",
       "params": {
-        "bonus": 0.6,
+        "bonus": 1.0,
         "injury": 0.15
       },
       "theme": "ember",
@@ -1836,7 +1790,7 @@
       "category": "mutation",
       "type": "Conditional passive",
       "positive": "Sprint for 2s to move 30% faster until you stop.",
-      "negative": "Stopping after a boost adds 2.5 Drowsy, at most once every 60s.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1851,9 +1805,7 @@
       ],
       "ability": "MomentumFiend",
       "params": {
-        "buildup": 2,
-        "drowsy": 0.025,
-        "cooldown": 60
+        "buildup": 2
       },
       "theme": "ember",
       "art": "wind"
@@ -1921,7 +1873,7 @@
       "category": "mutation",
       "type": "Equipment-conditional passive",
       "positive": "Without a backpack: sprint 30% faster and jump 20% higher.",
-      "negative": "With a backpack: sprint 5% slower.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
@@ -1938,13 +1890,6 @@
           "mul",
           1.2,
           "noBackpack",
-          "self"
-        ],
-        [
-          "sprintSpeed",
-          "mul",
-          0.95,
-          "wearingBackpack",
           "self"
         ]
       ],
@@ -1978,11 +1923,11 @@
     {
       "id": 58,
       "key": "ScavengersInstinct",
-      "name": "BingBong Baggage Scanner",
+      "name": "TSA",
       "rarity": "rare",
       "category": "wildcard",
       "type": "Proximity visualization",
-      "positive": "Mark food, items and luggage within 12 m, even through terrain.",
+      "positive": "Mark food, items and luggage within 56 m, even through terrain.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -1990,7 +1935,7 @@
       "mods": [],
       "ability": "ScavengersInstinct",
       "params": {
-        "radius": 12
+        "radius": 56
       },
       "theme": "dusk",
       "art": "sun"
@@ -2002,7 +1947,7 @@
       "rarity": "uncommon",
       "category": "wildcard",
       "type": "Consumption-triggered",
-      "positive": "At 20+ Injury, eating food removes 7.5 Injury.",
+      "positive": "At 20+ Injury, eating food heals 7.5 health.",
       "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
@@ -2024,14 +1969,14 @@
       "category": "wildcard",
       "type": "Manually placed revival anchor",
       "positive": "Press {key} on flat ground: your next pass-out revives you here. Once per biome.",
-      "negative": "The revival leaves 40 Injury.",
+      "negative": "",
       "flavor": "",
       "multiplayerOnly": false,
       "drawsCards": false,
       "mods": [],
       "ability": "SafetyNet",
       "params": {
-        "injury": 0.4
+        "injury": 0
       },
       "theme": "dusk",
       "art": "shield"
@@ -2069,7 +2014,7 @@
       "rarity": "legendary",
       "category": "wildcard",
       "type": "Acquisition-triggered",
-      "positive": "Sacrifice one of your cards to gain 35 maximum stamina.",
+      "positive": "Sacrifice one of your cards to gain 35 (MORE) maximum stamina.",
       "negative": "Gain 5 Curse when the sacrifice is made.",
       "flavor": "",
       "multiplayerOnly": false,
@@ -2174,5 +2119,12 @@
       "theme": "gold",
       "art": "flame"
     }
+  ],
+  "mythicItems": [
+    "Cure-All",
+    "Bugle_Magic",
+    "PandorasBox",
+    "Lantern_Faerie",
+    "Bugle_Scoutmaster Variant"
   ]
 }

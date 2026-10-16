@@ -37,7 +37,7 @@ namespace CampfireCards
             NetHandlers.Reset();
             Hooks.ResetRunTracking();
             Hud.ClearMarkers();
-            BuildScreen.Hide();
+            DeckScreen.HideIfOpen();
         }
 
         public static bool IsGameplayScene(string name) => name != null && (name.Contains("Island") || name.Contains("Level_"));
@@ -247,7 +247,7 @@ namespace CampfireCards
             FlushItemUses(local);
             AbilityKeys(local);
             PickSession.HostTick();
-            BuildScreen.Tick(local);
+            DeckScreen.Tick(local);
 
             if (Time.unscaledTime >= _nextAbilityBar)
             {
@@ -296,7 +296,7 @@ namespace CampfireCards
                     catch (Exception e) { Plugin.Log.LogError($"{a.Card.Name} Activate: {e}"); }
                 }
             }
-            if (Controls.WasPressed(Controls.Act.BuildScreen)) BuildScreen.Toggle(local);
+            if (Controls.WasPressed(Controls.Act.BuildScreen)) DeckScreen.Toggle(local);
         }
 
         private static void CheckArrivals(Character local)

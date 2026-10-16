@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace CampfireCards.Abilities
 {
-    /// <summary>Second Wind: manual recovery below the threshold, with a five-minute cooldown.</summary>
+    /// <summary>Second Wind: manual stamina recovery on a five-minute cooldown.</summary>
     public sealed class Ability_SecondWind : Ability
     {
         private readonly Cooldown _cooldown = new Cooldown(300f);
@@ -15,7 +15,6 @@ namespace CampfireCards.Abilities
         {
             if (me.data.passedOut || me.data.fullyPassedOut || me.data.dead) return false;
             if (!_cooldown.Ready(Now)) { Ui.Hud.Toast(Card.Name + ": cooldown " + CardCopy.Countdown(_cooldown.Remaining(Now))); return false; }
-            if (me.data.currentStamina >= P("threshold", 0.2f)) { Ui.Hud.Toast(Card.Name + ": needs stamina below " + CardCopy.Points(P("threshold", .2f))); return false; }
             if (me.GetMaxStamina() <= me.data.currentStamina) { Ui.Hud.Toast(Card.Name + ": statuses leave no room to recover"); return false; }
             float before = me.data.currentStamina;
             me.AddStamina(P("restore", 0.25f));   // AddStamina clamps to the current maximum
@@ -30,7 +29,6 @@ namespace CampfireCards.Abilities
             string key = Plugin.SecondWindKeyLabel;
             if (me.data.dead || me.data.passedOut || me.data.fullyPassedOut) return AbilityStatus.Wait(Line(key, "unavailable while down"));
             if (!_cooldown.Ready(Now)) return AbilityStatus.Wait(Line(key, "cooldown " + CardCopy.Countdown(_cooldown.Remaining(Now))));
-            if (me.data.currentStamina >= P("threshold", .2f)) return AbilityStatus.Wait(Line(key, "needs stamina below " + CardCopy.Points(P("threshold", .2f))));
             if (me.GetMaxStamina() <= me.data.currentStamina) return AbilityStatus.Wait(Line(key, "no room to recover"));
             return AbilityStatus.Ok(Line(key, Ui_AbilityBar.Ready));
         }

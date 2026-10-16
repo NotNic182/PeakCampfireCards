@@ -142,7 +142,9 @@ namespace CampfireCards.Net
 
         public static void OnCardRewardUsed(CardRewardUsed m, int sender)
         {
-            if (FromHost(sender)) Effects.SetFlag(m.actor, Effects.FlagBalloonUsed, true);
+            if (!FromHost(sender)) return;
+            if (m.flag == Effects.FlagBalloonUsed || m.flag == Effects.FlagBoneBook) Effects.SetFlag(m.actor, m.flag, true);
+            else Plugin.Verbose("CardRewardUsed with unknown flag " + m.flag);
         }
 
         /// <summary>

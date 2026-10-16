@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using CampfireCards.Abilities;
 using CampfireCards.Cards;
+using CampfireCards.Core;
 using CampfireCards.Generated;
 using CampfireCards.Net;
 using TMPro;
@@ -10,7 +11,7 @@ using UnityEngine.UI;
 
 namespace CampfireCards.Ui
 {
-    /// <summary>ui.json WaitingBanner, MyCardsHud, Toast, AbilityBar, Prompt and Scavenger markers: overlays that never block input.</summary>
+    /// <summary>ui.json WaitingBanner, DeckHud, Toast, AbilityBar, Prompt and Scavenger markers: overlays that never block input.</summary>
     public static class Hud
     {
         /// <summary>A world position marked on screen (Scavenger's Instinct).</summary>
@@ -24,7 +25,11 @@ namespace CampfireCards.Ui
         private static GameObject _root;
         private static RectTransform _rootRect;
         private static Image _waitingPanel; private static TextMeshProUGUI _waitingText, _waitingOrder;
-        private static TextMeshProUGUI _myCards; private static Image _myCardsPanel;
+        /// <summary>The deck pile (mini card backs), its count chip, and ALL CARDS ADDED UP underneath (ui.json DeckHud).</summary>
+        private static RectTransform _pile, _pileCards;
+        private static Image _deckChip; private static TextMeshProUGUI _deckCount;
+        private static TextMeshProUGUI _totals; private static Image _totalsPanel;
+        private static readonly ModResult _always = new ModResult();
         private static Image _toastPanel; private static TextMeshProUGUI _toastText; private static float _toastUntil;
         private static TextMeshProUGUI _abilityBar; private static Image _abilityPanel;
         /// <summary>The input device the hint labels were last written for (they name a key or a controller button).</summary>
@@ -34,8 +39,8 @@ namespace CampfireCards.Ui
         private static readonly List<TextMeshProUGUI> _markerPool = new List<TextMeshProUGUI>();
         private static readonly List<Marker> _markers = new List<Marker>();
 
-        /// <summary>Where YOUR CARDS starts above the bottom edge (ui.json MyCardsHud).</summary>
-        private static readonly float MyCardsBottom = Ui_MyCardsHud.Y;
+        /// <summary>Where the deck HUD starts above the bottom edge (ui.json DeckHud).</summary>
+        private static readonly float DeckBottom = Ui_DeckHud.Y;
 
         /// <summary>The top stack, each slot StackGap under the one above, so the three never touch (ui.json WaitingBanner).</summary>
         private static readonly float BannerTop = Ui_WaitingBanner.Top;
@@ -67,14 +72,35 @@ namespace CampfireCards.Ui
             UiKit.AutoSize(_waitingOrder, Mathf.Min(Ui_WaitingBanner.MinFontSize, Ui_WaitingBanner.OrderFontSize));
             _waitingPanel.gameObject.SetActive(false);
 
-            // the corner lists sit straight on the world: a dark panel fitted to the text keeps them readable on snow
-            _myCardsPanel = UiKit.Panel(_root.transform, "MyCardsPanel", Vector2.zero, Ui_MyCardsHud.Panel, Art.Shapes.Panel);
-            _myCardsPanel.type = Image.Type.Sliced;
-            _myCards = UiKit.Text(_root.transform, "MyCardsHud", Ui_MyCardsHud.Size, Ui_MyCardsHud.FontSize, Ui_MyCardsHud.Color, TextAlignmentOptions.BottomLeft);
-            UiKit.Place(_myCards.rectTransform, new Vector2(0f, 0f), new Vector2(Ui_MyCardsHud.X + Ui_MyCardsHud.Padding, MyCardsBottom + Ui_MyCardsHud.Padding));   // panel corner stays above the status icons over the bar
-            UiKit.LineHeight(_myCards, Ui_MyCardsHud.LineHeight);
-            UiKit.AutoSize(_myCards, Ui_MyCardsHud.MinFontSize);
-            ShowCorner(_myCards, _myCardsPanel, false);
+            // the deck corner sits straight on the world: the totals on a dark panel fitted to the text (readable on
+            // snow), the pile of card backs above it, both above the status icons over the stamina bar (ui.json DeckHud)
+            _totalsPanel = UiKit.Panel(_root.transform, "DeckTotalsPanel", Vector2.zero, Ui_DeckHud.Panel, Art.Shapes.Panel);
+            _totalsPanel.type = Image.Type.Sliced;
+            _totals = UiKit.Text(_root.transform, "DeckTotals", new Vector2(Ui_DeckHud.Width, 300f), Ui_DeckHud.FontSize, Ui_DeckHud.Color, TextAlignmentOptions.BottomLeft);
+            UiKit.Place(_totals.rectTransform, new Vector2(0f, 0f), new Vector2(Ui_DeckHud.X + Ui_DeckHud.Padding, DeckBottom + Ui_DeckHud.Padding));
+            UiKit.LineHeight(_totals, Ui_DeckHud.LineHeight);
+            UiKit.AutoSize(_totals, Ui_DeckHud.MinFontSize);
+
+            var pileGo = new GameObject("DeckPile", typeof(RectTransform));
+            pileGo.transform.SetParent(_root.transform, false);
+            _pile = UiKit.Rect(pileGo);
+            _pile.anchorMin = _pile.anchorMax = _pile.pivot = Vector2.zero;
+            var cardsGo = new GameObject("Cards", typeof(RectTransform));
+            cardsGo.transform.SetParent(_pile, false);
+            _pileCards = UiKit.Rect(cardsGo);
+            UiKit.Stretch(_pileCards);
+            // an invisible stretched image makes the whole pile one button: a click (whenever a cursor is visible) opens the deck
+            var hit = UiKit.Panel(_pile, "Hit", Vector2.zero, new Color(1f, 1f, 1f, 0f));
+            UiKit.Stretch(hit.rectTransform);
+            hit.raycastTarget = true;
+            var pileButton = hit.gameObject.AddComponent<Button>();
+            pileButton.transition = Selectable.Transition.None;
+            pileButton.onClick.AddListener(DeckScreen.ToggleFromHud);
+            _deckChip = UiKit.Panel(_pile, "CountChip", Vector2.one * Ui_DeckHud.CountChipSize, Ui_DeckHud.CountChipColor, Art.Shapes.Get(ArtShape.circle));
+            _deckChip.rectTransform.anchorMin = _deckChip.rectTransform.anchorMax = Vector2.zero;
+            _deckCount = UiKit.Text(_deckChip.transform, "Count", Vector2.one * Ui_DeckHud.CountChipSize, Ui_DeckHud.CountFontSize, Ui_DeckHud.CountTextColor, TextAlignmentOptions.Center, FontStyles.Bold);
+            UiKit.Place(_deckCount.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
+            ShowDeck(false);
 
             _abilityPanel = UiKit.Panel(_root.transform, "AbilityPanel", Vector2.zero, Ui_AbilityBar.Panel, Art.Shapes.Panel);
             _abilityPanel.type = Image.Type.Sliced;
@@ -145,38 +171,110 @@ namespace CampfireCards.Ui
         private static void ShowCorner(TextMeshProUGUI text, Image panel, bool show)
         {
             text.gameObject.SetActive(show);
-            if (show) UiKit.FitBacking(panel, text, text == _myCards ? Ui_MyCardsHud.Padding : Ui_AbilityBar.Padding);
+            if (show) UiKit.FitBacking(panel, text, Ui_AbilityBar.Padding);
             else panel.gameObject.SetActive(false);
         }
 
-        /// <summary>"YOUR CARDS": one line per card with a dot in its rarity colour.</summary>
+        /// <summary>The deck corner shown or hidden as one: the totals (panel fitted around them) and the pile above.</summary>
+        private static void ShowDeck(bool show)
+        {
+            if (_totals == null) return;
+            _totals.gameObject.SetActive(show);
+            if (show) UiKit.FitBacking(_totalsPanel, _totals, Ui_DeckHud.Padding);
+            else _totalsPanel.gameObject.SetActive(false);
+            _pile.gameObject.SetActive(show);
+        }
+
+        /// <summary>The deck pile (newest card on top) and ALL CARDS ADDED UP under it. Rebuilt when the collection changes.</summary>
         public static void RefreshMyCards()
         {
-            if (_myCards == null) return;
+            if (_totals == null) return;
             _labelsForGamepad = Controls.UsingGamepad;
             var cards = Effects.CardsOf(NetSend.LocalActor);
-            if (cards.Count == 0) { ShowCorner(_myCards, _myCardsPanel, false); return; }
-            // on a short canvas (big UI scale, 32:9) stay below the prompt: the list shrinks, then cuts, rather than overlap
-            float room = UiKit.CanvasSize.y - MyCardsBottom - (PromptTop + Ui_Prompt.Size.y);
-            _myCards.rectTransform.sizeDelta = new Vector2(Ui_MyCardsHud.Size.x, Mathf.Clamp(room, Ui_MyCardsHud.FontSize * 6f, Ui_MyCardsHud.Size.y));
-            var sb = new StringBuilder();
-            sb.Append("<b>").Append(Ui_MyCardsHud.Header).Append("</b>\n");
+            if (cards.Count == 0) { ShowDeck(false); return; }
+
+            // on a short canvas (big UI scale, 32:9) stay below the prompt: the totals shrink, then cut, rather than overlap
+            float room = UiKit.CanvasSize.y - DeckBottom - (PromptTop + Ui_Prompt.Size.y) - Ui_DeckHud.CardH - Ui_DeckHud.PileGap;
+            _totals.rectTransform.sizeDelta = new Vector2(Ui_DeckHud.Width, Mathf.Clamp(room, Ui_DeckHud.FontSize * 4f, 300f));
+            _totals.text = TotalsText(cards);
+            ShowDeck(RunState.OnIsland);
+
+            // the pile: up to MaxShown card backs cascading up-right, framed in their rarity colour, newest on top
+            for (int i = _pileCards.childCount - 1; i >= 0; i--) Object.Destroy(_pileCards.GetChild(i).gameObject);
+            int shown = Mathf.Min(cards.Count, Mathf.RoundToInt(Ui_DeckHud.MaxShown));
+            float w = Ui_DeckHud.CardW + (shown - 1) * Ui_DeckHud.OffsetX;
+            float h = Ui_DeckHud.CardH + (shown - 1) * Ui_DeckHud.OffsetY;
+            _pile.sizeDelta = new Vector2(w, h);
+            float panelH = _totalsPanel.gameObject.activeSelf ? _totalsPanel.rectTransform.sizeDelta.y : 0f;
+            _pile.anchoredPosition = new Vector2(Ui_DeckHud.X, DeckBottom + panelH + Ui_DeckHud.PileGap);
+            for (int i = 0; i < shown; i++)
+            {
+                byte id = cards[cards.Count - shown + i];
+                CardDef def;
+                var rarity = Deck.TryGet(id, out def) ? Deck.RarityColor(def.Rarity) : Color.white;
+                var mini = UiKit.Panel(_pileCards, "Back", new Vector2(Ui_DeckHud.CardW, Ui_DeckHud.CardH), rarity, Art.Shapes.Panel);
+                mini.type = Image.Type.Sliced;
+                mini.pixelsPerUnitMultiplier = Ui_DeckHud.BackPpu;
+                var rt = mini.rectTransform;
+                rt.anchorMin = rt.anchorMax = Vector2.zero;
+                rt.anchoredPosition = new Vector2(i * Ui_DeckHud.OffsetX + Ui_DeckHud.CardW * 0.5f, i * Ui_DeckHud.OffsetY + Ui_DeckHud.CardH * 0.5f);
+                rt.localRotation = Quaternion.Euler(0f, 0f, (i % 2 == 0 ? 1f : -1f) * Ui_DeckHud.TiltDegrees * ((i % 3) + 1) / 3f);
+                var back = UiKit.Panel(mini.transform, "Face", new Vector2(Ui_DeckHud.CardW, Ui_DeckHud.CardH) - Vector2.one * (Ui_DeckHud.FrameWidth * 2f), Ui_DeckHud.BackColor, Art.Shapes.Panel);
+                back.type = Image.Type.Sliced;
+                back.pixelsPerUnitMultiplier = Ui_DeckHud.BackPpu;
+            }
+            _deckChip.rectTransform.anchoredPosition = new Vector2(w - 4f, h - 4f);
+            _deckChip.transform.SetAsLastSibling();
+            _deckCount.text = cards.Count.ToString();
+        }
+
+        /// <summary>
+        /// ALL CARDS ADDED UP: the always-on combined stats (never per-frame, never flickering with conditions), capped
+        /// at MaxLines with a "+N more" tail; conditional and aura modifiers are counted as situational effects instead.
+        /// </summary>
+        private static string TotalsText(List<byte> cards)
+        {
+            Effects.FoldAlways(_always);
+            var lines = BuildStats.Lines(_always, _always);
+            int situational = 0;
+            var settings = CardSettings.Current;
             foreach (var id in cards)
             {
                 CardDef def;
-                bool known = Deck.TryGet(id, out def);
-                var color = known ? Deck.RarityColor(def.Rarity) : Color.white;
-                sb.Append(UiKit.ColorTag(color)).Append("■</color> ").Append(Deck.NameOf(id));
-                // the rarity as a word too, small and spaced, so it never rests on the square's colour alone
-                if (known)
-                    sb.Append("  <size=").Append(Ui_MyCardsHud.RaritySizePercent.ToString("0")).Append("%>").Append(UiKit.ColorTag(color))
-                      .Append("<cspace=0.06em>").Append(Deck.RarityName(def.Rarity)).Append("</cspace></color></size>");
-                sb.Append('\n');
+                if (!Deck.TryGet(id, out def)) continue;
+                for (int i = 0; i < def.Mods.Length; i++)
+                {
+                    var m = def.Mods[i];
+                    if (m.When == Generated.Condition.always && m.Target != ModTarget.team) continue;
+                    // a drawback the host disabled is neutral and must not be counted as a waiting effect
+                    if (BuildStats.IsNeutral(settings.ModValue(def, i), ChannelTable.Defs[(int)m.Channel].IsMul)) continue;
+                    situational++;
+                }
             }
-            sb.Append("<size=80%>").Append(UiKit.ColorTag(Ui_MyCardsHud.HintColor))
-              .Append(string.Format(Ui_MyCardsHud.HintTemplate, Plugin.BuildScreenKeyLabel)).Append("</color></size>");
-            _myCards.text = sb.ToString().TrimEnd();
-            ShowCorner(_myCards, _myCardsPanel, RunState.OnIsland);
+            var sb = new StringBuilder();
+            if (lines.Count > 0)
+            {
+                sb.Append("<b>").Append(UiKit.ColorTag(Ui_DeckHud.HeaderColor)).Append(Ui_DeckHud.TotalsHeader).Append("</color></b>\n");
+                int shown = Mathf.Min(lines.Count, Mathf.RoundToInt(Ui_DeckHud.MaxLines));
+                for (int i = 0; i < shown; i++)
+                {
+                    var l = lines[i];
+                    bool helps = BuildStats.Helps(l.Always, l.IsMul, l.Words);
+                    sb.Append(UiKit.ColorTag(helps ? Ui_CardEffects.GoodColor : Ui_CardEffects.BadColor))
+                      .Append(helps ? Ui_DeckScreen.GoodMark : Ui_DeckScreen.BadMark)
+                      .Append(BuildStats.Say(l, l.Always)).Append(".</color>\n");
+                }
+                var extras = new List<string>();
+                if (lines.Count > shown) extras.Add(string.Format(Ui_DeckHud.MoreTemplate, lines.Count - shown));
+                if (situational > 0) extras.Add(situational == 1 ? Ui_DeckHud.SituationalOne : string.Format(Ui_DeckHud.SituationalMany, situational));
+                if (extras.Count > 0) sb.Append(UiKit.ColorTag(Ui_DeckHud.HintColor)).Append(string.Join(" · ", extras)).Append("</color>\n");
+            }
+            else if (situational > 0)
+                sb.Append(UiKit.ColorTag(Ui_DeckHud.HintColor))
+                  .Append(situational == 1 ? Ui_DeckHud.SituationalOne : string.Format(Ui_DeckHud.SituationalMany, situational)).Append("</color>\n");
+            sb.Append("<size=80%>").Append(UiKit.ColorTag(Ui_DeckHud.HintColor))
+              .Append(string.Format(Ui_DeckHud.HintTemplate, Plugin.BuildScreenKeyLabel)).Append("</color></size>");
+            return sb.ToString();
         }
 
         /// <summary>One line per owned card that has a state to show (charges, cooldowns, activation keys).</summary>
@@ -258,10 +356,10 @@ namespace CampfireCards.Ui
             HideWaiting();
             HidePrompt();
             CardPicker.HideAll();
-            BuildScreen.Hide();
+            DeckScreen.HideIfOpen();
             ClearMarkers();
             if (_toastPanel != null) _toastPanel.gameObject.SetActive(false);
-            if (_myCards != null) ShowCorner(_myCards, _myCardsPanel, false);
+            ShowDeck(false);
             if (_abilityBar != null) ShowCorner(_abilityBar, _abilityPanel, false);
         }
 
@@ -270,10 +368,10 @@ namespace CampfireCards.Ui
             if (_toastPanel != null && _toastPanel.gameObject.activeSelf && Time.unscaledTime > _toastUntil) _toastPanel.gameObject.SetActive(false);
             if (!RunState.OnIsland)
             {
-                if (_myCards != null && _myCards.gameObject.activeSelf) ShowCorner(_myCards, _myCardsPanel, false);
+                if (_totals != null && _totals.gameObject.activeSelf) ShowDeck(false);
                 if (_abilityBar != null && _abilityBar.gameObject.activeSelf) ShowCorner(_abilityBar, _abilityPanel, false);
             }
-            else if (_myCards != null && Controls.UsingGamepad != _labelsForGamepad) RefreshMyCards();   // the hint names the other device's button
+            else if (_totals != null && Controls.UsingGamepad != _labelsForGamepad) RefreshMyCards();   // the hint names the other device's button
             DrawMarkers();
         }
     }
