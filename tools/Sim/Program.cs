@@ -20,6 +20,8 @@ namespace CampfireCards.Sim
         private const int OfferSize = 3;
         private const float DeadOfferPts = 25f; // below this, the best option feels like nothing
 
+        private static bool _drawbacksOff;
+
         public static void Main(string[] args)
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -37,9 +39,11 @@ namespace CampfireCards.Sim
                     }
                 }
                 if (a.StartsWith("out=")) outDir = a.Substring(4);
+                if (a == "drawbacks=off") _drawbacksOff = true;
             }
             Directory.CreateDirectory(outDir);
             var s = new CardSettings();   // sheet defaults: the balance everyone plays
+            if (_drawbacksOff) { s.DrawbacksEnabled = false; Console.WriteLine("benefit-only pass: drawbacks disabled"); }
 
             // pass 1: standalone values without the card-draw cards, to price what a bonus draw is worth
             var standalone = new Dictionary<byte, (float self, float team)>();

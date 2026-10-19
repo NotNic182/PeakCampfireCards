@@ -95,6 +95,9 @@ namespace CampfireCards.Ui
             hit.raycastTarget = true;
             var pileButton = hit.gameObject.AddComponent<Button>();
             pileButton.transition = Selectable.Transition.None;
+            // cursor-click affordance only: out of the gamepad navigation graph, or stick-down from the DeckScreen's
+            // team piles lands on this invisible button and confirm closes the open screen
+            pileButton.navigation = new Navigation { mode = Navigation.Mode.None };
             pileButton.onClick.AddListener(DeckScreen.ToggleFromHud);
             _deckChip = UiKit.Panel(_pile, "CountChip", Vector2.one * Ui_DeckHud.CountChipSize, Ui_DeckHud.CountChipColor, Art.Shapes.Get(ArtShape.circle));
             _deckChip.rectTransform.anchorMin = _deckChip.rectTransform.anchorMax = Vector2.zero;

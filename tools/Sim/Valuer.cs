@@ -187,8 +187,8 @@ namespace CampfireCards.Sim
                     return perBiome * 25f;                                                      // avg of the three 20s powers
                 }
                 case "HoldRefund": return Profile.HangSeconds * Profile.HangDrain * P("refund", 1f);
-                case "PhoenixClause":   // one save per run; the skipped pick is only owed when the save fires
-                    return Profile.DeathCost * 0.45f / 4f - 0.45f * AvgBonusCardValue / 4f;
+                case "PhoenixClause":   // one save per run, no strings attached since 0.8.0
+                    return Profile.DeathCost * 0.45f / 4f;
                 case "DelayedConsequences":
                 {
                     float totalMul = 1f - P("defer") + P("defer") * P("keep");
@@ -198,12 +198,8 @@ namespace CampfireCards.Sim
                     return Profile.FatalRiskPerBiome * 0.5f * (Profile.DeathCost - pts(P("injury")) * StickOf("injury") * Profile.BarValue);
                 case "MountainsBargain":
                     return -AvgBonusCardValue - pts(P("curse")) * StickOf("curse") * Profile.BarValue;   // the +35 max stamina is its mod
-                case "DoubleDeal":
-                {
-                    float penalty = ClownPenaltyCost(s, def);
-                    float draw = drawsResolved ? 0f : P("bonusCards", 2f) * AvgBonusCardValue;  // resolved builds hold the real cards
-                    return draw - penalty;
-                }
+                case "DoubleDeal":      // 0.8.0: the random permanent penalty is gone, only the draw remains
+                    return drawsResolved ? 0f : P("bonusCards", 2f) * AvgBonusCardValue;
                 case "DoubleDown":
                     return (drawsResolved ? 0f : P("bonusCards", 2f) * AvgBonusCardValueToRare)
                            - pts(P("curse")) * StickOf("curse") * Profile.BarValue
@@ -213,12 +209,24 @@ namespace CampfireCards.Sim
                 case "HungryHands":
                     return Profile.MealsPerBiome * Profile.UptimeOf(Condition.injury20) * pts(P("heal")) * 0.5f * Profile.BarValue;
                 case "LuckyLunch": return Profile.LuckyLunchMealSaved;
-                case "CleansingRitual":
-                    return Profile.CurativesPerBiome * pts(P("bonus")) * 0.5f * Profile.BarValue;
+                case "CleansingRitual": // 0.8.0: fires on curatives AND food, removes a random min..max
+                    return (Profile.CurativesPerBiome + Profile.MealsPerBiome)
+                           * pts((P("min", 0.025f) + P("max", 0.125f)) * 0.5f) * 0.5f * Profile.BarValue;
                 case "PocketTradeoff": return -Profile.PocketLockCost;                          // weight cut is the mod
-                case "CampfireSpawn": return Profile.InjuryPerHeal * Profile.HealItemCredit * Profile.BarValue;   // a bandage at every fire
+                case "CampfireSpawn": // 0.8.0: a bandage, a random food and a random item at every fire
+                    return Profile.InjuryPerHeal * Profile.HealItemCredit * Profile.BarValue
+                           + Profile.LuckyLunchMealSaved + 10f;
                 case "NextCampfireSpawn": return Profile.BalloonBunchValue / 4f;
                 case "ScavengersInstinct": return Profile.ScavengerFinds;
+                case "GasImmunity":     // the poison drip (~60% of incoming) never lands; discrete hits pay the drawback
+                    return (0.6f - (P("hit", 1.2f) - 1f) * 0.4f) * Profile.Status["poison"].load * Profile.BarValue;
+                case "BandageBrace":    // falls hurt base+perBandage*n less; scouts carry ~1.5 bandages on average
+                    return -SingleModCost(Channel.fallInjury,
+                        Math.Max(0f, 1f - P("base", 0.2f) - P("perBandage", 0.2f) * 1.5f), s);
+                case "BoneBook":        // one skeleton-revive tome per run, spent on whoever falls
+                    return Profile.DeathCost * 0.3f / 4f;
+                case "MythicChoice":    // one mythic item per run, and the pick of five beats a fixed drop
+                    return Profile.BalloonBunchValue * 1.3f / 4f;
                 case "HelpCost": return -1.5f * pts(P("stamina"));                              // pull fee; reach is team utility
                 case "SharedBurden": return -Profile.SharedBurdenAbsorbCost;
                 case "CampfireMeal": return Profile.Status["hunger"].load * 0.5f * Profile.BarValue;   // hunger cleared each fire
@@ -228,17 +236,6 @@ namespace CampfireCards.Sim
                 default:
                     throw new InvalidOperationException($"No value formula for ability {def.Ability} ({def.Name})");
             }
-        }
-
-        /// <summary>Clown Luggage's random permanent penalty: the mean cost of its four 10% options on the baseline.</summary>
-        private static float ClownPenaltyCost(CardSettings s, CardDef def)
-        {
-            float P(string name, float fb) => s.Param(def, name, fb);
-            float climb = SingleModCost(Channel.climbStamina, P("climbPenalty", 1.1f), s);
-            float sprint = SingleModCost(Channel.sprintStamina, P("sprintPenalty", 1.1f), s);
-            float injury = SingleModCost(Channel.allInjury, P("injuryPenalty", 1.1f), s);
-            float hunger = SingleModCost(Channel.hungerRate, P("hungerPenalty", 1.1f), s);
-            return (climb + sprint + injury + hunger) / 4f;
         }
 
         /// <summary>Cost (positive) or value (negative) of one always-on mul mod applied to the empty baseline.</summary>

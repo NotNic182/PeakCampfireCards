@@ -47,17 +47,17 @@ class CardTextTests(unittest.TestCase):
         self.assertEqual(([], []), (changes, notes))
 
     def test_name_text_and_none_edits_apply(self):
-        self.edit('name:     Piton Fingers', 'name:     Sticky Fingers')
+        self.edit('name:     To The Bone', 'name:     Sticky Fingers')
         self.edit('drawback: Take 5% more fall Injury.', 'drawback: (None)')
         changes, notes = text_tool.apply(self.txt)
         self.assertEqual(2, len(changes))
-        self.assertEqual('Sticky Fingers', self.card(1)['name'])
+        self.assertEqual('Sticky Fingers', self.card(3)['name'])
         self.assertEqual('', self.card(2)['negative'])
         raw = self.cards.read_bytes()
         self.assertEqual(0, raw.count(b'\r\n'), 'cards.json must stay pure LF')
 
     def test_rarity_edit_applies_and_notes_the_preflight_pin(self):
-        self.edit('rarity:   Uncommon\nbenefit:  Jump 30% higher.', 'rarity:   Rare\nbenefit:  Jump 30% higher.')
+        self.edit('rarity:   Common\nbenefit:  Jump 30% higher.', 'rarity:   Rare\nbenefit:  Jump 30% higher.')
         changes, notes = text_tool.apply(self.txt)
         self.assertEqual('rare', self.card(2)['rarity'])
         self.assertTrue(any('preflight' in n for n in notes))
@@ -72,21 +72,21 @@ class CardTextTests(unittest.TestCase):
 
     def test_block_moved_under_another_banner_is_an_error_unless_the_rarity_line_agrees(self):
         src = self.txt.read_text(encoding='utf-8-sig').replace('\r\n', '\n')
-        start = src.index('#1 - Piton Fingers')
+        start = src.index('#3 - To The Bone')
         end = src.index('\n\n#', start)
         block = src[start:end]
-        moved = src.replace('\n' + block, '').replace(' RARE  (16 cards)\n' + '=' * 78,
-                                                      ' RARE  (16 cards)\n' + '=' * 78 + '\n\n' + block)
+        moved = src.replace('\n' + block, '').replace(' RARE  (15 cards)\n' + '=' * 78,
+                                                      ' RARE  (15 cards)\n' + '=' * 78 + '\n\n' + block)
         self.txt.write_text(moved, encoding='utf-8')
         with self.assertRaisesRegex(ValueError, 'moving a block does nothing'):
             text_tool.apply(self.txt)
-        self.txt.write_text(moved.replace('name:     Piton Fingers\nrarity:   Common',
-                                          'name:     Piton Fingers\nrarity:   Rare'), encoding='utf-8')
+        self.txt.write_text(moved.replace('name:     To The Bone\nrarity:   Common',
+                                          'name:     To The Bone\nrarity:   Rare'), encoding='utf-8')
         changes, notes = text_tool.apply(self.txt)
-        self.assertEqual('rare', self.card(1)['rarity'])
+        self.assertEqual('rare', self.card(3)['rarity'])
 
     def test_renaming_only_the_heading_is_an_error(self):
-        self.edit('#1 - Piton Fingers', '#1 - Crimp Master')
+        self.edit('#3 - To The Bone', '#3 - Crimp Master')
         with self.assertRaisesRegex(ValueError, 'name: line'):
             text_tool.apply(self.txt)
 
@@ -98,7 +98,7 @@ class CardTextTests(unittest.TestCase):
             text_tool.apply(self.txt)
 
     def test_deleted_card_bad_rarity_and_duplicate_number_are_errors(self):
-        self.edit('#1 - Piton Fingers', '#2 - Piton Fingers')
+        self.edit('#3 - To The Bone', '#2 - To The Bone')
         with self.assertRaisesRegex(ValueError, 'appears twice'):
             text_tool.apply(self.txt)
         text_tool.export(self.txt)

@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.8.0";
+        public const string Version = "0.8.1";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -107,9 +107,9 @@ namespace CampfireCards
         /// The balance revision the design sheets carry (tools/card_sheet.py bumps it when a sheet edit changes numbers).
         /// Card values are not configurable: the sheets compiled into the mod are the single source of truth, so this is
         /// a revision marker, not a config key.
-        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min), 6 = 0.6.6 (Daddy reach x1.4), 7 = 0.7.1 full rebalance, 8 = 0.7.3 (regen benefits reworked, rarity weights 40/40), 9 = 0.7.6 simulation-driven rebalance (20 cards), 10 = 0.8.0 player card overhaul, 11 = benefit midpoints, 12 = full bars and small bumps kept.
+        /// 1 = 0.3.0-0.4.0, 2 = 0.4.1, 3 = 0.6.0 reviewed workbook redesign, 4 = 0.6.4 (BingBong Low Gravity 3), 5 = 0.6.5 (Bing BOING 15 s, BingBong every 5 min), 6 = 0.6.6 (Daddy reach x1.4), 7 = 0.7.1 full rebalance, 8 = 0.7.3 (regen benefits reworked, rarity weights 40/40), 9 = 0.7.6 simulation-driven rebalance (20 cards), 10 = 0.8.0 player card overhaul, 11 = benefit midpoints, 12 = full bars and small bumps kept, 13 = rarity follows benefit strength, 14 = the player's own rarity ladder (23 moves) and Common-first offer weights (50/30/16.5/3/0.5).
         /// </summary>
-        public const int CardBalanceVersion = 12;
+        public const int CardBalanceVersion = 14;
 
         /// <summary>
         /// The lobby options. Card numbers, rarity weights and the balance internals (cost cap, stamina floor, difficulty

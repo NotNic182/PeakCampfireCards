@@ -136,7 +136,7 @@ namespace CampfireCards.Tests
         [InlineData("DelayedConsequences", "Take 25% of a fall's Injury now and 66% after 20s: 9% less in total.")]
         [InlineData("BelayBuddy", "You and teammates within 8 m use 12% less climbing stamina.")]
         [InlineData("HeatHuddle", "Huddling warms you 45% more, from farther away, and you get cold 12% slower.")]
-        [InlineData("OverhangArtist", "Hang still on a wall to recover 3 stamina per second.")]
+        [InlineData("OverhangArtist", "Hang still on a wall to recover 4.5 stamina per second.")]
         [InlineData("GeckoGrip", "Climbing uses 10.8% less stamina.")]
         public void CardTextShowsTheNumbersThisDifficultyUses(string key, string expected)
         {

@@ -299,6 +299,32 @@ namespace CampfireCards
             if (Controls.WasPressed(Controls.Act.BuildScreen)) DeckScreen.Toggle(local);
         }
 
+        /// <summary>
+        /// hooks.json pausePressed: the pause press belongs to whichever mod window is open - the deck screen backs
+        /// out one step, the mythic chooser postpones - so the pause menu never opens on top of them. Keyboard Esc
+        /// raises Pause and UICancel together, and the windows consume both in their own Update; this prefix is the
+        /// net under them for inputs that raise Pause without UICancel (a controller's Start) and for any press that
+        /// still finds the window open at LateUpdate. Any other frame vanilla pause runs untouched.
+        /// </summary>
+        public static bool OnUpdatePausedPrefix(GUIManager __instance)
+        {
+            var local = Character.localCharacter;
+            if (local == null || local.input == null || !local.input.pauseWasPressed) return true;
+            if (DeckScreen.Instance != null && DeckScreen.Instance.isOpen)
+            {
+                local.input.pauseWasPressed = false;
+                DeckScreen.Instance.BackFromInput();
+                return false;
+            }
+            if (ItemChooser.IsOpen)
+            {
+                local.input.pauseWasPressed = false;
+                ItemChooser.Instance.HideNow();
+                return false;
+            }
+            return true;
+        }
+
         private static void CheckArrivals(Character local)
         {
             // opening pick readiness: the beach wake-up is over and we have stood on the ground for a moment

@@ -176,7 +176,18 @@ namespace CampfireCards.Ui
             if (!isOpen) return;
             bool cancel = false;
             try { cancel = UIInputHandler.action_cancel != null && UIInputHandler.action_cancel.WasPressedThisFrame(); } catch { }
-            if (cancel) HideNow();
+            if (cancel)
+            {
+                // Esc raises Pause and UICancel together: eat the pause press, or GUIManager.UpdatePaused (LateUpdate)
+                // finds this window already closed and opens the pause menu on top of the postponed choice
+                try
+                {
+                    var local = Character.localCharacter;
+                    if (local != null && local.input != null) local.input.pauseWasPressed = false;
+                }
+                catch { }
+                HideNow();
+            }
         }
     }
 }

@@ -19,8 +19,10 @@ namespace CampfireCards.Ui
     /// ui.json DeckScreen: your deck as real cards. The Deck key (or a click on the HUD pile) opens a MenuWindow where
     /// the deck expands into a fan of card faces with ALL CARDS ADDED UP (the live combined stats) beneath it; clicking
     /// a card pulls it out for a close look (benefit, drawback, each conditional modifier on or off right now, charges,
-    /// aura reach, pick order); the key steps on to TEAM CARDS, every teammate's cards as small faces in pick order.
-    /// It never computes a modifier itself (Effects and Core.BuildStats do).
+    /// aura reach, pick order). The key cycles on: TEAM DECKS, one clickable pile of card backs per teammate, and a
+    /// third press closes. Clicking a pile fans that teammate's cards out; Esc backs out one step (hooks.json
+    /// pausePressed keeps the pause menu from opening on top). It never computes a modifier itself (Effects and
+    /// Core.BuildStats do).
     /// </summary>
     public class DeckScreen : MenuWindow
     {
@@ -38,8 +40,12 @@ namespace CampfireCards.Ui
         public override bool autoHideOnClose => true;
         public override GameObject panel => gameObject;
 
-        private enum View { Fan, Pulled, Team }
+        private enum View { Fan, Pulled, Team, TeamDeck }
         private View _view;
+        /// <summary>The teammate whose fanned-out cards the TeamDeck view shows.</summary>
+        private int _teamFocus = int.MinValue;
+        /// <summary>The frame a back input was handled: Esc can arrive through the pause press and action_cancel at once.</summary>
+        private int _backFrame = -1;
 
         private TextMeshProUGUI _title, _subtitle;
         private RectTransform _fan;
@@ -52,6 +58,7 @@ namespace CampfireCards.Ui
         private TextMeshProUGUI _detail;
         private Button _prev, _next;
         private RectTransform _teamRoot;
+        private readonly List<Button> _teamButtons = new List<Button>();
         private byte[] _deck = new byte[0];
         private int _pulledIndex;
         private float _nextRefresh;
@@ -62,7 +69,7 @@ namespace CampfireCards.Ui
         private static readonly int MaxPerRow = Mathf.RoundToInt(Ui_Fan.MaxPerRow);
 
         // ------------------------------------------------------------------ entry points (Hooks and the HUD pile)
-        /// <summary>The Deck key: open the fan, then step to Team Cards (with teammates), then close. A pulled card steps back to the fan.</summary>
+        /// <summary>The Deck key: open the fan, step to Team Decks (with teammates), then close. A pulled card steps back to the fan.</summary>
         public static void Toggle(Character me)
         {
             if (Instance != null && Instance.isOpen) { Instance.Step(); return; }
@@ -94,20 +101,30 @@ namespace CampfireCards.Ui
             if (Instance._view == View.Fan && Effects.CardsOf(NetSend.LocalActor).Count != Instance._deck.Length) { Instance.ShowFan(); return; }
             Instance.RefreshTotals();
             if (Instance._view == View.Pulled) Instance.RefreshDetail(me);
-            if (Instance._view == View.Team)
+            if (Instance._view == View.Team || Instance._view == View.TeamDeck)
             {
                 string print = TeamFingerprint();
-                if (print != Instance._teamPrint) { Instance._teamPrint = print; Instance.ClearTeam(); Instance.BuildTeam(); }
+                if (print != Instance._teamPrint)
+                {
+                    Instance._teamPrint = print;
+                    Instance.ClearTeam();
+                    if (Instance._view == View.Team) Instance.BuildTeam();
+                    else if (Teammates().Contains(Instance._teamFocus)) Instance.BuildTeamDeck(Instance._teamFocus);
+                    else Instance.ShowTeam();   // that teammate left the room: back to the deck row
+                }
             }
         }
 
-        /// <summary>What the team view shows, cheap enough to compare 4 times a second: who, cards, state, penalties.</summary>
+        /// <summary>What the team view shows, cheap enough to compare 4 times a second: who, which cards, state, penalties.</summary>
         private static string TeamFingerprint()
         {
             var sb = new StringBuilder();
             foreach (int actor in Teammates())
             {
-                sb.Append(actor).Append(':').Append(Effects.CardsOf(actor).Count).Append(':');
+                sb.Append(actor).Append(':');
+                // the card ids, not just the count: a swap (Fine Print's sacrifice beside a pick) must redraw too
+                foreach (var id in Effects.CardsOf(actor)) sb.Append(id).Append('.');
+                sb.Append(':');
                 Character ch;
                 if (PlayerHandler.TryGetCharacter(actor, out ch) && ch != null && ch.data != null)
                     sb.Append(ch.data.dead ? 'g' : (ch.data.passedOut || ch.data.fullyPassedOut) ? 'd' : 'u');
@@ -133,9 +150,10 @@ namespace CampfireCards.Ui
             var backdrop = UiKit.Panel(transform, "Backdrop", Vector2.zero, Ui_DeckScreen.Backdrop);
             UiKit.Stretch(backdrop.rectTransform);
             backdrop.raycastTarget = true;
-            backdrop.gameObject.AddComponent<BackdropClick>().OnClick = () => { if (isOpen) Back(); };
+            backdrop.gameObject.AddComponent<BackdropClick>().OnClick = () => { if (isOpen) BackFromInput(); };
 
             _title = UiKit.Text(transform, "Title", new Vector2(1400f, 90f), Ui_DeckScreen.TitleFontSize, Ui_DeckScreen.TitleColor, TextAlignmentOptions.Center, FontStyles.Bold | FontStyles.UpperCase);
+            _title.richText = false;   // the TeamDeck title is a raw player name; a name with TMP tags must not restyle the screen
             UiKit.Place(_title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, Ui_DeckScreen.TitleY));
             UiKit.AutoSize(_title, Ui_DeckScreen.TitleMinFontSize);
 
@@ -328,9 +346,10 @@ namespace CampfireCards.Ui
             Pull(_pulledIndex + dir);
         }
 
-        /// <summary>Everyone else's cards, as small card faces in pick order.</summary>
+        /// <summary>Every teammate as a deck pile; clicking one fans that deck out.</summary>
         private void ShowTeam()
         {
+            if (Teammates().Count == 0) { ShowFan(); return; }   // the last teammate left: never a blank TEAM DECKS page
             _view = View.Team;
             _fan.gameObject.SetActive(false);
             _totalsPanel.gameObject.SetActive(false);
@@ -343,6 +362,24 @@ namespace CampfireCards.Ui
             RefreshSubtitle();
         }
 
+        /// <summary>One teammate's cards, fanned out from their pile in the team view.</summary>
+        private void ShowTeamDeck(int actor)
+        {
+            _view = View.TeamDeck;
+            _teamFocus = actor;
+            _fan.gameObject.SetActive(false);
+            _totalsPanel.gameObject.SetActive(false);
+            _pulledRoot.gameObject.SetActive(false);
+            _teamRoot.gameObject.SetActive(true);
+            _title.text = NetSend.NameOf(actor);
+            _teamPrint = TeamFingerprint();
+            ClearTeam();
+            BuildTeamDeck(actor);
+            RefreshSubtitle();
+            Art.Sfx.Play(Ui_DeckScreen.FlipSound);
+        }
+
+        /// <summary>The Deck key cycles: your fan, the team decks, closed. A pulled card steps back into the fan first.</summary>
         private void Step()
         {
             switch (_view)
@@ -351,14 +388,31 @@ namespace CampfireCards.Ui
                 case View.Fan:
                     if (Teammates().Count > 0) ShowTeam(); else HideNow();
                     break;
-                default: ShowFan(); break;
+                default: HideNow(); break;   // Team and TeamDeck: the third press closes
             }
         }
 
-        /// <summary>Esc or a click outside: a pulled card goes back to the fan, anything else closes.</summary>
+        /// <summary>Esc, controller cancel or a click outside, once per frame however many input paths deliver it.</summary>
+        public void BackFromInput()
+        {
+            if (Time.frameCount == _backFrame) return;
+            _backFrame = Time.frameCount;
+            // Esc raises Pause and UICancel together. This runs in the Update phase; if Back() closes the window,
+            // GUIManager.UpdatePaused (LateUpdate) would find it closed and open the pause menu off the same press.
+            try
+            {
+                var local = Character.localCharacter;
+                if (local != null && local.input != null) local.input.pauseWasPressed = false;
+            }
+            catch { }
+            Back();
+        }
+
+        /// <summary>One step out: a pulled card to the fan, a teammate's cards to the team decks, anything else closes.</summary>
         private void Back()
         {
             if (_view == View.Pulled) { ShowFan(select: _pulledIndex); return; }
+            if (_view == View.TeamDeck) { ShowTeam(); return; }
             HideNow();
         }
 
@@ -459,7 +513,7 @@ namespace CampfireCards.Ui
             // Hooks.AbilityKeys is silenced by the game's windowBlockingInput while this MenuWindow is open, so the
             // Deck key steps views from here; never on the very frame Hooks opened the window with the same press.
             if (Time.frameCount != _openedFrame && Controls.WasPressed(Controls.Act.BuildScreen)) { Step(); return; }
-            if (CancelPressed()) { Back(); return; }
+            if (CancelPressed()) { BackFromInput(); return; }
             if (_view == View.Pulled)
             {
                 var kb = UnityEngine.InputSystem.Keyboard.current;
@@ -487,7 +541,10 @@ namespace CampfireCards.Ui
                     _subtitle.text = string.Format(Ui_DeckScreen.PulledTemplate, _pulledIndex + 1, _deck.Length);
                     break;
                 case View.Team:
-                    _subtitle.text = string.Format(Ui_DeckScreen.NavBackHint, key);
+                    _subtitle.text = string.Format(Ui_DeckScreen.TeamHint, key);
+                    break;
+                case View.TeamDeck:
+                    _subtitle.text = string.Format(Ui_DeckScreen.TeamDeckHint, key);
                     break;
                 default:
                     string hint = _deck.Length == 0 ? Ui_DeckScreen.NoCards
@@ -670,6 +727,7 @@ namespace CampfireCards.Ui
 
         private void ClearTeam()
         {
+            _teamButtons.Clear();
             for (int i = _teamRoot.childCount - 1; i >= 0; i--)
             {
                 var child = _teamRoot.GetChild(i);
@@ -678,57 +736,155 @@ namespace CampfireCards.Ui
             }
         }
 
-        /// <summary>One block per teammate: name, count and state, Clown Luggage penalties, then their cards as small faces.</summary>
+        /// <summary>One deck pile per teammate (name, count and state, Clown Luggage penalties above it), in rows of TeamPerRow.</summary>
         private void BuildTeam()
         {
             var team = Teammates();
-            float scale = Ui_DeckScreen.TeamCardScale;
-            float cardH = Ui_Card.Size.y * scale, cardW = Ui_Card.Size.x * scale, gap = Ui_Fan.Spacing * scale;
-            int maxPerRow = Mathf.RoundToInt(Ui_DeckScreen.TeamMaxPerRow);
+            float scale = Ui_DeckScreen.TeamPileScale;
+            float cardW = Ui_DeckHud.CardW * scale, cardH = Ui_DeckHud.CardH * scale;
+            float offX = Ui_DeckHud.OffsetX * scale, offY = Ui_DeckHud.OffsetY * scale;
+            int maxShown = Mathf.RoundToInt(Ui_DeckHud.MaxShown);
+            int perRow = Mathf.Max(1, Mathf.RoundToInt(Ui_DeckScreen.TeamPerRow));
+            float blockW = Ui_DeckScreen.TeamBlockW;
             float headerH = Ui_DeckScreen.TeamNameFontSize * 1.5f;
-            float y = 0f;
-            float width = 0f;
+            float pileH = cardH + (maxShown - 1) * offY;
+            float blockH = headerH + Ui_DeckScreen.TeamPileGap + pileH;
+            int rows = (Mathf.Max(1, team.Count) + perRow - 1) / perRow;
 
-            foreach (int actor in team)
+            for (int i = 0; i < team.Count; i++)
             {
+                int actor = team[i];
                 var cards = Effects.CardsOf(actor);
-                var header = UiKit.Text(_teamRoot, "Name", new Vector2(UiKit.FitWidth(1400f), headerH), Ui_DeckScreen.TeamNameFontSize, Ui_DeckScreen.HeaderColor, TextAlignmentOptions.Center, FontStyles.Bold);
-                UiKit.Place(header.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, y));
+                int row = i / perRow;
+                int inRow = Mathf.Min(perRow, team.Count - row * perRow);
+                float x = (i % perRow - (inRow - 1) * 0.5f) * (blockW + Ui_Fan.Spacing);
+                float top = -row * (blockH + Ui_DeckScreen.TeamRowGap);
+
+                var header = UiKit.Text(_teamRoot, "Name", new Vector2(blockW, headerH), Ui_DeckScreen.TeamNameFontSize, Ui_DeckScreen.HeaderColor, TextAlignmentOptions.Center, FontStyles.Bold);
+                UiKit.Place(header.rectTransform, new Vector2(0.5f, 1f), new Vector2(x, top));
                 UiKit.AutoSize(header, 14f);
                 header.text = TeamHeader(actor, cards.Count);
-                y -= headerH;
+
                 if (cards.Count == 0)
                 {
-                    var none = UiKit.Text(_teamRoot, "None", new Vector2(1400f, 30f), Ui_DeckScreen.FontSize, Ui_DeckScreen.InactiveColor, TextAlignmentOptions.Center);
-                    UiKit.Place(none.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, y));
+                    var none = UiKit.Text(_teamRoot, "None", new Vector2(blockW, 30f), Ui_DeckScreen.FontSize, Ui_DeckScreen.InactiveColor, TextAlignmentOptions.Center);
+                    UiKit.Place(none.rectTransform, new Vector2(0.5f, 1f), new Vector2(x, top - headerH - Ui_DeckScreen.TeamPileGap));
                     none.text = Ui_DeckScreen.TeamNoCards;
-                    y -= 34f;
+                    continue;
                 }
-                else
-                {
-                    int cols = Mathf.Min(cards.Count, maxPerRow);
-                    int rows = (cards.Count + cols - 1) / cols;
-                    float blockW = cols * cardW + (cols - 1) * gap;
-                    float blockH = rows * cardH + (rows - 1) * gap;
-                    width = Mathf.Max(width, blockW);
-                    var holder = UiKit.Node(_teamRoot, "Cards", new Vector2(blockW / scale, blockH / scale));
-                    var rect = UiKit.Rect(holder);
-                    rect.anchoredPosition = new Vector2(0f, y - blockH * 0.5f);
-                    rect.localScale = Vector3.one * scale;
-                    var grid = holder.AddComponent<GridLayoutGroup>();
-                    grid.cellSize = Ui_Card.Size;
-                    grid.spacing = new Vector2(Ui_Fan.Spacing, Ui_Fan.Spacing);
-                    grid.childAlignment = TextAnchor.MiddleCenter;
-                    grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-                    grid.constraintCount = cols;
-                    foreach (var id in cards) CardFace.Build(holder.transform, id, interactive: false);
-                    y -= blockH;
-                }
-                y -= Ui_DeckScreen.TeamRowGap;
+                // the name is the most natural click target and visually part of the block: it must open the deck,
+                // not fall through to the backdrop (which closes the whole screen)
+                header.raycastTarget = true;
+                header.gameObject.AddComponent<BackdropClick>().OnClick = () => ShowTeamDeck(actor);
+                _teamButtons.Add(Pile(actor, cards, x, top - headerH - Ui_DeckScreen.TeamPileGap, cardW, cardH, offX, offY, maxShown));
             }
 
-            // the whole roster (which hangs below the root's origin) scaled to the band under the subtitle, centred in it
-            float totalH = Mathf.Max(1f, -y);
+            FitTeam(rows * blockH + (rows - 1) * Ui_DeckScreen.TeamRowGap,
+                    Mathf.Min(Mathf.Max(1, team.Count), perRow) * (blockW + Ui_Fan.Spacing));
+            if (_teamButtons.Count > 0)
+            {
+                try { UIInputHandler.SetSelectedObject(_teamButtons[0].gameObject); }
+                catch (System.Exception e) { Plugin.Verbose("controller selection skipped: " + e.Message); }
+            }
+        }
+
+        /// <summary>A teammate's deck as a pile of card backs (the HUD pile's look, larger): one button that fans it out.</summary>
+        private Button Pile(int actor, List<byte> cards, float x, float top, float cardW, float cardH, float offX, float offY, int maxShown)
+        {
+            int shown = Mathf.Min(cards.Count, maxShown);
+            float w = cardW + (shown - 1) * offX, h = cardH + (shown - 1) * offY;
+            var pile = UiKit.Node(_teamRoot, "Pile", new Vector2(w, h));
+            UiKit.Place(UiKit.Rect(pile), new Vector2(0.5f, 1f), new Vector2(x, top));
+
+            // the hit area doubles as hover/selection feedback: invisible until the tint fades a faint wash in
+            var hit = UiKit.Panel(pile.transform, "Hit", new Vector2(w, h) + Vector2.one * Ui_DeckScreen.TeamPileGap * 2f, Color.white, Art.Shapes.Panel);
+            hit.type = Image.Type.Sliced;
+            hit.raycastTarget = true;
+            var b = hit.gameObject.AddComponent<Button>();
+            b.targetGraphic = hit;
+            var colors = b.colors;
+            colors.normalColor = new Color(1f, 1f, 1f, 0f);
+            colors.highlightedColor = colors.selectedColor = new Color(1f, 1f, 1f, 0.15f);
+            colors.pressedColor = new Color(1f, 1f, 1f, 0.25f);
+            b.colors = colors;
+            b.onClick.AddListener(() => ShowTeamDeck(actor));
+
+            float frame = Ui_DeckHud.FrameWidth * Ui_DeckScreen.TeamPileScale;
+            for (int i = 0; i < shown; i++)
+            {
+                byte id = cards[cards.Count - shown + i];
+                CardDef def;
+                var rarity = Deck.TryGet(id, out def) ? Deck.RarityColor(def.Rarity) : Color.white;
+                var mini = UiKit.Panel(pile.transform, "Back", new Vector2(cardW, cardH), rarity, Art.Shapes.Panel);
+                mini.type = Image.Type.Sliced;
+                mini.pixelsPerUnitMultiplier = Ui_DeckHud.BackPpu;
+                var rt = mini.rectTransform;
+                rt.anchorMin = rt.anchorMax = Vector2.zero;
+                rt.anchoredPosition = new Vector2(i * offX + cardW * 0.5f, i * offY + cardH * 0.5f);
+                rt.localRotation = Quaternion.Euler(0f, 0f, (i % 2 == 0 ? 1f : -1f) * Ui_DeckHud.TiltDegrees * ((i % 3) + 1) / 3f);
+                var back = UiKit.Panel(mini.transform, "Face", new Vector2(cardW, cardH) - Vector2.one * (frame * 2f), Ui_DeckHud.BackColor, Art.Shapes.Panel);
+                back.type = Image.Type.Sliced;
+                back.pixelsPerUnitMultiplier = Ui_DeckHud.BackPpu;
+            }
+
+            float chip = Ui_DeckHud.CountChipSize * Ui_DeckScreen.TeamPileScale;
+            var chipImg = UiKit.Panel(pile.transform, "CountChip", Vector2.one * chip, Ui_DeckHud.CountChipColor, Art.Shapes.Get(ArtShape.circle));
+            chipImg.rectTransform.anchorMin = chipImg.rectTransform.anchorMax = Vector2.zero;
+            chipImg.rectTransform.anchoredPosition = new Vector2(w - 4f * Ui_DeckScreen.TeamPileScale, h - 4f * Ui_DeckScreen.TeamPileScale);
+            var count = UiKit.Text(chipImg.transform, "Count", Vector2.one * chip, Ui_DeckHud.CountFontSize * Ui_DeckScreen.TeamPileScale, Ui_DeckHud.CountTextColor, TextAlignmentOptions.Center, FontStyles.Bold);
+            UiKit.Place(count.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
+            count.text = cards.Count.ToString();
+            return b;
+        }
+
+        /// <summary>One teammate's deck fanned out: their header line, then full card faces in pick order.</summary>
+        private void BuildTeamDeck(int actor)
+        {
+            var cards = Effects.CardsOf(actor);
+            float headerH = Ui_DeckScreen.TeamNameFontSize * 1.5f;
+            var header = UiKit.Text(_teamRoot, "Name", new Vector2(UiKit.FitWidth(1400f), headerH), Ui_DeckScreen.TeamNameFontSize, Ui_DeckScreen.HeaderColor, TextAlignmentOptions.Center, FontStyles.Bold);
+            UiKit.Place(header.rectTransform, new Vector2(0.5f, 1f), Vector2.zero);
+            UiKit.AutoSize(header, 14f);
+            header.text = TeamHeader(actor, cards.Count);
+            float y = -headerH - Ui_DeckScreen.TeamPileGap;
+            float width = 0f;
+
+            if (cards.Count == 0)
+            {
+                var none = UiKit.Text(_teamRoot, "None", new Vector2(1400f, 30f), Ui_DeckScreen.FontSize, Ui_DeckScreen.InactiveColor, TextAlignmentOptions.Center);
+                UiKit.Place(none.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, y));
+                none.text = Ui_DeckScreen.TeamNoCards;
+                y -= 34f;
+            }
+            else
+            {
+                float scale = Ui_DeckScreen.TeamDeckScale;
+                float cardH = Ui_Card.Size.y * scale, cardW = Ui_Card.Size.x * scale, gap = Ui_Fan.Spacing * scale;
+                int cols = Mathf.Min(cards.Count, MaxPerRow);
+                int rows = (cards.Count + cols - 1) / cols;
+                float blockW = cols * cardW + (cols - 1) * gap;
+                float blockH = rows * cardH + (rows - 1) * gap;
+                width = blockW;
+                var holder = UiKit.Node(_teamRoot, "Cards", new Vector2(blockW / scale, blockH / scale));
+                var rect = UiKit.Rect(holder);
+                rect.anchoredPosition = new Vector2(0f, y - blockH * 0.5f);
+                rect.localScale = Vector3.one * scale;
+                var grid = holder.AddComponent<GridLayoutGroup>();
+                grid.cellSize = Ui_Card.Size;
+                grid.spacing = new Vector2(Ui_Fan.Spacing, Ui_Fan.Spacing);
+                grid.childAlignment = TextAnchor.MiddleCenter;
+                grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                grid.constraintCount = cols;
+                foreach (var id in cards) CardFace.Build(holder.transform, id, interactive: false);
+                y -= blockH;
+            }
+            FitTeam(-y, width);
+        }
+
+        /// <summary>The team content (hanging below the root's origin) scaled to the band under the subtitle, centred in it.</summary>
+        private void FitTeam(float totalH, float width)
+        {
+            totalH = Mathf.Max(1f, totalH);
             var canvas = UiKit.CanvasSize;
             float bandTop = canvas.y * 0.5f - Ui_DeckScreen.TeamBandTop, bandBottom = -canvas.y * 0.5f + UiTiming.SafeMargin;
             float fit = Mathf.Min(1f, (bandTop - bandBottom) / totalH, (canvas.x - 2f * UiTiming.SafeMargin) / Mathf.Max(1f, width));

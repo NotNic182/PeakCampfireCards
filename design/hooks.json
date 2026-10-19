@@ -846,6 +846,21 @@
       "purpose": "Tenderfoot Insurance: the 25 Injury a fuse deals when it runs out in the local scout's hand counts as dynamite.",
       "verified": "Dynamite.cs:56 private void Update(); on IsMine, fuseTime <= 0 with the item in hand: AddStatus(Injury, 0.25) at :87 before RPC_Explode.",
       "finalizerArgs": "Exception __exception, bool __state"
+    },
+    {
+      "id": "pausePressed",
+      "kind": "harmony",
+      "targetType": "GUIManager",
+      "targetMember": "UpdatePaused",
+      "signature": "",
+      "prefixArgs": "GUIManager __instance",
+      "prefixBool": true,
+      "postfixArgs": "",
+      "handler": "OnUpdatePaused",
+      "runsOn": "local",
+      "purpose": "Esc over an open mod window goes to that window (deck screen: back out one step; mythic chooser: postpone) instead of opening the pause menu on top of it",
+      "verified": "GUIManager.cs:420 public void UpdatePaused() opens pauseMenu on input.pauseWasPressed with no MenuWindow check; MenuWindow.cs:63 closeOnPause consumes the press the same way",
+      "finalizerArgs": ""
     }
   ]
 }

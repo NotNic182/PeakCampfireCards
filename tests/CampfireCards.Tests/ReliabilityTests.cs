@@ -637,7 +637,7 @@ namespace CampfireCards.Tests
             var s = new CardSettings();
             var r = Fold(s, ("OneHandedScout", Always), ("Ultralight", Always), ("EternalCampfire", Always), ("Thornbreaker", Always));
             var lines = BuildStats.Lines(r, r).ToDictionary(l => l.Label);
-            Assert.Equal(0.55f * 0.25f, lines["Item in hand weight"].Now, 4);
+            Assert.Equal(0.55f * 0.35f, lines["Item in hand weight"].Now, 4);
             Assert.DoesNotContain("Carried item weight", lines.Keys); // ordinary pocket items have no Carry-On Only discount
             Assert.Equal(0.2f * 0.4f, lines["Thorns build-up"].Now, 4);
             Assert.Equal(StatComposites.Thorns(r), lines["Thorns build-up"].Now, 5);

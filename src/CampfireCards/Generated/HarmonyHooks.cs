@@ -342,4 +342,10 @@ namespace CampfireCards.Generated
         [HarmonyFinalizer] static Exception Finalizer(Exception __exception, bool __state) { return CampfireCards.Hooks.OnDynamiteFuseFinalizer(__exception, __state); }
     }
 
+    [HarmonyPatch(typeof(GUIManager), "UpdatePaused")]
+    internal static class Patch_pausePressed
+    {
+        [HarmonyPrefix] static bool Prefix(GUIManager __instance) { return CampfireCards.Hooks.OnUpdatePausedPrefix(__instance); }
+    }
+
 }

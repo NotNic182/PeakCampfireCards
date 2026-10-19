@@ -360,7 +360,7 @@ namespace CampfireCards.Generated
         public const string GiveUpLaterTemplate = "{0}: after this pick, you give up one of your cards.";
     }
 
-    /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop: YOUR DECK. The deck expands from a pile into a fan of full card faces (rows of up to Fan.MaxPerRow, scaled to fit the band between the subtitle and the totals panel); under the fan, ALL CARDS ADDED UP on a dark panel: the combined stats from the live Effects fold in two balanced columns, with + / - markers, on-now and off-now marks, the difficulty strength line, and FROM TEAMMATES auras. Clicking a card pulls it out: the card enlarged on the left, a detail panel on the right (rarity and name, benefit, drawback, every conditional modifier marked active or not right now, its charge or cooldown, aura reach, when it was picked, flavour), with < and > arrows that flip through the deck. The Deck key steps to TEAM CARDS: every other player's name, card count and state (passed out / ghost), their cards as small card faces in pick order, and Clown Luggage penalties. opened with the Deck key on the island (or by clicking the DeckHud pile); the key then steps to TEAM CARDS (with teammates in the run) and closes after it; Esc backs out of a pulled card first, then closes; a click on the backdrop does the same. Closed by a pick fan opening or leaving the run. The fan expands from the pile centre over expandSeconds with cardStaggerSeconds between cards. Totals and the pulled card's detail refresh 4 times a second from the live Effects fold and Core.BuildStats, never recomputed in the UI. Controller: the first card is selected on open, grid navigation between cards, confirm pulls one out, < and > flip, cancel backs out.</summary>
+    /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop: YOUR DECK. The deck expands from a pile into a fan of full card faces (rows of up to Fan.MaxPerRow, scaled to fit the band between the subtitle and the totals panel); under the fan, ALL CARDS ADDED UP on a dark panel: the combined stats from the live Effects fold in two balanced columns, with + / - markers, on-now and off-now marks, the difficulty strength line, and FROM TEAMMATES auras. Clicking a card pulls it out: the card enlarged on the left, a detail panel on the right (rarity and name, benefit, drawback, every conditional modifier marked active or not right now, its charge or cooldown, aura reach, when it was picked, flavour), with < and > arrows that flip through the deck. The Deck key steps to TEAM DECKS: every other player as a small pile of card backs in their rarity colours (name, card count and state (passed out / ghost), Clown Luggage penalties above it, a count chip on the pile); clicking a deck fans that player’s cards out as card faces in pick order; the key again closes the screen. opened with the Deck key on the island (or by clicking the DeckHud pile); the key then steps to TEAM DECKS (with teammates in the run) and a third press closes, from the team views alike; Esc and a backdrop click back out one step instead (pulled card -> fan, a teammate’s fanned cards -> the team decks, anything else closes), and the pause menu never opens over this screen: Esc raises Pause and UICancel together, the window consumes both, and hooks.json pausePressed catches what still reaches LateUpdate (a controller Start press). Closed by a pick fan opening or leaving the run. The fan expands from the pile centre over expandSeconds with cardStaggerSeconds between cards. Totals and the pulled card’s detail refresh 4 times a second from the live Effects fold and Core.BuildStats, never recomputed in the UI. Controller: the first card (or deck pile) is selected on open, grid navigation, confirm pulls a card out or opens a pile, < and > flip, cancel backs out.</summary>
     public static class Ui_DeckScreen
     {
         public const string Parent = "root";
@@ -370,7 +370,7 @@ namespace CampfireCards.Generated
         public const string SoundOn = "cardsAppear";
         public static readonly Color Backdrop = new Color(0.04f, 0.025f, 0.015f, 0.72f);
         public const string Title = "YOUR DECK";
-        public const string TeamTitle = "TEAM CARDS";
+        public const string TeamTitle = "TEAM DECKS";
         public const float TitleFontSize = 56.0f;
         public const float TitleMinFontSize = 32.0f;
         public const float TitleY = -70.0f;
@@ -380,9 +380,8 @@ namespace CampfireCards.Generated
         public static readonly Color SubtitleColor = new Color(0.8f, 0.74f, 0.68f, 1f);
         public const string FanHint = "Click a card to pull it out.";
         public const string FanHintPad = "Pick a card with confirm to pull it out.";
-        public const string NavTeamHint = "[{0}] team cards · Esc: close.";
+        public const string NavTeamHint = "[{0}] team decks · Esc: close.";
         public const string NavCloseHint = "Esc: close.";
-        public const string NavBackHint = "[{0}] your deck · Esc: close.";
         public const string PulledTemplate = "Card {0} of {1} · flip with < and > · Esc: back to the fan.";
         public const string NoCards = "No cards yet. You pick one at the next campfire.";
         public const string StatsHeader = "ALL CARDS ADDED UP";
@@ -432,11 +431,9 @@ namespace CampfireCards.Generated
         public static readonly Color ArrowColor = new Color(0.8f, 0.74f, 0.68f, 1f);
         public const float ArrowGap = 24.0f;
         public const string PickedTemplate = "Picked {0} of {1} this run.";
-        public const float TeamCardScale = 0.5f;
         public const float TeamNameFontSize = 24.0f;
         public const float TeamRowGap = 20.0f;
         public const float TeamBandTop = 190.0f;
-        public const float TeamMaxPerRow = 8.0f;
         public const string TeamNoCards = "No cards yet.";
         public const string CardCountOne = "1 card";
         public const string CardCountMany = "{0} cards";
@@ -447,6 +444,13 @@ namespace CampfireCards.Generated
         public const string FlipSound = "cardSwitch";
         public const float MaxTotalLines = 22.0f;
         public const string MoreTotalsTemplate = "+{0} more - pull a card out for its details";
+        public const string TeamHint = "Click a deck to look through it · [{0}] or Esc: close.";
+        public const string TeamDeckHint = "Esc: back to the team · [{0}] close.";
+        public const float TeamPileScale = 1.6f;
+        public const float TeamPerRow = 4.0f;
+        public const float TeamBlockW = 360.0f;
+        public const float TeamPileGap = 14.0f;
+        public const float TeamDeckScale = 0.8f;
     }
 
     /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop and a small centred panel: a title naming the card, one button per choosable item (only items the ItemDatabase can spawn are listed), and a hint line. Used by Balright to pick the mythic item its campfire delivers.. opened after the card fan closes at a campfire where the owner still has the choice; a click sends the pick to the host (SpawnItem) and closes; Esc or cancel postpones to the next campfire. Controller: the first button is selected, up/down moves, confirm chooses.</summary>

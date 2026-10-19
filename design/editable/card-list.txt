@@ -18,7 +18,7 @@ CAMPFIRE CARDS - CARD LIST (64 cards)
 
 
 ==============================================================================
- COMMON  (14 cards)
+ COMMON  (24 cards)
 ==============================================================================
 
 #21 - Almost Climbable Cactus
@@ -31,6 +31,16 @@ flavor:   (none)
      . Thorns build-up: -80 % change  (You)
      . Thorn removal time: -50 % change  (You)
 
+#22 - Aloe
+name:     Aloe
+rarity:   Common
+benefit:  Heat wears off 150% faster.
+drawback: Heat builds 5% faster.
+flavor:   (none)
+   effects (reference only):
+     . Heat decay: +150 % change  (You)
+     . Heat build-up: +5 % change  (You)
+
 #44 - Ascent 5+
 name:     Ascent 5+
 rarity:   Common
@@ -41,6 +51,27 @@ flavor:   (none)
      . Huddle radius and cold removal: +75 % change  (You)
      . Cold build-up: -20 % change  (You)
 
+#53 - Big Lollipop Crash
+name:     Big Lollipop Crash
+rarity:   Common
+benefit:  Sprint for 2s to move 30% faster until you stop.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Sprint speed: +30 % change  (You, while your sprint speed-up is on)
+     . Sprint time before the speed-up: 2 seconds
+
+#25 - Bing Boing
+name:     Bing Boing
+rarity:   Common
+benefit:  Every 5 min alive: a random 20s burst of Infinite Stamina, Invincibility or Low Gravity.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Time between powers: 300 seconds
+     . Power length: 20 seconds
+     . Low Gravity strength (the mushroom is 3): 3 strength
+
 #16 - Campfire++
 name:     Campfire++
 rarity:   Common
@@ -49,6 +80,16 @@ drawback: (none)
 flavor:   (none)
    effects (reference only):
      . (text only: no numbers)
+
+#34 - Carry-On Only
+name:     Carry-On Only
+rarity:   Common
+benefit:  Held items weigh 45% less.
+drawback: Backpack contents weigh 5% more.
+flavor:   (none)
+   effects (reference only):
+     . Held item weight: -45 % change  (You)
+     . Backpack content weight: +5 % change  (You)
 
 #43 - Carry-On Scout
 name:     Carry-On Scout
@@ -71,15 +112,38 @@ flavor:   (none)
      . Drowsy build-up: -30 % change  (You)
      . Cold build-up: +10 % change  (You)
 
-#8 - Daddy Long Arms
-name:     Daddy Long Arms
+#50 - Crown of Bad Decisions
+name:     Crown of Bad Decisions
 rarity:   Common
-benefit:  Grab walls from 40% farther away.
-drawback: All stamina costs are 5% higher.
+benefit:  Gain a full bar of yellow stamina now, then again at each later campfire.
+drawback: Gain 3 Curse now, then 1 at each later campfire, up to 5 total.
 flavor:   (none)
    effects (reference only):
-     . Wall-grab reach: +40 % change  (You)
-     . All stamina costs: +5 % change  (You)
+     . Yellow stamina when picked: 100 points
+     . Yellow stamina at each later campfire: 100 points
+     . Curse when picked: 3 points
+     . Curse at each later campfire: 1 points
+     . Most Curse this card can ever add: 5 points
+
+#28 - Discount Cure-All
+name:     Discount Cure-All
+rarity:   Common
+benefit:  Press {key} at 25+ Poison, Spores or Drowsy to remove 25 from the highest. Once per biome.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Needs at least this much of the status: 25 points
+     . Status removed: 25 points
+
+#23 - Heat Pack
+name:     Heat Pack
+rarity:   Common
+benefit:  Cold wears off 150% faster.
+drawback: Cold builds 5% faster.
+flavor:   (none)
+   effects (reference only):
+     . Cold decay: +150 % change  (You)
+     . Cold build-up: +5 % change  (You)
 
 #12 - HOOOOLLLD
 name:     HOOOOLLLD
@@ -112,6 +176,36 @@ flavor:   (none)
      . Sprint stamina cost: -30 % change  (You)
      . Hunger build-up: +10 % change  (You)
 
+#59 - Medicinal Munchies
+name:     Medicinal Munchies
+rarity:   Common
+benefit:  At 20+ Injury, eating food heals 7.5 health.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Needs at least this much Injury: 20 points
+     . Injury removed: 7.5 points
+
+#2 - Mini Scout Cannon
+name:     Mini Scout Cannon
+rarity:   Common
+benefit:  Jump 30% higher.
+drawback: Take 5% more fall Injury.
+flavor:   (none)
+   effects (reference only):
+     . Jump height: +30 % change  (You)
+     . Fall Injury: +5 % change  (You)
+
+#10 - Nic of Time
+name:     Nic of Time
+rarity:   Common
+benefit:  Press {key} to recover 30 stamina. Cooldown: 5 min.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Stamina recovered: 30 points
+     . Cooldown: 300 seconds
+
 #30 - Perma-Cooking
 name:     Perma-Cooking
 rarity:   Common
@@ -120,6 +214,15 @@ drawback: (none)
 flavor:   (none)
    effects (reference only):
      . Hunger removed by food: +25 % change  (You)
+
+#61 - Petrify Procrastination
+name:     Petrify Procrastination
+rarity:   Common
+benefit:  Petrification builds 50% slower.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Petrify build-up: -50 % change  (You)
 
 #1 - Piton Fingers
 name:     Piton Fingers
@@ -131,14 +234,15 @@ flavor:   (none)
      . Climbing stamina cost: -18 % change  (You)
      . Sprint stamina cost: +10 % change  (You)
 
-#35 - Super Idol Hands
-name:     Super Idol Hands
+#7 - Tendiefoot
+name:     Tendiefoot
 rarity:   Common
-benefit:  Held items weigh 75% less.
-drawback: (none)
+benefit:  Take 25% less fall Injury.
+drawback: Dynamite deals 50% more Injury.
 flavor:   (none)
    effects (reference only):
-     . Held item weight: -75 % change  (You)
+     . Fall Injury: -25 % change  (You)
+     . Dynamite Injury: +50 % change  (You)
 
 #3 - To The Bone
 name:     To The Bone
@@ -161,18 +265,8 @@ flavor:   (none)
      . Stamina cost to start a pull: 5 points
 
 ==============================================================================
- UNCOMMON  (25 cards)
+ UNCOMMON  (20 cards)
 ==============================================================================
-
-#22 - Aloe
-name:     Aloe
-rarity:   Uncommon
-benefit:  Heat wears off 150% faster.
-drawback: Heat builds 5% faster.
-flavor:   (none)
-   effects (reference only):
-     . Heat decay: +150 % change  (You)
-     . Heat build-up: +5 % change  (You)
 
 #19 - Antidote Enthusiast
 name:     Antidote Enthusiast
@@ -196,36 +290,14 @@ flavor:   (none)
      . Sprint speed: +30 % change  (You, while you don't wear a backpack)
      . Jump height: +20 % change  (You, while you don't wear a backpack)
 
-#53 - Big Lollipop Crash
-name:     Big Lollipop Crash
+#31 - Book of Broken Bones
+name:     Book of Broken Bones
 rarity:   Uncommon
-benefit:  Sprint for 2s to move 30% faster until you stop.
+benefit:  You receive a Book of Bones right now.
 drawback: (none)
 flavor:   (none)
    effects (reference only):
-     . Sprint speed: +30 % change  (You, while your sprint speed-up is on)
-     . Sprint time before the speed-up: 2 seconds
-
-#25 - Bing Boing
-name:     Bing Boing
-rarity:   Uncommon
-benefit:  Every 5 min alive: a random 20s burst of Infinite Stamina, Invincibility or Low Gravity.
-drawback: (none)
-flavor:   (none)
-   effects (reference only):
-     . Time between powers: 300 seconds
-     . Power length: 20 seconds
-     . Low Gravity strength (the mushroom is 3): 3 strength
-
-#34 - Carry-On Only
-name:     Carry-On Only
-rarity:   Uncommon
-benefit:  Held items weigh 45% less.
-drawback: Backpack contents weigh 5% more.
-flavor:   (none)
-   effects (reference only):
-     . Held item weight: -45 % change  (You)
-     . Backpack content weight: +5 % change  (You)
+     . (text only: no numbers)
 
 #36 - Cook It, Keep It
 name:     Cook It, Keep It
@@ -247,15 +319,26 @@ flavor:   (none)
      . Hunger removed by cooked food: +60 % change  (You)
      . Poison added: 5 points
 
-#9 - Cookie Addiction
-name:     Cookie Addiction
+#8 - Daddy Long Arms
+name:     Daddy Long Arms
 rarity:   Uncommon
-benefit:  Gain 30 maximum stamina.
-drawback: Hunger builds 15% faster.
+benefit:  Grab walls from 40% farther away.
+drawback: All stamina costs are 5% higher.
 flavor:   (none)
    effects (reference only):
-     . Max stamina: 30 stamina points  (You)
-     . Hunger build-up: +15 % change  (You)
+     . Wall-grab reach: +40 % change  (You)
+     . All stamina costs: +5 % change  (You)
+
+#15 - Endurance Badge
+name:     Endurance Badge
+rarity:   Uncommon
+benefit:  Climb for 2s straight: climbing uses 40% less stamina for the next 3.5s.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Climbing stamina cost: -40 % change  (You, while your climbing boost is on)
+     . Climbing time before the boost: 2 seconds
+     . Boost length: 3.5 seconds
 
 #6 - Energy Drink Overdose
 name:     Energy Drink Overdose
@@ -266,6 +349,16 @@ flavor:   (none)
    effects (reference only):
      . Climb speed: +30 % change  (You)
      . Climbing stamina cost: +10 % change  (You)
+
+#24 - Fartberry Fitness
+name:     Fartberry Fitness
+rarity:   Uncommon
+benefit:  Poison that builds up over time (gas, venom, vile food) doesn't affect you.
+drawback: Instant poison hits hurt 20% more.
+flavor:   (none)
+   effects (reference only):
+     . Poison below this is gas: 2 points
+     . Poison hits hurt: +20 % change
 
 #42 - First Aid Badge
 name:     First Aid Badge
@@ -288,16 +381,6 @@ flavor:   (none)
      . Max stamina: 10 stamina points  (You, while a teammate is near you)
      . Range: 8 metres
 
-#23 - Heat Pack
-name:     Heat Pack
-rarity:   Uncommon
-benefit:  Cold wears off 150% faster.
-drawback: Cold builds 5% faster.
-flavor:   (none)
-   effects (reference only):
-     . Cold decay: +150 % change  (You)
-     . Cold build-up: +5 % change  (You)
-
 #14 - I'm getting Scoutmastered
 name:     I'm getting Scoutmastered
 rarity:   Uncommon
@@ -306,16 +389,6 @@ drawback: (none)
 flavor:   (none)
    effects (reference only):
      . Sprint speed: +35 % change  (You)
-
-#59 - Medicinal Munchies
-name:     Medicinal Munchies
-rarity:   Uncommon
-benefit:  At 20+ Injury, eating food heals 7.5 health.
-drawback: (none)
-flavor:   (none)
-   effects (reference only):
-     . Needs at least this much Injury: 20 points
-     . Injury removed: 7.5 points
 
 #13 - Meditation
 name:     Meditation
@@ -327,25 +400,14 @@ flavor:   You're already crouched. Take a breather.
      . Crouch time required: 3 seconds
      . Yellow stamina gained: 100 points
 
-#2 - Mini Scout Cannon
-name:     Mini Scout Cannon
+#45 - Otto-Matic Clutch
+name:     Otto-Matic Clutch
 rarity:   Uncommon
-benefit:  Jump 30% higher.
-drawback: Take 5% more fall Injury.
-flavor:   (none)
-   effects (reference only):
-     . Jump height: +30 % change  (You)
-     . Fall Injury: +5 % change  (You)
-
-#32 - Mini Tenacity
-name:     Mini Tenacity
-rarity:   Uncommon
-benefit:  Medical and food items also remove a random amount from your highest other negative status.
+benefit:  First teammate revive by feeding or statue each biome: both gain a full bar of yellow stamina.
 drawback: (none)
 flavor:   (none)
    effects (reference only):
-     . Least removed: 2.5 points
-     . Most removed: 12.5 points
+     . Yellow stamina for both scouts: 100 points
 
 #51 - Pandora's HotPocket
 name:     Pandora's HotPocket
@@ -358,6 +420,17 @@ flavor:   (none)
      . Chance of a lucky roll: 100 %
      . Yellow stamina on a lucky roll: 37.5 points
 
+#54 - Piton Payment Plan
+name:     Piton Payment Plan
+rarity:   Uncommon
+benefit:  Take 25% of a fall's Injury now and 60% after 20s: 15% less in total.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Share of each fall's Injury that is delayed: 75 %
+     . Delay before the rest lands: 20 seconds
+     . Share of the delayed Injury that still lands: 80 %
+
 #20 - ROOTS Survivor
 name:     ROOTS Survivor
 rarity:   Uncommon
@@ -368,18 +441,6 @@ flavor:   (none)
      . Spores build-up: -80 % change  (You)
      . Poison build-up: -45 % change  (You)
 
-#41 - Rule Zero
-name:     Rule Zero
-rarity:   Uncommon
-benefit:  You and teammates within 8 m use 20% less climbing stamina.
-drawback: With no teammate within 8 m, climbing uses 5% more stamina.
-flavor:   (none)
-   effects (reference only):
-     . Climbing stamina cost: -20 % change  (Teammates within 8 m)
-     . Climbing stamina cost: -20 % change  (You, while a teammate is near you)
-     . Climbing stamina cost: +5 % change  (You, while no teammate is near you)
-     . Range: 8 metres
-
 #39 - Scoutmaster's Care Package
 name:     Scoutmaster's Care Package
 rarity:   Uncommon
@@ -388,6 +449,15 @@ drawback: (none)
 flavor:   (none)
    effects (reference only):
      . (text only: no numbers)
+
+#35 - Super Idol Hands
+name:     Super Idol Hands
+rarity:   Uncommon
+benefit:  Held items weigh 65% less.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Held item weight: -65 % change  (You)
 
 #26 - TechTara
 name:     TechTara
@@ -400,29 +470,8 @@ flavor:   (none)
      . Extra reduction per bandage: 20 %
      . Bandages counted at most: 3 bandages
 
-#7 - Tendiefoot
-name:     Tendiefoot
-rarity:   Uncommon
-benefit:  Take 25% less fall Injury.
-drawback: Dynamite deals 50% more Injury.
-flavor:   (none)
-   effects (reference only):
-     . Fall Injury: -25 % change  (You)
-     . Dynamite Injury: +50 % change  (You)
-
-#27 - Walk It Off
-name:     Walk It Off
-rarity:   Uncommon
-benefit:  At 20+ Injury, climbing and sprinting use 35% less stamina.
-drawback: Take 5% more Injury.
-flavor:   (none)
-   effects (reference only):
-     . Climbing stamina cost: -35 % change  (You, while you have 20+ Injury)
-     . Sprint stamina cost: -35 % change  (You, while you have 20+ Injury)
-     . All Injury: +5 % change  (You)
-
 ==============================================================================
- RARE  (16 cards)
+ RARE  (15 cards)
 ==============================================================================
 
 #38 - Balright
@@ -452,107 +501,76 @@ flavor:   (none)
    effects (reference only):
      . Double jump cooldown: 15 seconds
 
-#31 - Book of Broken Bones
-name:     Book of Broken Bones
+#29 - BingBong Parachute
+name:     BingBong Parachute
 rarity:   Rare
-benefit:  You receive a Book of Bones right now.
+benefit:  Once per run, cancel a fatal fall and return to safe ground.
 drawback: (none)
 flavor:   (none)
    effects (reference only):
      . (text only: no numbers)
 
-#50 - Crown of Bad Decisions
-name:     Crown of Bad Decisions
+#52 - Bootleg Scoutmaster Bugle
+name:     Bootleg Scoutmaster Bugle
 rarity:   Rare
-benefit:  Gain a full bar of yellow stamina now, then again at each later campfire.
-drawback: Gain 3 Curse now, then 1 at each later campfire, up to 5 total.
+benefit:  Press {key} to gain a full bar of yellow stamina. Once per biome.
+drawback: Each use adds 15 Injury.
 flavor:   (none)
    effects (reference only):
-     . Yellow stamina when picked: 100 points
-     . Yellow stamina at each later campfire: 100 points
-     . Curse when picked: 3 points
-     . Curse at each later campfire: 1 points
-     . Most Curse this card can ever add: 5 points
+     . Yellow stamina per use: 100 points
+     . Injury per use: 15 points
 
-#28 - Discount Cure-All
-name:     Discount Cure-All
+#9 - Cookie Addiction
+name:     Cookie Addiction
 rarity:   Rare
-benefit:  Press {key} at 25+ Poison, Spores or Drowsy to remove 25 from the highest. Once per biome.
+benefit:  Gain 30 maximum stamina.
+drawback: Hunger builds 15% faster.
+flavor:   (none)
+   effects (reference only):
+     . Max stamina: 30 stamina points  (You)
+     . Hunger build-up: +15 % change  (You)
+
+#62 - Fine Print
+name:     Fine Print
+rarity:   Rare
+benefit:  Sacrifice one of your cards to gain 35 (MORE) maximum stamina.
+drawback: Gain 5 Curse when the sacrifice is made.
+flavor:   (none)
+   effects (reference only):
+     . Max stamina: 35 stamina points  (You)
+     . Curse when the sacrifice is made: 5 points
+
+#55 - Glass Scout Cannon
+name:     Glass Scout Cannon
+rarity:   Rare
+benefit:  Gain 40 maximum stamina.
+drawback: Take 25% more Injury.
+flavor:   (none)
+   effects (reference only):
+     . Max stamina: 40 stamina points  (You)
+     . All Injury: +25 % change  (You)
+
+#32 - Mini Tenacity
+name:     Mini Tenacity
+rarity:   Rare
+benefit:  Medical and food items also remove a random amount from your highest other negative status.
 drawback: (none)
 flavor:   (none)
    effects (reference only):
-     . Needs at least this much of the status: 25 points
-     . Status removed: 25 points
+     . Least removed: 2.5 points
+     . Most removed: 12.5 points
 
-#15 - Endurance Badge
-name:     Endurance Badge
+#41 - Rule Zero
+name:     Rule Zero
 rarity:   Rare
-benefit:  Climb for 2s straight: climbing uses 40% less stamina for the next 3.5s.
-drawback: (none)
+benefit:  You and teammates within 8 m use 20% less climbing stamina.
+drawback: With no teammate within 8 m, climbing uses 5% more stamina.
 flavor:   (none)
    effects (reference only):
-     . Climbing stamina cost: -40 % change  (You, while your climbing boost is on)
-     . Climbing time before the boost: 2 seconds
-     . Boost length: 3.5 seconds
-
-#24 - Fartberry Fitness
-name:     Fartberry Fitness
-rarity:   Rare
-benefit:  Poison that builds up over time (gas, venom, vile food) doesn't affect you.
-drawback: Instant poison hits hurt 20% more.
-flavor:   (none)
-   effects (reference only):
-     . Poison below this is gas: 2 points
-     . Poison hits hurt: +20 % change
-
-#10 - Nic of Time
-name:     Nic of Time
-rarity:   Rare
-benefit:  Press {key} to recover 30 stamina. Cooldown: 5 min.
-drawback: (none)
-flavor:   (none)
-   effects (reference only):
-     . Stamina recovered: 30 points
-     . Cooldown: 300 seconds
-
-#45 - Otto-Matic Clutch
-name:     Otto-Matic Clutch
-rarity:   Rare
-benefit:  First teammate revive by feeding or statue each biome: both gain a full bar of yellow stamina.
-drawback: (none)
-flavor:   (none)
-   effects (reference only):
-     . Yellow stamina for both scouts: 100 points
-
-#61 - Petrify Procrastination
-name:     Petrify Procrastination
-rarity:   Rare
-benefit:  Petrification builds 50% slower.
-drawback: (none)
-flavor:   (none)
-   effects (reference only):
-     . Petrify build-up: -50 % change  (You)
-
-#54 - Piton Payment Plan
-name:     Piton Payment Plan
-rarity:   Rare
-benefit:  Take 25% of a fall's Injury now and 60% after 20s: 15% less in total.
-drawback: (none)
-flavor:   (none)
-   effects (reference only):
-     . Share of each fall's Injury that is delayed: 75 %
-     . Delay before the rest lands: 20 seconds
-     . Share of the delayed Injury that still lands: 80 %
-
-#4 - Pitonless Pit Stop
-name:     Pitonless Pit Stop
-rarity:   Rare
-benefit:  Hang still on a wall to recover 5 stamina per second.
-drawback: Climb 10% slower.
-flavor:   (none)
-   effects (reference only):
-     . Climb speed: -10 % change  (You)
-     . Stamina recovered per second: 5 points
+     . Climbing stamina cost: -20 % change  (Teammates within 8 m)
+     . Climbing stamina cost: -20 % change  (You, while a teammate is near you)
+     . Climbing stamina cost: +5 % change  (You, while no teammate is near you)
+     . Range: 8 metres
 
 #49 - Scout Cannon Legs
 name:     Scout Cannon Legs
@@ -564,6 +582,17 @@ flavor:   (none)
      . Sprint speed: +35 % change  (You)
      . Jump height: +25 % change  (You)
      . Fall Injury: +25 % change  (You)
+
+#57 - Scout's Dishonor
+name:     Scout's Dishonor
+rarity:   Rare
+benefit:  Immediately gain 2 random bonus cards, Common to Rare.
+drawback: Gain 5 Curse. Your next campfire offers only 2 cards.
+flavor:   (none)
+   effects (reference only):
+     . Bonus cards (Common to Rare): 2 cards
+     . Curse when picked: 5 points
+     . Cards in your next offer: 2 cards
 
 #47 - Take One for the Troop
 name:     Take One for the Troop
@@ -586,28 +615,20 @@ flavor:   (none)
    effects (reference only):
      . Range: 56 metres
 
-==============================================================================
- LEGENDARY  (7 cards)
-==============================================================================
-
-#29 - BingBong Parachute
-name:     BingBong Parachute
-rarity:   Legendary
-benefit:  Once per run, cancel a fatal fall and return to safe ground.
-drawback: (none)
+#27 - Walk It Off
+name:     Walk It Off
+rarity:   Rare
+benefit:  At 20+ Injury, climbing and sprinting use 35% less stamina.
+drawback: Take 5% more Injury.
 flavor:   (none)
    effects (reference only):
-     . (text only: no numbers)
+     . Climbing stamina cost: -35 % change  (You, while you have 20+ Injury)
+     . Sprint stamina cost: -35 % change  (You, while you have 20+ Injury)
+     . All Injury: +5 % change  (You)
 
-#52 - Bootleg Scoutmaster Bugle
-name:     Bootleg Scoutmaster Bugle
-rarity:   Legendary
-benefit:  Press {key} to gain a full bar of yellow stamina. Once per biome.
-drawback: Each use adds 15 Injury.
-flavor:   (none)
-   effects (reference only):
-     . Yellow stamina per use: 100 points
-     . Injury per use: 15 points
+==============================================================================
+ LEGENDARY  (3 cards)
+==============================================================================
 
 #60 - Budget Checkpoint Flag
 name:     Budget Checkpoint Flag
@@ -627,36 +648,15 @@ flavor:   (none)
    effects (reference only):
      . Bonus cards: 2 cards
 
-#62 - Fine Print
-name:     Fine Print
+#4 - Pitonless Pit Stop
+name:     Pitonless Pit Stop
 rarity:   Legendary
-benefit:  Sacrifice one of your cards to gain 35 (MORE) maximum stamina.
-drawback: Gain 5 Curse when the sacrifice is made.
+benefit:  Hang still on a wall to recover 7.5 stamina per second.
+drawback: Climb 10% slower.
 flavor:   (none)
    effects (reference only):
-     . Max stamina: 35 stamina points  (You)
-     . Curse when the sacrifice is made: 5 points
-
-#55 - Glass Scout Cannon
-name:     Glass Scout Cannon
-rarity:   Legendary
-benefit:  Gain 40 maximum stamina.
-drawback: Take 25% more Injury.
-flavor:   (none)
-   effects (reference only):
-     . Max stamina: 40 stamina points  (You)
-     . All Injury: +25 % change  (You)
-
-#57 - Scout's Dishonor
-name:     Scout's Dishonor
-rarity:   Legendary
-benefit:  Immediately gain 2 random bonus cards, Common to Rare.
-drawback: Gain 5 Curse. Your next campfire offers only 2 cards.
-flavor:   (none)
-   effects (reference only):
-     . Bonus cards (Common to Rare): 2 cards
-     . Curse when picked: 5 points
-     . Cards in your next offer: 2 cards
+     . Climb speed: -10 % change  (You)
+     . Stamina recovered per second: 7.5 points
 
 ==============================================================================
  MYTHIC  (2 cards)

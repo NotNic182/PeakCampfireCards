@@ -30,14 +30,21 @@ namespace CampfireCards.Net
             try
             {
                 Character c;
-                if (PlayerHandler.TryGetCharacter(actor, out c) && c != null && !string.IsNullOrEmpty(c.characterName)) return c.characterName;
+                if (PlayerHandler.TryGetCharacter(actor, out c) && c != null && !string.IsNullOrEmpty(c.characterName)) return NoTags(c.characterName);
                 var room = PhotonNetwork.CurrentRoom;
                 Photon.Realtime.Player p;
-                if (room != null && room.Players.TryGetValue(actor, out p) && !string.IsNullOrEmpty(p.NickName)) return p.NickName;
+                if (room != null && room.Players.TryGetValue(actor, out p) && !string.IsNullOrEmpty(p.NickName)) return NoTags(p.NickName);
             }
             catch { }
             return actor == LocalActor ? "You" : "Player " + actor;
         }
+
+        /// <summary>
+        /// Names land inside TMP rich text (team headers, auras, toasts), and a nickname like "&lt;size=400%&gt;" must
+        /// never restyle the UI. A zero-width space after each &lt; makes TMP render the bracket verbatim without
+        /// changing what the name looks like; &lt;noparse&gt; wrapping is escapable by the name itself, this is not.
+        /// </summary>
+        private static string NoTags(string s) => string.IsNullOrEmpty(s) ? s : s.Replace("<", "<​");
 
         private static void RaiseRaw(byte code, byte[] payload, RaiseEventOptions options)
         {
