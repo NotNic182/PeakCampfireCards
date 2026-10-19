@@ -17,3 +17,6 @@ __pycache__/
 *.token
 tok
 .env
+
+# local working notes, never published
+HANDOFF.md

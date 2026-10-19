@@ -97,7 +97,7 @@ namespace CampfireCards.Ui
             if (!RunState.OnIsland || me == null || (CardPicker.Instance != null && CardPicker.Instance.isOpen)) { HideIfOpen(); return; }
             if (Time.unscaledTime < Instance._nextRefresh) return;
             Instance._nextRefresh = Time.unscaledTime + UiTiming.BuildRefreshSeconds;
-            // the deck can grow while the screen is open (a bonus reveal, the dev tester): rebuild the fan to match
+            // the deck can grow while the screen is open (a bonus reveal, a run restore): rebuild the fan to match
             if (Instance._view == View.Fan && Effects.CardsOf(NetSend.LocalActor).Count != Instance._deck.Length) { Instance.ShowFan(); return; }
             Instance.RefreshTotals();
             if (Instance._view == View.Pulled) Instance.RefreshDetail(me);

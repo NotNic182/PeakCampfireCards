@@ -13,7 +13,7 @@ namespace CampfireCards
     /// </summary>
     public static class Controls
     {
-        public enum Act { BloodBattery, SecondWind, EmergencyPurge, SafetyNet, BuildScreen }
+        public enum Act { BloodBattery, SecondWind, EmergencyPurge, SafetyNet, BuildScreen, ScavengerFood, ScavengerLuggage, ScavengerMisc }
 
         /// <summary>The action a manual card's ability is pressed with (cards.json ability), or null for a passive card.</summary>
         public static Act? ActOf(string ability)
@@ -72,6 +72,14 @@ namespace CampfireCards
             return pad != null && pad.WasPressedThisFrame();
         }
 
+        /// <summary>The key or the controller button of the action is held down right now (TSA's reveal keys).</summary>
+        public static bool IsHeld(Act act)
+        {
+            if (KeyHeld(KeyOf(act))) return true;
+            var pad = PadAction(act);
+            return pad != null && pad.IsPressed();
+        }
+
         /// <summary>What to print for the action: the controller button while a controller is in use, else the key.</summary>
         public static string Label(Act act)
         {
@@ -96,6 +104,9 @@ namespace CampfireCards
                 case Act.SecondWind: return Plugin.SecondWindKey;
                 case Act.EmergencyPurge: return Plugin.EmergencyPurgeKey;
                 case Act.SafetyNet: return Plugin.SafetyNetKey;
+                case Act.ScavengerFood: return Plugin.ScavengerFoodKey;
+                case Act.ScavengerLuggage: return Plugin.ScavengerLuggageKey;
+                case Act.ScavengerMisc: return Plugin.ScavengerMiscKey;
                 default: return Plugin.BuildScreenKey;
             }
         }
@@ -108,6 +119,9 @@ namespace CampfireCards
                 case Act.SecondWind: return Plugin.SecondWindPad;
                 case Act.EmergencyPurge: return Plugin.EmergencyPurgePad;
                 case Act.SafetyNet: return Plugin.SafetyNetPad;
+                case Act.ScavengerFood: return Plugin.ScavengerFoodPad;
+                case Act.ScavengerLuggage: return Plugin.ScavengerLuggagePad;
+                case Act.ScavengerMisc: return Plugin.ScavengerMiscPad;
                 default: return Plugin.BuildScreenPad;
             }
         }
@@ -117,6 +131,14 @@ namespace CampfireCards
             var kb = Keyboard.current;
             if (kb == null || key == null || key.Value == Key.None) return false;
             try { var control = kb[key.Value]; return control != null && control.wasPressedThisFrame; }
+            catch { return false; }
+        }
+
+        private static bool KeyHeld(ConfigEntry<Key> key)
+        {
+            var kb = Keyboard.current;
+            if (kb == null || key == null || key.Value == Key.None) return false;
+            try { var control = kb[key.Value]; return control != null && control.isPressed; }
             catch { return false; }
         }
 

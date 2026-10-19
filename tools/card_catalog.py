@@ -75,7 +75,7 @@ def write_workbook(rows, path):
         ('Changing gameplay', 'Write mechanics in plain English in Requested effects, including numbers, trigger, duration, and drawback. Text edits alone do not change gameplay.'),
         ('Keep these unchanged', 'ID and Key identify the card for reimport. Rarity, Category and Enabled by default are reference fields.'),
         ('No drawback', 'Leave Drawback blank; the card then shows only its benefit.'),
-        ('Ability key placeholder', 'Keep {key} in manual card text: the game replaces it with your configured binding. Defaults: Nic of Time V, Discount Cure-All K, Bootleg Scoutmaster Bugle B, Budget Checkpoint Flag N.'),
+        ('Ability key placeholder', 'Keep {key} in manual card text: the game replaces it with your configured binding. Defaults: Nic of Time V, Discount Cure-All K, Bootleg Scoutmaster Bugle B, Budget Checkpoint Flag N; TSA shows its three held reveal keys (Y / U / I).'),
         ('Your own images', 'Save <Key>.png in art/cards beside CampfireCards.dll. See card-image-map.csv and docs/card-images.md. Restart PEAK after changing images.'),
         ('Current implementation', 'Notes flag known limitations. Current code shows the actual modifiers, ability handler and parameters. Existing Enabled settings are preserved during upgrade.'),
         ('Numbers in the code', 'Multiplier 0.8 = 20% less, 1.3 = 30% more. Stamina/status amounts 0.1 = 10 game units; cooldowns/delays are seconds, radii metres, chance 0.65 = 65%.'),

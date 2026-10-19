@@ -75,8 +75,8 @@ class CardTextTests(unittest.TestCase):
         start = src.index('#3 - To The Bone')
         end = src.index('\n\n#', start)
         block = src[start:end]
-        moved = src.replace('\n' + block, '').replace(' RARE  (15 cards)\n' + '=' * 78,
-                                                      ' RARE  (15 cards)\n' + '=' * 78 + '\n\n' + block)
+        moved = src.replace('\n' + block, '').replace(' RARE  (14 cards)\n' + '=' * 78,
+                                                      ' RARE  (14 cards)\n' + '=' * 78 + '\n\n' + block)
         self.txt.write_text(moved, encoding='utf-8')
         with self.assertRaisesRegex(ValueError, 'moving a block does nothing'):
             text_tool.apply(self.txt)

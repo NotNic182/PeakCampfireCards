@@ -103,7 +103,7 @@
       "owns": "net.json 91/92/94/96/97/106 flow, ui.json timing",
       "responsibility": "host: arrivals, last-arrival-first order, a queue of sessions (one per campfire, never skipped), offers (skip and one-card flags, solo filter, Mythics once), validation of every pick request, timeout picks, bonus cards for card-draw cards; everyone: turn state, the picker and the status banner",
       "dependsOn": "Deck,Net,Ui",
-      "testedBy": "Unit tests (PickTurns: regular, out-of-turn, invalid card, replay, stale session, timeout claim, simultaneous, leaver; SessionQueue: rapid fires, duplicates, order). v0.3.0 in game: opening pick (click and timeout), campfire pick after F9, bonus grant reveal, sacrifice grid with 13 cards. v0.4.0 flow not yet played"
+      "testedBy": "Unit tests (PickTurns: regular, out-of-turn, invalid card, replay, stale session, timeout claim, simultaneous, leaver; SessionQueue: rapid fires, duplicates, order). v0.3.0 in game: opening pick (click and timeout), campfire pick, bonus grant reveal, sacrifice grid with 13 cards. v0.4.0 flow not yet played"
     },
     {
       "id": "Net",

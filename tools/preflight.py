@@ -222,7 +222,7 @@ def main():
             item = (r.get('params') or {}).get('item', -1)
             if not (0 <= item < len(cards['spawnItems'])):
                 problem('cards %s: params.item does not index spawnItems' % label)
-    expected = {'common': 24, 'uncommon': 20, 'rare': 15, 'legendary': 3, 'mythic': 2}
+    expected = {'common': 24, 'uncommon': 20, 'rare': 14, 'legendary': 4, 'mythic': 2}
     if len(cards['rows']) != 64:
         problem('cards: %d cards, expected 64' % len(cards['rows']))
     for k, n in expected.items():

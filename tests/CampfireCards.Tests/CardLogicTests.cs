@@ -21,8 +21,8 @@ namespace CampfireCards.Tests
         [Theory]
         [InlineData(CardRarity.Common, 24)]
         [InlineData(CardRarity.Uncommon, 20)]
-        [InlineData(CardRarity.Rare, 15)]
-        [InlineData(CardRarity.Legendary, 3)]
+        [InlineData(CardRarity.Rare, 14)]
+        [InlineData(CardRarity.Legendary, 4)]
         [InlineData(CardRarity.Mythic, 2)]
         public void RarityCounts(CardRarity r, int count) => Assert.Equal(count, CardTable.Cards.Count(c => c.Rarity == r));
 

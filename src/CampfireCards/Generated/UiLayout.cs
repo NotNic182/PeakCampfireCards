@@ -328,6 +328,7 @@ namespace CampfireCards.Generated
         public const string StatusTemplate = "{0}: {1}";
         public const string KeyedTemplate = "{0} [{1}]: {2}";
         public const float MaxHeight = 300.0f;
+        public const string ScavengerHold = "hold to mark food / luggage / items";
     }
 
     /// <summary>bold label in the marker's colour with a black outline (they float over snow and sky), a square, the label and the distance. Scavenger's Instinct: one pooled label per marker, placed every frame; hidden behind the camera or off the island</summary>

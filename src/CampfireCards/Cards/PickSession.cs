@@ -55,7 +55,6 @@ namespace CampfireCards.Cards
             _seenSessions.Clear();
             _foreignPicks.Clear();
             _grants.Clear();
-            _devPending.Clear();
             _warnedEmptyDeck = false;
             _openingPending = false;
             _awaitingStart = 0;
@@ -441,60 +440,22 @@ namespace CampfireCards.Cards
             NetSend.Raise(new CardsGranted { sessionId = sessionId, actor = actor, cards = cards, reason = 1 }, Photon.Realtime.ReceiverGroup.All);
         }
 
-        /// <summary>Tester grants raised but not echoed back yet: a second click on the same card must wait, or a
-        /// card-draw card would deal its bonus cards twice (online, the echo takes a round trip).</summary>
-        private static readonly HashSet<byte> _devPending = new HashSet<byte>();
-
-        /// <summary>
-        /// Host dev tester (F6 card menu): grant the local player one card WITH its acquisition effects (reason 10, so
-        /// clicking again after a remove is never dropped as a repeated grant). A card-draw card also deals its bonus
-        /// cards right away, counting the just-granted card as owned (its own grant may not have echoed back yet).
-        /// Refused with a toast: a card already in the build, a Mythic a teammate owns, and a card still on offer in the
-        /// current pick session (granting it would let AddCard refuse that player's accepted pick, costing them the pick).
-        /// </summary>
-        public static void DevGrantSelf(byte id)
-        {
-            if (!NetSend.IsHost) return;
-            int actor = NetSend.LocalActor;
-            var def = CardSettings.Current.Card(id);
-            if (def == null) return;
-            if (Effects.CardsOf(actor).Contains(id) && (!CardSettings.Current.AllowDuplicates || def.Rarity == CardRarity.Mythic))
-            {
-                Hud.Toast(def.Name + " is already in your build");
-                return;
-            }
-            if (def.Rarity == CardRarity.Mythic)
-            {
-                int owner = Effects.MythicOwner(id);
-                if (owner != int.MinValue) { Hud.Toast(def.Name + " is already owned by " + NetSend.NameOf(owner)); return; }
-            }
-            if (Turns.Active && Turns.CardsStillOffered().Contains(id))
-            {
-                Hud.Toast(def.Name + " is still on offer in the current card pick");
-                return;
-            }
-            if (!_devPending.Add(id)) return;   // clicked again before the first grant came back
-            NetSend.Raise(new CardsGranted { sessionId = SessionId, actor = actor, cards = new[] { id }, reason = 10 }, Photon.Realtime.ReceiverGroup.All);
-            if (!def.DrawsCards) return;
-            int count = Math.Max(0, (int)Math.Round(CardSettings.Current.Param(def, "bonusCards", 1f)));
-            if (count == 0) return;
-            var owned = new List<byte>(Effects.CardsOf(actor)) { id };
-            var maxRarity = def.Ability == "DoubleDown" ? CardRarity.Rare : CardRarity.Mythic;
-            var bonus = Deck.DealBonus(DealRandom.Shared, owned, count, NetSend.IsSolo, maxRarity, Turns.CardsStillOffered());
-            if (bonus.Length > 0)
-                NetSend.Raise(new CardsGranted { sessionId = SessionId, actor = actor, cards = bonus, reason = 10 }, Photon.Realtime.ReceiverGroup.All);
-        }
-
         private static readonly HashSet<(int session, int actor, byte reason)> _grants = new HashSet<(int, int, byte)>();
 
         /// <summary>Everyone: bonus cards from the host. A repeated grant (same session, player and reason) adds nothing.</summary>
         public static void OnCardsGranted(CardsGranted m)
         {
             if (m.cards == null || m.cards.Length == 0) return;
-            // the tester grant is back (accepted or not): the card may be clicked again
-            if (m.reason == 10 && m.actor == NetSend.LocalActor)
-                foreach (var id in m.cards) _devPending.Remove(id);
-            if (m.reason != 9 && m.reason != 10 && !_grants.Add((m.sessionId, m.actor, m.reason)))   // 9/10 = dev keys, may repeat
+            // 0.9 hosts only ever send reason 1 (bonus deals) and reason 9 (the F8 run restore). Anything else is an
+            // old or modified host - the pre-0.9 builds' F6 tester sent reason 10 - and is refused outright, so the
+            // public 0.8.x zips cannot shower a 0.9 lobby with cards.
+            if (m.reason != 1 && m.reason != 9)
+            {
+                Plugin.Log.LogWarning($"Ignored card grant with unsupported reason {m.reason} for actor {m.actor} (old or modified host)");
+                return;
+            }
+            // reason 9 may repeat by design: a second restore after a sacrifice or a partial echo must still land
+            if (m.reason != 9 && !_grants.Add((m.sessionId, m.actor, m.reason)))
             {
                 Plugin.Log.LogWarning($"Ignored repeated card grant for actor {m.actor} in session {m.sessionId}");
                 return;

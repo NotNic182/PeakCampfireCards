@@ -122,12 +122,14 @@ namespace CampfireCards.Abilities
     }
 
     /// <summary>
-    /// Scavenger's Instinct: food, items and unopened luggage within 15 m are marked on screen (drawn over the world, so
-    /// they show through terrain). The hungrier body is a modifier.
+    /// Scavenger's Instinct (TSA): nothing shows on its own. While a reveal key is held, that key's category is marked
+    /// on screen (drawn over the world, so it shows through terrain): ScavengerFood = food, ScavengerLuggage = unopened
+    /// luggage, ScavengerMisc = every other ground item. Keys can be held together; releasing them clears the markers.
     /// </summary>
     public sealed class Ability_ScavengersInstinct : Ability
     {
         private float _nextScan;
+        private int _lastMask;
         private readonly List<Hud.Marker> _markers = new List<Hud.Marker>();
         private static readonly Dictionary<int, bool> _isFood = new Dictionary<int, bool>();
         private static readonly Color FoodColor = new Color(0.62f, 0.92f, 0.45f, 1f);
@@ -136,22 +138,36 @@ namespace CampfireCards.Abilities
 
         public override void Tick(Character me, float dt)
         {
+            bool food = Controls.IsHeld(Controls.Act.ScavengerFood);
+            bool luggage = Controls.IsHeld(Controls.Act.ScavengerLuggage);
+            bool misc = Controls.IsHeld(Controls.Act.ScavengerMisc);
+            int mask = (food ? 1 : 0) | (luggage ? 2 : 0) | (misc ? 4 : 0);
+            if (me.data.dead) mask = 0;
+            if (mask == 0)
+            {
+                if (_lastMask != 0) { _markers.Clear(); Hud.SetMarkers(_markers); }
+                _lastMask = 0;
+                return;
+            }
+            if (mask != _lastMask) _nextScan = 0f;   // a key went down or up: redraw now, not up to 0.25 s later
+            _lastMask = mask;
             if (Time.unscaledTime < _nextScan) return;
             _nextScan = Time.unscaledTime + 0.25f;
+
             float radius = P("radius", 12f);
             _markers.Clear();
-            if (!me.data.dead)
-            {
-                Vector3 c = me.Center;
+            Vector3 c = me.Center;
+            if (food || misc)
                 foreach (var it in Item.ALL_ITEMS)
                 {
                     if (it == null || it.itemState != ItemState.Ground || !it.gameObject.activeInHierarchy) continue;
                     Vector3 p = it.transform.position;
-                    float d = Vector3.Distance(p, c);
-                    if (d > radius) continue;
-                    bool food = IsFood(it);
-                    _markers.Add(new Hud.Marker { World = p, Label = NameOf(it), Color = food ? FoodColor : ItemColor });
+                    if (Vector3.Distance(p, c) > radius) continue;
+                    bool isFood = IsFood(it);
+                    if (isFood ? !food : !misc) continue;
+                    _markers.Add(new Hud.Marker { World = p, Label = NameOf(it), Color = isFood ? FoodColor : ItemColor });
                 }
+            if (luggage)
                 foreach (var l in Luggage.ALL_LUGGAGE)
                 {
                     // the game only drops opened luggage from this list on the host, and scout statues are luggage too
@@ -160,9 +176,14 @@ namespace CampfireCards.Abilities
                     if (Vector3.Distance(p, c) > radius) continue;
                     _markers.Add(new Hud.Marker { World = p + Vector3.up * 0.5f, Label = "Luggage", Color = LuggageColor });
                 }
-            }
             Hud.SetMarkers(_markers);
         }
+
+        /// <summary>The ability bar names the three reveal keys, so the card teaches itself.</summary>
+        public override AbilityStatus Status(Character me) =>
+            AbilityStatus.Ok(Line(
+                Controls.Label(Controls.Act.ScavengerFood) + " / " + Controls.Label(Controls.Act.ScavengerLuggage) + " / " + Controls.Label(Controls.Act.ScavengerMisc),
+                Ui_AbilityBar.ScavengerHold));
 
         private static bool IsFood(Item it)
         {
@@ -180,6 +201,7 @@ namespace CampfireCards.Abilities
 
         public override void OnRemoved(Character me)
         {
+            _lastMask = 0;
             _markers.Clear();
             Hud.ClearMarkers();
         }

@@ -213,7 +213,7 @@ namespace CampfireCards.Generated
             new CardDef { Id = 57, Key = "DoubleDown", Name = "Scout's Dishonor", Rarity = CardRarity.Rare, Category = "wildcard", Type = "One-time acquisition", Positive = "Immediately gain 2 random bonus cards, Common to Rare.", Negative = "Gain 5 Curse. Your next campfire offers only 2 cards.", Flavor = "", MultiplayerOnly = false, DrawsCards = true,
                 Mods = new ModDef[] {  },
                 Ability = "DoubleDown", Params = new Dictionary<string, float> { { "bonusCards", 2.0f }, { "curse", 0.05f }, { "nextOffer", 2.0f } }, Theme = 3, Art = 9 },
-            new CardDef { Id = 58, Key = "ScavengersInstinct", Name = "TSA", Rarity = CardRarity.Rare, Category = "wildcard", Type = "Proximity visualization", Positive = "Mark food, items and luggage within 56 m, even through terrain.", Negative = "", Flavor = "", MultiplayerOnly = false, DrawsCards = false,
+            new CardDef { Id = 58, Key = "ScavengersInstinct", Name = "TSA", Rarity = CardRarity.Legendary, Category = "wildcard", Type = "Held proximity visualization", Positive = "Hold {key} to mark food / luggage / other items within 56 m, even through terrain.", Negative = "", Flavor = "", MultiplayerOnly = false, DrawsCards = false,
                 Mods = new ModDef[] {  },
                 Ability = "ScavengersInstinct", Params = new Dictionary<string, float> { { "radius", 56.0f } }, Theme = 3, Art = 6 },
             new CardDef { Id = 59, Key = "HungryHands", Name = "Medicinal Munchies", Rarity = CardRarity.Common, Category = "wildcard", Type = "Consumption-triggered", Positive = "At 20+ Injury, eating food heals 7.5 health.", Negative = "", Flavor = "", MultiplayerOnly = false, DrawsCards = false,

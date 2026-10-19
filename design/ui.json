@@ -471,7 +471,8 @@
         "AlreadyUsedThisBiome": "{0}: already used this biome",
         "StatusTemplate": "{0}: {1}",
         "KeyedTemplate": "{0} [{1}]: {2}",
-        "MaxHeight": 300
+        "MaxHeight": 300,
+        "ScavengerHold": "hold to mark food / luggage / items"
       },
       "behaviour": "visible on the island for owned activated or limited abilities; grows to MaxHeight before the text shrinks (to MinFontSize); an ability's line is StatusTemplate (KeyedTemplate when it has a key) with Ready, UsedThisBiome or UsedThisRun for charges",
       "soundOn": "none"

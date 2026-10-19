@@ -27,7 +27,16 @@ namespace CampfireCards.Net
             _bonusFrom.Reset();
             _warned.Clear();
             _answered.Clear();
+            // back on this player's own config until the next lobby's host announces its rules
+            if (_hostRulesAdopted)
+            {
+                _hostRulesAdopted = false;
+                CardSettings.Current.AllowDuplicates = _localAllowDuplicates;
+                CardSettings.Current.DrawbacksEnabled = _localDrawbacksEnabled;
+            }
         }
+
+        private static bool _hostRulesAdopted, _localAllowDuplicates, _localDrawbacksEnabled;
 
         /// <summary>Events only the host may send (deals, grants, approvals).</summary>
         private static bool FromHost(int sender)
@@ -71,6 +80,24 @@ namespace CampfireCards.Net
             {
                 if (_answered.Add((sender, m.deckHash))) NetSend.RaiseTo(MakeHello(), sender);
                 if (Effects.HasAnyState) NetSend.RaiseTo(Effects.BuildStateSync(PickSession.SessionId), sender);
+            }
+            // the lobby-wide rules are the HOST's: a guest's own config must not free its scout of drawbacks or let it
+            // keep duplicates others refuse (SettingsFingerprint.Rules: [1] = duplicate cards, [5] = drawbacks)
+            if (!NetSend.IsHost && FromHost(sender) && m.rules != null && m.rules.Length >= 6)
+            {
+                bool duplicates = m.rules[1] != 0, drawbacks = m.rules[5] != 0;
+                if (duplicates != CardSettings.Current.AllowDuplicates || drawbacks != CardSettings.Current.DrawbacksEnabled)
+                {
+                    if (!_hostRulesAdopted)
+                    {
+                        _hostRulesAdopted = true;
+                        _localAllowDuplicates = CardSettings.Current.AllowDuplicates;
+                        _localDrawbacksEnabled = CardSettings.Current.DrawbacksEnabled;
+                    }
+                    CardSettings.Current.AllowDuplicates = duplicates;
+                    CardSettings.Current.DrawbacksEnabled = drawbacks;
+                    Plugin.Log.LogInfo($"Host rules adopted for this lobby: duplicate cards {(duplicates ? "on" : "off")}, drawbacks {(drawbacks ? "on" : "off")} (your own config said otherwise).");
+                }
             }
         }
 

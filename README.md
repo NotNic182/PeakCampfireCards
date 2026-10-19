@@ -51,7 +51,7 @@ Copy the `plugins/CampfireCards` folder from the release zip into `PEAK/BepInEx/
   and cancels all of it.
 - Each pick offers `OfferCount` cards (3 by default, up to 10); the picker wraps them into rows and scales to fit.
 - The host can turn drawbacks off (`Drawbacks = false`): drawback stats stop applying, cards add no Curse, Drowsy,
-  Poison or Injury costs, Fartberry Fitness amplifies no poison hits, and the cards show only their benefit. The whole lobby must use the same setting.
+  Poison or Injury costs, Fartberry Fitness amplifies no poison hits, and the cards show only their benefit. The host's setting applies to everyone: guests adopt the host's `Drawbacks` and `AllowDuplicates` values when they join.
 - Lighter-load cards scale only positive item weight; a Balloon Bunch's lift is never reduced.
 - PEAK changes statuses in whole 2.5-point steps. When a card changes an amount, the leftover is kept for the next
   change, so small percentages (a 5-point fall x1.15, 1 Curse per fire) hold on average.
@@ -73,13 +73,16 @@ explain the status terms and the supplied log.
 | K | Discount Cure-All: remove 25 from the highest Poison, Spores or Drowsy at 25+ (once per biome) |
 | B | Bootleg Scoutmaster Bugle: gain a full bar of yellow stamina for 15 Injury (once per biome) |
 | N | Budget Checkpoint Flag: place your anchor on flat ground (once per biome) |
+| Y / U / I | TSA (hold): mark food / unopened luggage / all other items on screen, through terrain, while the key is held |
+| F8 | Host only: everyone gets their cards from the saved run back after a crash, a rejoin or a relaunch |
 | J | Your deck: your cards fan out as real card faces with ALL CARDS ADDED UP (the combined result: sprint speed, jump height, stamina costs, regeneration, maximum stamina, Injury, item weight and more) beneath them. Click a card to pull it out and see everything it does — benefit, drawback, which conditional effects are active right now, charges and cooldowns — and flip through the deck with < and >. Press J again for TEAM DECKS: every teammate as a pile of card backs — click a deck (or its name) to look through their cards. A third press closes, and Esc always backs out one step without opening the pause menu. Clicking the pile in the corner opens it too |
 
-**With a controller**, move between offered cards with the D-pad or stick and confirm to take one. Each key above also
-gets a controller button: by default the first of D-pad up, down, left, right, View/Select or a stick click that PEAK
-itself does not use. The ability bar and the hints name the button while you play on a controller, and the log says
-which buttons were chosen. Set them yourself under `Keys` (`BuildScreenGamepad` and so on, for example
-`<Gamepad>/dpad/left`, or `none`).
+**With a controller**, move between offered cards with the D-pad or stick and confirm to take one. The ability keys and
+the deck key also get a controller button: by default the first of D-pad up, down, left, right, View/Select or a stick
+click that PEAK itself does not use. The ability bar and the hints name the button while you play on a controller, and
+the log says which buttons were chosen. Set them yourself under `Keys` (`BuildScreenGamepad` and so on, for example
+`<Gamepad>/dpad/left`, or `none`). The three TSA reveal keys are **keyboard-only by default** — give them controller
+buttons via `ScavengerFoodGamepad` and friends if you play on a pad — and the F8 restore is keyboard-only.
 
 After you take a card, it stays raised and the others dim until the host confirms the pick. If no answer comes within
 5 seconds, you can choose again.
@@ -210,7 +213,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
 | Scout's Dishonor | Rare | Immediately gain 2 random bonus cards, Common to Rare. | Gain 5 Curse. Your next campfire offers only 2 cards. |
-| TSA | Rare | Mark food, items and luggage within 56 m, even through terrain. | No drawback |
+| TSA | Legendary | Hold {key} to mark food / luggage / other items within 56 m, even through terrain. | No drawback |
 | Medicinal Munchies | Common | At 20+ Injury, eating food heals 7.5 health. | No drawback |
 | Budget Checkpoint Flag | Legendary | Press {key} on flat ground: your next pass-out revives you here. Once per biome. | No drawback |
 | Petrify Procrastination | Common | Petrification builds 50% slower. | No drawback |
@@ -230,9 +233,8 @@ A campfire lit while a pick is still running gets its own pick right after it. L
 
 The mod also remembers the run on disk: everyone's cards are saved by player name as they change
 (`BepInEx/config/notnic.campfirecards.run.txt`, with the previous run kept beside it). After a crash, a rejoin or a
-relaunch, a host with `DevKeys` on presses **F8** (with `GrantCard` empty) and every scout in the room gets their
-saved cards back — without re-paying any pick-time costs. Restore promptly: the memory holds the current run and
-the one before it.
+relaunch, the **host** presses **F8** (`Keys.RestoreRun`) and every scout in the room gets their saved cards back —
+without re-paying any pick-time costs. Restore promptly: the memory holds the current run and the one before it.
 
 ## Config
 `BepInEx/config/notnic.campfirecards.cfg`:
@@ -247,7 +249,9 @@ the one before it.
     everyone waits until the current scout chooses; in Simultaneous mode, each scout can choose independently.
     Sacrifice choices follow the same host timer.
   - `PickMode`: `Simultaneous` (default) or `Turns`. The host's choice applies to everyone.
-- `Keys`: `SecondWind` (V), `EmergencyPurge` (K), `BloodBattery` (B), `SafetyNet` (N), `BuildScreen` (J).
+- `Keys`: `SecondWind` (V), `EmergencyPurge` (K), `BloodBattery` (B), `SafetyNet` (N), `BuildScreen` (J),
+  `ScavengerFood` (Y), `ScavengerLuggage` (U), `ScavengerMisc` (I) — held, not pressed, and only with TSA —
+  and `RestoreRun` (F8, host only).
 - `Cards`: `OfferCount` (3; 1 to 10 cards per pick), `Drawbacks` (false = cards keep only their benefits),
   `AllowDuplicates`, `MythicsEnabled`, and `DisabledCards` (cards that are never offered, comma separated, by the
   name on the card; for the three names that themselves contain a comma, use the card key from
@@ -255,10 +259,7 @@ the one before it.
   internals are not configurable — they come from the design sheets compiled into the mod, so every player on the
   same version plays the same, intended cards. Settings written by versions before 0.7.4 (the 64 per-card
   sections, `Rarity Weights`, the balance knobs) are removed from the file once on launch.
-- `Debug`: `VerboseLog`, and `DevKeys` for testing (F9 lights the current campfire, F10 warps you to it,
-  F11 shows a sample offer, F8 restores everyone's cards from the saved run — or grants the cards listed in
-  `GrantCard` when that entry is not empty — F6 opens the host's card tester: every card one rarity at a
-  time, click one to add it to your build with its effects, F6 again for the next rarity).
+- `Debug`: `VerboseLog` (log every card event).
 
 ## Known limitations
 - ROOTS Survivor retains its spores resistance; your proposed Mandrake/Zombie immunity and next-biome zombie

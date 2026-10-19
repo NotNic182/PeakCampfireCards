@@ -56,7 +56,7 @@
 55,GlassHeart,rare,mutation,yes,Glass Scout Cannon,Gain 40 maximum stamina.,Take 25% more Injury.,,,,"[[""maxStamina"", ""add"", 0.4, ""always"", ""self""], [""allInjury"", ""mul"", 1.25, ""always"", ""self""]]",,{}
 56,PacklessNomad,uncommon,mutation,yes,Baggage Claim Escapee,Without a backpack: sprint 30% faster and jump 20% higher.,,,,,"[[""sprintSpeed"", ""mul"", 1.3, ""noBackpack"", ""self""], [""jumpHeight"", ""mul"", 1.2, ""noBackpack"", ""self""]]",,{}
 57,DoubleDown,rare,wildcard,yes,Scout's Dishonor,"Immediately gain 2 random bonus cards, Common to Rare.",Gain 5 Curse. Your next campfire offers only 2 cards.,,,,[],DoubleDown,"{""bonusCards"": 2, ""curse"": 0.05, ""nextOffer"": 2}"
-58,ScavengersInstinct,rare,wildcard,yes,TSA,"Mark food, items and luggage within 56 m, even through terrain.",,,,"Screen labels through terrain, not object outlines.",[],ScavengersInstinct,"{""radius"": 56}"
+58,ScavengersInstinct,legendary,wildcard,yes,TSA,"Hold {key} to mark food / luggage / other items within 56 m, even through terrain.",,,,"Screen labels through terrain, not object outlines.",[],ScavengersInstinct,"{""radius"": 56}"
 59,HungryHands,common,wildcard,yes,Medicinal Munchies,"At 20+ Injury, eating food heals 7.5 health.",,,,,[],HungryHands,"{""threshold"": 0.2, ""heal"": 0.075}"
 60,SafetyNet,legendary,wildcard,yes,Budget Checkpoint Flag,Press {key} on flat ground: your next pass-out revives you here. Once per biome.,,,,,[],SafetyNet,"{""injury"": 0}"
 61,Stoneblood,common,wildcard,yes,Petrify Procrastination,Petrification builds 50% slower.,,,,,"[[""petrifyRate"", ""mul"", 0.5, ""always"", ""self""]]",,{}

@@ -14,6 +14,9 @@ namespace CampfireCards.Ui
                 case "EmergencyPurge": key = Plugin.EmergencyPurgeKeyLabel; break;
                 case "BloodBattery": key = Plugin.BloodBatteryKeyLabel; break;
                 case "SafetyNet": key = Plugin.SafetyNetKeyLabel; break;
+                case "ScavengersInstinct":   // three held keys, in the text's category order: food / luggage / other
+                    key = Controls.Label(Controls.Act.ScavengerFood) + " / " + Controls.Label(Controls.Act.ScavengerLuggage) + " / " + Controls.Label(Controls.Act.ScavengerMisc);
+                    break;
                 default: key = "?"; break;
             }
             return CardCopy.WithKey(template, key);

@@ -471,7 +471,7 @@ flavor:   (none)
      . Bandages counted at most: 3 bandages
 
 ==============================================================================
- RARE  (15 cards)
+ RARE  (14 cards)
 ==============================================================================
 
 #38 - Balright
@@ -606,15 +606,6 @@ flavor:   (none)
      . Share of the prevented Injury you take: 10 %
      . Most Injury you take per hit: 5 points
 
-#58 - TSA
-name:     TSA
-rarity:   Rare
-benefit:  Mark food, items and luggage within 56 m, even through terrain.
-drawback: (none)
-flavor:   (none)
-   effects (reference only):
-     . Range: 56 metres
-
 #27 - Walk It Off
 name:     Walk It Off
 rarity:   Rare
@@ -627,7 +618,7 @@ flavor:   (none)
      . All Injury: +5 % change  (You)
 
 ==============================================================================
- LEGENDARY  (3 cards)
+ LEGENDARY  (4 cards)
 ==============================================================================
 
 #60 - Budget Checkpoint Flag
@@ -657,6 +648,15 @@ flavor:   (none)
    effects (reference only):
      . Climb speed: -10 % change  (You)
      . Stamina recovered per second: 7.5 points
+
+#58 - TSA
+name:     TSA
+rarity:   Legendary
+benefit:  Hold {key} to mark food / luggage / other items within 56 m, even through terrain.
+drawback: (none)
+flavor:   (none)
+   effects (reference only):
+     . Range: 56 metres
 
 ==============================================================================
  MYTHIC  (2 cards)

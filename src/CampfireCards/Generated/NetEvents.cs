@@ -259,7 +259,7 @@ namespace CampfireCards.Net
         }
     }
 
-    /// <summary>bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection; reason 9 = the host F8 restore, added without acquisition effects (live:false) and exempt from the repeat check; reason 10 = the host F6 card tester, added with acquisition effects and exempt from the repeat check. Sender: host. Receivers: All.</summary>
+    /// <summary>bonus cards for a player (Double Deal / Double Down); everyone adds them to that player's collection; reason 9 = the host's run restore (Keys.RestoreRun), added without acquisition effects (live:false) and exempt from the repeat check; every other reason except 1 is refused (pre-0.9 builds' reason-10 card tester included). Sender: host. Receivers: All.</summary>
     public struct CardsGranted : INetEvent
     {
         public const byte Code = 96;

@@ -239,7 +239,7 @@ namespace CampfireCards
             Hud.Ensure();
             if (!RunState.RunStarted) return;
 
-            if (Plugin.DevKeys != null && Plugin.DevKeys.Value) DevKeys(local);
+            RestoreKey(local);
 
             PollBiome(local);
             Effects.Recompute(local);
@@ -363,116 +363,26 @@ namespace CampfireCards
             }
         }
 
-        // ------------------------------------------------------------------ dev keys
-        /// <summary>A player in the room by in-game name (case-insensitive) or player number; int.MinValue when none.</summary>
-        private static int DevFindPlayer(string who)
-        {
-            int number;
-            var players = PhotonNetwork.PlayerList;
-            if (players == null) return int.MinValue;
-            if (int.TryParse(who, out number))
-                foreach (var p in players) if (p != null && p.ActorNumber == number) return number;
-            foreach (var p in players)
-                if (p != null && string.Equals(NetSend.NameOf(p.ActorNumber).Trim(), who, StringComparison.OrdinalIgnoreCase)) return p.ActorNumber;
-            return int.MinValue;
-        }
-
-        private static int _testerRarity;
-
+        // ------------------------------------------------------------------ run restore
         /// <summary>
-        /// Testing keys (config Debug.DevKeys): F9 light the current campfire, F10 warp next to it, F11 sample offer,
-        /// F8 grant a card, F6 the card tester (host), F7 log the active effects.
+        /// Keys.RestoreRun (F8): the host gives everyone in the room their cards from the saved run back
+        /// (Cards/RunMemoryFile) after a crash, a rejoin or a relaunch. A guest's press points them at the host.
         /// </summary>
-        private static void DevKeys(Character local)
+        private static void RestoreKey(Character local)
         {
+            var key = Plugin.RestoreRunKey;
             var kb = UnityEngine.InputSystem.Keyboard.current;
-            if (kb == null) return;
-            // F6: the card tester, one rarity per page. Pressing it again shows the next rarity; Esc or a click outside
-            // the cards closes it. Clicking a card grants it to the host WITH its acquisition effects (PickSession).
-            if (kb.f6Key.wasPressedThisFrame && NetSend.IsHost && Deck.Ready)
-            {
-                var picker = CardPicker.Ensure();
-                int pages = (int)CardRarity.Mythic + 1;
-                _testerRarity = picker.GrantMenuOpen ? (_testerRarity + 1) % pages : 0;
-                var rarity = (CardRarity)_testerRarity;
-                var ids = new List<byte>();
-                foreach (var def in CardTable.Cards) if (def.Rarity == rarity) ids.Add(def.Id);
-                picker.ShowGrant(ids.ToArray(), $"Card tester: {Deck.RarityName(rarity)} ({_testerRarity + 1}/{pages})");
-            }
-            if (kb.f9Key.wasPressedThisFrame)
-            {
-                Campfire fire = null;
-                try { fire = MapHandler.CurrentCampfire; } catch { }
-                if (fire != null && !fire.Lit) { Plugin.Log.LogInfo("DevKeys: lighting " + fire.name); fire.DebugLight(); }
-                else Plugin.Log.LogInfo("DevKeys: no unlit current campfire");
-            }
-            if (kb.f10Key.wasPressedThisFrame)
-            {
-                Campfire fire = null;
-                try { fire = MapHandler.CurrentCampfire; } catch { }
-                if (fire != null)
-                {
-                    Vector3 pos = fire.transform.position + fire.transform.forward * 3f + Vector3.up * 1.5f;
-                    Plugin.Log.LogInfo("DevKeys: warping to " + fire.name + " at " + pos);
-                    local.photonView.RPC("WarpPlayerRPC", RpcTarget.All, pos, true);
-                }
-            }
-            if (kb.f11Key.wasPressedThisFrame && Deck.Ready)
-            {
-                var hand = Deck.Deal(new System.Random(), Effects.CardsOf(NetSend.LocalActor), Core.CardSettings.Current.OfferCount, NetSend.IsSolo);
-                CardPicker.Ensure().Show(1, hand, 60f, CardPicker.Mode.Test);
-                Plugin.Log.LogInfo("DevKeys: sample offer " + string.Join(",", hand));
-            }
-            if (kb.f8Key.wasPressedThisFrame && NetSend.IsHost)
-            {
-                // re-read the file so GrantCard can be edited while the game runs
-                try { Plugin.Instance.Config.Reload(); } catch (Exception e) { Plugin.Log.LogWarning("Config reload: " + e.Message); }
-                string grantList = Plugin.DevGrantCard != null ? Plugin.DevGrantCard.Value : "";
-                // GrantCard empty: everyone in the room gets their cards from the saved run back (Cards/RunMemoryFile).
-                // Otherwise "Key, Key" grants the host; "; Name: Key, Key" grants another player by in-game name (or
-                // player number), so a host can give specific cards back after a rejoin or a continued save.
-                if (grantList.Trim().Length == 0) RunMemoryFile.RestoreAll();
-                else foreach (var entry in grantList.Split(';'))
-                {
-                    string list = entry;
-                    int actor = NetSend.LocalActor;
-                    int colon = entry.IndexOf(':');
-                    if (colon > 0)
-                    {
-                        string who = entry.Substring(0, colon).Trim();
-                        list = entry.Substring(colon + 1);
-                        actor = DevFindPlayer(who);
-                        if (actor == int.MinValue) { Plugin.Log.LogWarning("DevKeys: no player named " + who); Ui.Hud.Toast("GrantCard: no player named " + who); continue; }
-                    }
-                    var ids = new List<byte>();
-                    foreach (var key in list.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries))
-                    {
-                        var def = Array.Find(CardTable.Cards, c => string.Equals(c.Key, key, StringComparison.OrdinalIgnoreCase));
-                        if (def != null) ids.Add(def.Id); else { Plugin.Log.LogWarning("DevKeys: no card " + key); Ui.Hud.Toast("GrantCard: no card " + key); }
-                    }
-                    if (ids.Count == 0) continue;
-                    Plugin.Log.LogInfo("DevKeys: granting " + NetSend.NameOf(actor) + " " + string.Join(", ", ids.ConvertAll(Deck.NameOf)));
-                    NetSend.Raise(new CardsGranted { sessionId = PickSession.SessionId, actor = actor, cards = ids.ToArray(), reason = 9 }, Photon.Realtime.ReceiverGroup.All);
-                }
-            }
-            if (kb.f7Key.wasPressedThisFrame) DumpEffects(local);
-        }
-
-        /// <summary>Dev: log every channel that differs from neutral and the scout fields the cards drive.</summary>
-        private static void DumpEffects(Character local)
-        {
-            var sb = new System.Text.StringBuilder("DevKeys: effects");
-            foreach (Channel ch in Enum.GetValues(typeof(Channel)))
-            {
-                float v = Effects.Local[ch];
-                float neutral = ChannelTable.Defs[(int)ch].IsMul ? 1f : 0f;
-                if (Mathf.Abs(v - neutral) > 0.0001f) sb.Append($" {ch}={v:0.###}");
-            }
-            var mv = local.refs.movement;
-            sb.Append($" | sprintMultiplier={mv.sprintMultiplier:0.###} jumpImpulse={mv.jumpImpulse:0.###} sprintStaminaUsage={mv.sprintStaminaUsage:0.####}");
-            sb.Append($" maxStamina={local.GetMaxStamina():0.###} statusSum={local.refs.afflictions.statusSum:0.###} stamina={local.data.currentStamina:0.###} extra={local.data.extraStamina:0.###}");
-            sb.Append($" weight={local.refs.afflictions.GetCurrentStatus(CharacterAfflictions.STATUSTYPE.Weight):0.###} biome={LocalCards.Biome}");
-            Plugin.Log.LogInfo(sb.ToString());
+            if (kb == null || key == null || key.Value == UnityEngine.InputSystem.Key.None) return;
+            // same gate as AbilityKeys: never while a menu has input focus - PEAK's rebind screen accepts F8 as a
+            // binding, and that press must not also fire a lobby-wide restore
+            bool blocked = false;
+            try { blocked = GUIManager.instance != null && (GUIManager.instance.windowBlockingInput || GUIManager.instance.wheelActive); } catch { }
+            if (blocked) return;
+            UnityEngine.InputSystem.Controls.KeyControl control = null;
+            try { control = kb[key.Value]; } catch { }
+            if (control == null || !control.wasPressedThisFrame) return;
+            if (!NetSend.IsHost) { Ui.Hud.Toast("Card restore: only the host can restore the run"); return; }
+            RunMemoryFile.RestoreAll();
         }
     }
 }

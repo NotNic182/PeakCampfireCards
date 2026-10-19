@@ -133,31 +133,6 @@ namespace CampfireCards.Tests
         }
 
         [Fact]
-        public void DevTesterGrantRunsAcquisitionEffectsDealsBonusCardsAndMayRepeatAfterARemove()
-        {
-            var dishonor = Card("DoubleDown");
-
-            PickSession.DevGrantSelf(dishonor.Id);
-            Assert.Contains(dishonor.Id, Effects.CardsOf(1));
-            Assert.NotNull(LocalCards.Get<Ability_DoubleDown>());
-            Assert.Equal(.05f, CardStatus.Get(Character.localCharacter, CharacterAfflictions.STATUSTYPE.Curse), 5);
-            // the card itself and its bonus deal, both as reason 10 (exempt from the repeated-grant check)
-            Assert.Equal(2, NetSend.Sent.OfType<CardsGranted>().Count());
-            Assert.All(NetSend.Sent.OfType<CardsGranted>(), g => Assert.Equal((byte)10, g.reason));
-            Assert.Equal(3, Effects.CardsOf(1).Count);   // Double Down plus its two bonus cards
-
-            // already owned (duplicates off): nothing is raised
-            PickSession.DevGrantSelf(dishonor.Id);
-            Assert.Equal(2, NetSend.Sent.OfType<CardsGranted>().Count());
-
-            // removed and granted again in the same session: the repeated-grant check never eats a tester grant
-            Effects.RemoveCard(1, dishonor.Id);
-            Assert.DoesNotContain(dishonor.Id, Effects.CardsOf(1));
-            PickSession.DevGrantSelf(dishonor.Id);
-            Assert.Contains(dishonor.Id, Effects.CardsOf(1));
-        }
-
-        [Fact]
         public void CollectionChangedFiresOncePerAddRemoveAndSync()
         {
             var fired = new List<int>();
@@ -176,46 +151,35 @@ namespace CampfireCards.Tests
         }
 
         [Fact]
-        public void DevTesterRefusesMythicsATeammateOwnsAndCardsStillOnOffer()
+        public void RestoreGrantsSkipPickEffectsMayRepeatAndUnsupportedReasonsAreRefused()
         {
-            // a teammate owns the Mythic: nothing is raised (AddCard would refuse it on every client anyway)
-            var mythic = Card("MountainsHeir");
-            Effects.CardsOf(2).Add(mythic.Id);
-            PickSession.DevGrantSelf(mythic.Id);
-            Assert.Empty(NetSend.Sent.OfType<CardsGranted>());
+            // reason 9 (the F8 run restore) lands without pick-time effects: no Curse, no bonus draws
+            var dishonor = Card("DoubleDown");
+            PickSession.OnCardsGranted(new CardsGranted { sessionId = 0, actor = 1, cards = new[] { dishonor.Id }, reason = 9 });
+            Assert.Contains(dishonor.Id, Effects.CardsOf(1));
+            Assert.Equal(0f, CardStatus.Get(Character.localCharacter, CharacterAfflictions.STATUSTYPE.Curse), 5);
+            Assert.Equal(1, Effects.CardsOf(1).Count);
 
-            // a card in a teammate's dealt hand: granting it would consume that player's accepted pick
-            var gecko = Card("GeckoGrip"); var sure = Card("Surefooted");
-            PickSession.OnStart(new PickSessionStart
-            {
-                sessionId = 201, order = new[] { 1, 2 }, hands = new[] { gecko.Id, sure.Id }, handSize = 1,
-                mode = (byte)PickMode.Simultaneous, timeoutSeconds = 0f, segment = 255
-            });
-            PickSession.DevGrantSelf(sure.Id);
-            Assert.Empty(NetSend.Sent.OfType<CardsGranted>());
+            // reason 9 is repeat-exempt: a second restore in the same (session, actor) still lands
+            var gecko = Card("GeckoGrip");
+            PickSession.OnCardsGranted(new CardsGranted { sessionId = 0, actor = 1, cards = new[] { gecko.Id }, reason = 9 });
+            Assert.Contains(gecko.Id, Effects.CardsOf(1));
 
-            // a card nobody is being offered is still grantable mid-session
-            var ledge = Card("LedgeDancer");
-            PickSession.DevGrantSelf(ledge.Id);
-            Assert.Contains(ledge.Id, Effects.CardsOf(1));
+            // anything but reasons 1 and 9 is refused outright - the pre-0.9 builds' F6 tester sent reason 10
+            var sure = Card("Surefooted");
+            PickSession.OnCardsGranted(new CardsGranted { sessionId = 0, actor = 1, cards = new[] { sure.Id }, reason = 10 });
+            Assert.DoesNotContain(sure.Id, Effects.CardsOf(1));
+            PickSession.OnCardsGranted(new CardsGranted { sessionId = 0, actor = 1, cards = new[] { sure.Id }, reason = 42 });
+            Assert.DoesNotContain(sure.Id, Effects.CardsOf(1));
         }
 
         [Fact]
-        public void DevTesterIgnoresASecondClickUntilTheGrantEchoReturns()
+        public void LiveMythicAcquisitionIsRefusedWhileATeammateOwnsIt()
         {
-            NetSend.Deliver = false;   // online: the raised grant only lands after a server round trip
-            var dishonor = Card("DoubleDown");
-            PickSession.DevGrantSelf(dishonor.Id);
-            PickSession.DevGrantSelf(dishonor.Id);   // double click inside the echo window
-            // one main grant and one bonus deal, not two of each
-            Assert.Equal(2, NetSend.Sent.OfType<CardsGranted>().Count());
-
-            foreach (var g in NetSend.Sent.OfType<CardsGranted>().ToArray()) PickSession.OnCardsGranted(g);
-            Assert.Contains(dishonor.Id, Effects.CardsOf(1));
-
-            // after the echo, a re-click reports the duplicate instead of granting again
-            PickSession.DevGrantSelf(dishonor.Id);
-            Assert.Equal(2, NetSend.Sent.OfType<CardsGranted>().Count());
+            var mythic = Card("MountainsHeir");
+            Effects.CardsOf(2).Add(mythic.Id);
+            Effects.AddCard(1, mythic.Id, live: true);
+            Assert.DoesNotContain(mythic.Id, Effects.CardsOf(1));
         }
 
         [Fact]

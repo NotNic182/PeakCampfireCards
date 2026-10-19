@@ -76,7 +76,7 @@ namespace CampfireCards.Ui
         }
     }
 
-    /// <summary>The picker's backdrop: a click outside the cards (closes reveal and sample fans).</summary>
+    /// <summary>The picker's backdrop: a click outside the cards (closes reveal fans; the deck screen reuses it).</summary>
     public class BackdropClick : MonoBehaviour, IPointerClickHandler
     {
         public System.Action OnClick;
@@ -105,11 +105,10 @@ namespace CampfireCards.Ui
         public override GameObject panel => gameObject;
 
         /// <summary>
-        /// Pick = the player's campfire choice; Test = dev sample (click closes); Sacrifice = Mountain's Bargain, choose a
-        /// card to give up; Reveal = bonus cards just granted (click or wait to close); Grant = dev card tester (F6, host
-        /// only): clicking a card grants it to you with its effects, and the fan stays open for more.
+        /// Pick = the player's campfire choice; Sacrifice = Mountain's Bargain, choose a card to give up;
+        /// Reveal = bonus cards just granted (click or wait to close).
         /// </summary>
-        public enum Mode { Pick, Test, Sacrifice, Reveal, Grant }
+        public enum Mode { Pick, Sacrifice, Reveal }
 
         private TextMeshProUGUI _title, _subtitle;
         private RectTransform _fan;
@@ -143,7 +142,7 @@ namespace CampfireCards.Ui
             return Instance;
         }
 
-        /// <summary>Close a pick, sample or reveal fan (a pending sacrifice then opens). An open sacrifice stays.</summary>
+        /// <summary>Close a pick or reveal fan (a pending sacrifice then opens). An open sacrifice stays.</summary>
         public static void HideIfOpen()
         {
             if (Instance == null || !Instance.isOpen) return;
@@ -168,7 +167,7 @@ namespace CampfireCards.Ui
             backdrop.raycastTarget = true;
             backdrop.gameObject.AddComponent<BackdropClick>().OnClick = () =>
             {
-                if (isOpen && (Current == Mode.Reveal || Current == Mode.Test || Current == Mode.Grant)) HideNow();
+                if (isOpen && Current == Mode.Reveal) HideNow();
             };
 
             _title = UiKit.Text(transform, "Title", Ui_Title.Size, Ui_Title.FontSize, Ui_Title.Color, TextAlignmentOptions.Center, FontStyles.Bold | FontStyles.UpperCase);
@@ -188,7 +187,7 @@ namespace CampfireCards.Ui
             _grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
         }
 
-        /// <summary>A pick offer (Mode.Pick) or a dev sample (Mode.Test).</summary>
+        /// <summary>A pick offer (Mode.Pick).</summary>
         public void Show(byte reason, byte[] hand, float timeoutSeconds, Mode mode)
         {
             if (isOpen && Current == Mode.Sacrifice)
@@ -220,23 +219,11 @@ namespace CampfireCards.Ui
             Hud.HidePrompt();
         }
 
-        /// <summary>Dev card tester (F6, host): one rarity's cards; a click grants the card to you, with its effects.</summary>
-        public void ShowGrant(byte[] cards, string title)
-        {
-            if (cards == null || cards.Length == 0) return;
-            if (isOpen && (Current == Mode.Pick || Current == Mode.Sacrifice)) return;   // never over a real choice
-            _title.text = title;
-            Open(cards, 0f, Mode.Grant);
-        }
-
-        /// <summary>The tester fan is open (Hooks F6: the next press shows the next rarity).</summary>
-        public bool GrantMenuOpen => isOpen && Current == Mode.Grant;
-
         /// <summary>Bonus cards were just added to the collection: show them (nothing to choose).</summary>
         public void ShowReveal(byte[] cards)
         {
             if (cards == null || cards.Length == 0) return;
-            if (isOpen && (Current == Mode.Pick || Current == Mode.Sacrifice || Current == Mode.Grant)) return;   // the toast already named them
+            if (isOpen && (Current == Mode.Pick || Current == Mode.Sacrifice)) return;   // the toast already named them
             _title.text = Ui_Title.BonusTitle;
             Open(cards, UiTiming.RevealSeconds, Mode.Reveal);
         }
@@ -353,10 +340,6 @@ namespace CampfireCards.Ui
                     Sfx.Play("cardPick");
                     if (cb != null) cb(id);
                     break;
-                case Mode.Grant:
-                    Sfx.Play("cardPick");
-                    PickSession.DevGrantSelf(id);
-                    break;
                 default:
                     HideNow();
                     break;
@@ -436,14 +419,6 @@ namespace CampfireCards.Ui
                 case Mode.Reveal:
                     _subtitle.text = Controls.UsingGamepad ? Ui_Subtitle.RevealPadText : Ui_Subtitle.RevealText;
                     if (left <= 0f || CancelPressed()) HideNow();
-                    break;
-                case Mode.Test:
-                    _subtitle.text = Ui_Subtitle.Text.Replace("{timeLeft}", seconds);
-                    if (CancelPressed()) HideNow();
-                    break;
-                case Mode.Grant:
-                    _subtitle.text = "Click a card to add it to your build. F6: next rarity. Click outside or press Esc to close.";
-                    if (CancelPressed()) HideNow();
                     break;
                 default:
                     _subtitle.text = _hasTimer

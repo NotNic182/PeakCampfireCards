@@ -12,9 +12,9 @@ namespace CampfireCards.Cards
 {
     /// <summary>
     /// Run memory: every player's cards are written to disk (by player NAME, Core.RunMemory format) whenever a
-    /// collection changes, and F8 with an empty GrantCard gives everyone in the room their saved cards back as a
-    /// reason-9 restore (no pick-time effects). The run file mirrors the run being played; when a new run first saves,
-    /// the old state rotates to the lastrun file, so a crashed run can be restored even after new picks were made.
+    /// collection changes, and the host's restore key (Keys.RestoreRun, F8) gives everyone in the room their saved
+    /// cards back as a reason-9 restore (no pick-time effects). The run file mirrors the run being played; when a new
+    /// run first saves, the old state rotates to the lastrun file, so a crashed run can be restored after new picks.
     /// </summary>
     public static class RunMemoryFile
     {
@@ -50,8 +50,17 @@ namespace CampfireCards.Cards
             _runActive = true;
         }
 
-        /// <summary>Run over (end screen): the finished state stays on disk; nothing further is recorded.</summary>
-        public static void OnRunEnded() => _runActive = false;
+        /// <summary>
+        /// Run over (end screen): recovery exists for crashes and mid-run exits, not deck carry-over, so a cleanly
+        /// finished run leaves nothing behind for the restore key to re-grant in the next run. A crash or a quit
+        /// mid-run never reaches this, so those runs stay restorable.
+        /// </summary>
+        public static void OnRunEnded()
+        {
+            _runActive = false;
+            try { File.Delete(RunPath); } catch (Exception e) { Plugin.Log.LogWarning("Run memory clear: " + e.Message); }
+            try { File.Delete(LastRunPath); } catch (Exception e) { Plugin.Log.LogWarning("Run memory clear: " + e.Message); }
+        }
 
         /// <summary>Mirror the full known state. A player with no cards keeps their saved entry: a rejoiner arrives
         /// with an empty collection, and overwriting their line would destroy exactly what the restore needs.</summary>
@@ -81,7 +90,7 @@ namespace CampfireCards.Cards
         }
 
         /// <summary>
-        /// Host (F8, GrantCard empty): everyone in the room gets the saved cards they do not hold, matched by player
+        /// Host (Keys.RestoreRun): everyone in the room gets the saved cards they do not hold, matched by player
         /// name across the run and lastrun files, granted as a reason-9 restore (no Curse, no bonus draws, repeatable).
         /// </summary>
         public static void RestoreAll()
@@ -94,7 +103,7 @@ namespace CampfireCards.Cards
                 var saved = RunMemory.Merge(RunMemory.Parse(ReadSafe(LastRunPath)), RunMemory.Parse(ReadSafe(RunPath)));
                 if (saved.Count == 0) { Hud.Toast("Card restore: no saved run found"); return; }
                 // a card still in someone's dealt hand is not granted: the owner picking it would have the pick
-                // consumed and the card refused as a duplicate (same guard as the F6 tester)
+                // consumed and the card refused as a duplicate (the picker refuses duplicates)
                 var offered = new HashSet<byte>();
                 if (PickSession.Active) foreach (var id in PickSession.Turns.CardsStillOffered()) offered.Add(id);
                 int cards = 0, players = 0, waiting = 0;
@@ -119,6 +128,17 @@ namespace CampfireCards.Cards
                         var def = Array.Find(CardTable.Cards, c => string.Equals(c.Key, key, StringComparison.OrdinalIgnoreCase));
                         if (def == null) { Plugin.Log.LogWarning($"Card restore: no card with key \"{key}\" (saved by another version?)"); continue; }
                         if (offered.Contains(def.Id)) { waiting++; continue; }
+                        // a Mythic a PRESENT player holds is never duplicated (reason-9 grants skip the live
+                        // once-per-run check); a stale entry under a departed pre-rejoin actor still restores
+                        if (def.Rarity == CardRarity.Mythic)
+                        {
+                            int owner = Effects.MythicOwner(def.Id);
+                            if (owner != int.MinValue && owner != actor && actors.Contains(owner))
+                            {
+                                Plugin.Log.LogInfo($"Card restore: {name} does not get {Deck.NameOf(def.Id)}: {NetSend.NameOf(owner)} already holds this Mythic this run");
+                                continue;
+                            }
+                        }
                         ids.Add(def.Id);
                     }
                     if (ids.Count == 0) continue;
