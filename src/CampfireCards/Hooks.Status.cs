@@ -46,6 +46,7 @@ namespace CampfireCards
             AddCarry.Reset();
             SubCarry.Reset();
             _petrifyCarry = 0f;
+            _injuryCommitted = 0f;
             _shareOwed.Clear();
         }
 
@@ -335,6 +336,97 @@ namespace CampfireCards
             __result = Mathf.Max(1f + bonus - __instance.refs.afflictions.statusSum, 0f);
         }
 
+        /// <summary>
+        /// The afflictions total that knocks the local scout out: the vanilla 1.0 plus any max-stamina BONUS, so the
+        /// knockout matches the extended bar (green reaching zero and passing out coincide). Raise-only - a penalty
+        /// never knocks out earlier than vanilla - and capped at 1.9, reachable under the 2.0 engine total and at the
+        /// Lava hit gate.
+        /// </summary>
+        internal static float PassOutThreshold() =>
+            Mathf.Min(1f + Mathf.Max(0f, Effects.Local[Channel.maxStamina]), 1.9f);
+
+        /// <summary>hooks.json passOutThreshold: afflictions must fill the card-extended bar, not the vanilla 100.</summary>
+        public static void OnShouldPassOut(CharacterAfflictions __instance, ref bool __result)
+        {
+            if (!__result || __instance.character == null || !Mine(__instance.character)) return;
+            __result = __instance.statusSum > PassOutThreshold() - 0.01f;   // -0.01 mirrors vanilla's 0.99 slack
+        }
+
+        /// <summary>Committed Injury at frame start (Hooks.Tick): a lost aura may shrink the cap, never delete points.</summary>
+        private static float _injuryCommitted;
+
+        internal static void SampleInjuryCapFloor(Character local) =>
+            _injuryCommitted = local != null && local.refs != null && local.refs.afflictions != null
+                ? local.refs.afflictions.GetCurrentStatus(CharacterAfflictions.STATUSTYPE.Injury) : 0f;
+
+        /// <summary>
+        /// hooks.json injuryCap: Injury's vanilla 1.0 cap would keep pure Injury below a raised threshold. The local
+        /// scout gets the extended threshold, floored at already-committed Injury (losing an aura must not let the next
+        /// commit's clamp delete points). A REMOTE copy of another scout never clamps below the 1.9 ceiling: the owner's
+        /// own clamp is authoritative, and its team-aura threshold cannot be refolded from the synced card lists - the
+        /// vanilla remote cap would silently truncate synced Injury above 1.0 (and the host's reconnect snapshot with it).
+        /// </summary>
+        public static void OnGetStatusCap(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE type, ref float __result)
+        {
+            if (type != CharacterAfflictions.STATUSTYPE.Injury || __instance.character == null || !RunState.RunStarted) return;
+            __result = Mathf.Max(__result, Mine(__instance.character) ? Mathf.Max(PassOutThreshold(), _injuryCommitted) : 1.9f);
+        }
+
+        /// <summary>
+        /// hooks.json scorpionSting: vanilla sizes the sting's poison to just cross the vanilla 100 (a designed
+        /// guaranteed knockout). With a card-extended bar it must cross the extended threshold instead, or it tops the
+        /// scout out around 105 and never knocks them out. The vanilla body with that one number changed.
+        /// </summary>
+        private static readonly System.Action<Character, Vector3, Vector3, float> AddForceAt =
+            HarmonyLib.AccessTools.MethodDelegate<System.Action<Character, Vector3, Vector3, float>>(
+                HarmonyLib.AccessTools.Method(typeof(Character), "AddForceAtPosition"));   // internal in the game
+
+        public static bool OnScorpionAttackPrefix(Scorpion __instance, Character character)
+        {
+            if (character == null || !character.IsLocal || !Mine(character)) return true;
+            float threshold = PassOutThreshold();
+            if (threshold <= 1.0001f) return true;
+            float dose = Mathf.Max(0.5f, threshold - character.refs.afflictions.statusSum + 0.05f);
+            character.refs.afflictions.AddStatus(CharacterAfflictions.STATUSTYPE.Poison, 0.025f);
+            character.refs.afflictions.AddAffliction(new Peak.Afflictions.Affliction_PoisonOverTime(__instance.totalPoisonTime, 0f, dose / __instance.totalPoisonTime));
+            AddForceAt(character, 500f * __instance.mesh.forward, __instance.transform.position, 2f);
+            return false;
+        }
+
+        private static readonly HarmonyLib.AccessTools.FieldRef<Peak.StatusFieldBase, float> FieldLastEntered =
+            HarmonyLib.AccessTools.FieldRefAccess<Peak.StatusFieldBase, float>("lastEnteredTime");
+        private static readonly HarmonyLib.AccessTools.FieldRef<Peak.StatusFieldBase, bool> FieldInflicting =
+            HarmonyLib.AccessTools.FieldRefAccess<Peak.StatusFieldBase, bool>("inflicting");
+        private static readonly HarmonyLib.AccessTools.FieldRef<Peak.StatusFieldBase, bool> FieldInField =
+            HarmonyLib.AccessTools.FieldRefAccess<Peak.StatusFieldBase, bool>("characterInField");
+
+        /// <summary>
+        /// hooks.json statusFieldMaxGate: a field with doNotApplyIfStatusesMaxed stops applying at statusSum >= 1, which
+        /// would stall a bonus-bar scout at ~100 forever instead of knocking them out. Inside that stall window only
+        /// (1 <= sum < extended threshold) the vanilla in-field branch runs with the raised gate; everywhere else, and
+        /// with no bonus, vanilla runs untouched.
+        /// </summary>
+        public static bool OnStatusFieldUpdatePrefix(Peak.StatusFieldBase __instance)
+        {
+            var me = Character.localCharacter;
+            if (__instance == null || me == null || !__instance.doNotApplyIfStatusesMaxed || !Mine(me)) return true;
+            float threshold = PassOutThreshold();
+            if (threshold <= 1.0001f) return true;
+            float sum = me.refs.afflictions.statusSum;
+            if (sum < 1f || sum > threshold - 0.0001f) return true;
+            bool inField = __instance.CharacterInField(me);
+            FieldInField(__instance) = inField;
+            if (!inField) { FieldInflicting(__instance) = false; return false; }
+            if (Time.time - FieldLastEntered(__instance) > __instance.delayBeforeStatusOverTime) __instance.TickStatus();
+            if (!FieldInflicting(__instance) && __instance.statusAmountOnEntry != 0f && Time.time - FieldLastEntered(__instance) > __instance.entryCooldown)
+            {
+                me.refs.afflictions.AdjustStatus(__instance.statusType, __instance.statusAmountOnEntry);
+                FieldLastEntered(__instance) = Time.time;
+            }
+            FieldInflicting(__instance) = true;
+            return false;
+        }
+
         /// <summary>The HUD's status-segment row (Bar/LayoutGroup) and its prefab right edge, while the mod has moved it.</summary>
         private static RectTransform _barSegments;
         private static int _barSegmentsOwner;
@@ -366,6 +458,10 @@ namespace CampfireCards
             float frame = StatComposites.BarFrame(bonus, c.refs.afflictions.statusSum);
             var o = __instance.staminaBarOutline;
             o.sizeDelta = new Vector2(14f + frame * width, o.sizeDelta.y);
+            // vanilla flags "overflow" at statusSum > 1.005; with a bonus the bar only truly overflows past the
+            // extended threshold (hooks.json passOutThreshold)
+            if (__instance.staminaBarOutlineOverflowBar != null)
+                __instance.staminaBarOutlineOverflowBar.gameObject.SetActive(c.refs.afflictions.statusSum > PassOutThreshold() + 0.005f);
             if (!_barSegmentsMoved) { _barSegmentsRight = segments.offsetMax.x; _barSegmentsMoved = true; }
             SetRightEdge(segments, _barSegmentsRight + StatComposites.BarSegmentsShift(bonus, width));
         }

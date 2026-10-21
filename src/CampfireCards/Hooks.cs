@@ -32,6 +32,7 @@ namespace CampfireCards
             ArrivedSegments.Clear();
             Effects.Reset();
             Hooks.ResetStatusCarries();
+            Hooks.ResetEndGameHold();
             PickSession.Reset();
             Ability_EternalCampfire.Arbiter.Reset();
             NetHandlers.Reset();
@@ -243,11 +244,13 @@ namespace CampfireCards
 
             PollBiome(local);
             Effects.Recompute(local);
+            SampleInjuryCapFloor(local);   // the Injury cap may shrink with a lost aura, never below committed points
             LocalCards.Tick(local, Time.deltaTime);
             FlushItemUses(local);
             AbilityKeys(local);
             PickSession.HostTick();
             DeckScreen.Tick(local);
+            TickEndGameHold();
 
             if (Time.unscaledTime >= _nextAbilityBar)
             {

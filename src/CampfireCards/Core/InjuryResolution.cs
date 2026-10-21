@@ -37,11 +37,11 @@ namespace CampfireCards.Core
         /// and caps Injury separately. Simulate both installments while other current statuses remain unchanged.
         /// </summary>
         public static bool WouldPassOut(float statusSum, float injury, float pending, float injuryCap,
-            float nativeMultiplier, float immediate, float deferred = 0f)
+            float nativeMultiplier, float immediate, float deferred = 0f, float passOutThreshold = 1f)
         {
             Commit(ref statusSum, ref injury, ref pending, injuryCap, immediate * nativeMultiplier);
             Commit(ref statusSum, ref injury, ref pending, injuryCap, deferred * nativeMultiplier);
-            return statusSum > .99f;
+            return statusSum > passOutThreshold - .01f;   // default 1f reproduces vanilla's 0.99
         }
 
         private static void Commit(ref float total, ref float injury, ref float pending, float cap, float amount)

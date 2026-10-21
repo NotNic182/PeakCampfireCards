@@ -676,7 +676,7 @@ flavor:   The mountain no longer challenges you. It obeys you.
 #64 - The Eternal Campfire
 name:     The Eternal Campfire
 rarity:   Mythic
-benefit:  You and scouts within 15 m: maximum stamina +35; Injury and status buildup -60%. Share 1 auto-revive per biome.
+benefit:  You and scouts within 15 m: maximum stamina +35; Injury and status buildup -60%. Share 1 auto-revive on death per biome.
 drawback: (none)
 flavor:   Where you stand, no Scout is left behind.
    effects (reference only):

@@ -31,8 +31,10 @@ namespace CampfireCards.Abilities
             float nativeMultiplier = NativeInjuryRules.Multiplier(me.data.isSkeleton, ignoreSkeleton, Ascents.etcDamageMultiplier);
             // the step leftover the mod keeps back (Hooks.Status, StatusCarry) lands with the next Injury, so count it as pending
             float pending = aff.GetIncrementalStatus(type) + Hooks.PendingInjuryCarry;
+            // the threshold follows bonus max stamina (hooks.json passOutThreshold), or the rescue would burn on
+            // falls that no longer knock the scout out; GetStatusCap already returns the raised Injury cap
             if (!NativeInjuryRules.WouldPassOut(aff.statusSum, aff.GetCurrentStatus(type), pending,
-                aff.GetStatusCap(type), nativeMultiplier, injury, deferred)) return false;
+                aff.GetStatusCap(type), nativeMultiplier, injury, deferred, Hooks.PassOutThreshold())) return false;
             return Trigger(me);
         }
 
@@ -187,7 +189,8 @@ namespace CampfireCards.Abilities
 
     /// <summary>
     /// The Eternal Campfire: team aura (modifiers in cards.json) plus one revive per biome per owner for the first scout
-    /// to go down inside it. The host arbitrates so overlapping auras never revive twice.
+    /// to DIE inside it (a recoverable pass-out never spends the charge). The host arbitrates so overlapping auras never
+    /// revive twice.
     /// </summary>
     public sealed class Ability_EternalCampfire : Ability
     {
@@ -197,10 +200,12 @@ namespace CampfireCards.Abilities
             return true;
         }
 
-        /// <summary>The local scout went down near a teammate who owns The Eternal Campfire.</summary>
+        /// <summary>The local scout died near a teammate who owns The Eternal Campfire.</summary>
         public static bool RequestFromTeammate(Character me, int incapEvent)
         {
             var s = CardSettings.Current;
+            // this now runs AFTER RPCA_Die warped the body to DeathPos: measure from where the scout actually fell
+            Vector3 myPos = me.data.dead ? me.LastLivingPosition : me.Center;
             int best = int.MinValue; float bestDist = float.MaxValue;
             foreach (var kv in Effects.CardsByActor)
             {
@@ -210,11 +215,11 @@ namespace CampfireCards.Abilities
                     var def = s.Card(id);
                     if (def == null || def.Ability != "EternalCampfire") continue;
                     Character owner;
-                    // a dead owner's aura is gone, except for the owner itself: its own instant death (petrify, kill
-                    // plane) is the one incapacitation it is always inside
+                    // a dead owner's aura is gone, except for the owner itself: its own death is the one it is always inside
                     if (!PlayerHandler.TryGetCharacter(kv.Key, out owner) || owner == null || (owner.data.dead && owner != me)) continue;
-                    float dist = Vector3.Distance(owner.Center, me.Center);
-                    if (dist <= s.Param(def, "radius", 15f) && dist < bestDist) { bestDist = dist; best = kv.Key; }
+                    float dist = Vector3.Distance(owner.Center, myPos);
+                    // +2 matches the host's own re-check band, so a victim the host WOULD grant also sends the request
+                    if (dist <= s.Param(def, "radius", 15f) + 2f && dist < bestDist) { bestDist = dist; best = kv.Key; }
                 }
             }
             if (best == int.MinValue) return false;
@@ -237,20 +242,44 @@ namespace CampfireCards.Abilities
             if (owner == null || victim == null || (owner.data.dead && m.ownerActor != sender)) return;
             float radius = 15f;
             foreach (var id in Effects.CardsOf(m.ownerActor)) { var d = s.Card(id); if (d != null && d.Ability == "EternalCampfire") radius = s.Param(d, "radius", 15f); }
-            if (sender != m.ownerActor && Vector3.Distance(owner.Center, victim.Center) > radius + 2f) return;
+            // a dead victim's body was warped to DeathPos: re-check the radius against where it actually fell
+            Vector3 victimPos = victim.data.dead ? victim.LastLivingPosition : victim.Center;
+            if (sender != m.ownerActor && Vector3.Distance(owner.Center, victimPos) > radius + 2f) return;
             // the host's own biome counts, never the one in the request (a client cannot refill the charge by naming another)
+            int grantedOwner = m.ownerActor;
             if (!Arbiter.TryGrant(m.ownerActor, LocalCards.Biome, sender, m.incapEvent))
             {
-                Plugin.Verbose($"Eternal Campfire: refused revive of {sender} (owner {m.ownerActor}, event {m.incapEvent}, biome {LocalCards.Biome})");
-                return;
+                // the named owner's charge is spent: only the host knows that, so fall back to any other living
+                // owner whose unspent aura covers the victim before giving up. TryGrant's per-event key makes a
+                // double grant for the same incapacitation impossible.
+                grantedOwner = int.MinValue;
+                foreach (var kv in Effects.CardsByActor)
+                {
+                    if (kv.Key == m.ownerActor) continue;
+                    foreach (var id in kv.Value)
+                    {
+                        var d2 = s.Card(id);
+                        if (d2 == null || d2.Ability != "EternalCampfire") continue;
+                        Character other;
+                        if (!PlayerHandler.TryGetCharacter(kv.Key, out other) || other == null || (other.data.dead && kv.Key != sender)) continue;
+                        if (kv.Key != sender && Vector3.Distance(other.Center, victimPos) > s.Param(d2, "radius", 15f) + 2f) continue;
+                        if (Arbiter.TryGrant(kv.Key, LocalCards.Biome, sender, m.incapEvent)) { grantedOwner = kv.Key; break; }
+                    }
+                    if (grantedOwner != int.MinValue) break;
+                }
+                if (grantedOwner == int.MinValue)
+                {
+                    Plugin.Verbose($"Eternal Campfire: refused revive of {sender} (owner {m.ownerActor}, event {m.incapEvent}, biome {LocalCards.Biome})");
+                    return;
+                }
             }
-            NetSend.RaiseTo(new ReviveGranted { ownerActor = m.ownerActor, incapEvent = m.incapEvent }, sender);
+            NetSend.RaiseTo(new ReviveGranted { ownerActor = grantedOwner, incapEvent = m.incapEvent }, sender);
         }
 
         /// <summary>
-        /// Victim side: the host approved; revive at a safe spot nearby. Like Budget Checkpoint Flag, wait 1.5 s first:
-        /// the game finishes its pass-out (fade, fully passed out) about 1 s after going down, and reviving before that
-        /// would be undone by it.
+        /// Victim side: the host approved; revive at a safe spot nearby. A still-settling pass-out waits 1.5 s like
+        /// Budget Checkpoint Flag; an already-dead scout has nothing left to settle, and waiting would widen the
+        /// end-of-run race, so it revives on the next frame.
         /// </summary>
         public static void OnGranted(Character me, ReviveGranted m)
         {
@@ -260,7 +289,8 @@ namespace CampfireCards.Abilities
 
         private static System.Collections.IEnumerator ReviveSoon(Character me)
         {
-            yield return new WaitForSeconds(1.5f);
+            if (me != null && !me.data.dead) yield return new WaitForSeconds(1.5f);
+            else yield return null;
             if (me == null || !(me.data.passedOut || me.data.dead)) yield break;
             var s = CardSettings.Current;
             var def = System.Linq.Enumerable.FirstOrDefault(Generated.CardTable.Cards, c => c.Ability == "EternalCampfire");

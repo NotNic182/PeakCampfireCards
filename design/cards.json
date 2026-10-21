@@ -2082,7 +2082,7 @@
       "rarity": "mythic",
       "category": "mythic",
       "type": "Permanent Mythic team aura",
-      "positive": "You and scouts within 15 m: maximum stamina +35; Injury and status buildup -60%. Share 1 auto-revive per biome.",
+      "positive": "You and scouts within 15 m: maximum stamina +35; Injury and status buildup -60%. Share 1 auto-revive on death per biome.",
       "negative": "",
       "flavor": "Where you stand, no Scout is left behind.",
       "multiplayerOnly": false,

@@ -276,6 +276,7 @@ namespace CampfireCards.Generated
         public const string SituationalMany = "{0} situational effects";
         public const string HintTemplate = "[{0}] Open your deck";
         public const float PileGap = 12.0f;
+        public const string HintAllTemplate = "[{0}] See all card effects";
     }
 
     /// <summary>dark panel, white text. toastSeconds notices; warnings that ask the players to act (settings or version mismatch) stay warningToastSeconds</summary>
@@ -443,8 +444,8 @@ namespace CampfireCards.Generated
         public const string PenaltyLabel = "Clown Luggage penalty: ";
         public const string PullSound = "cardPick";
         public const string FlipSound = "cardSwitch";
-        public const float MaxTotalLines = 22.0f;
-        public const string MoreTotalsTemplate = "+{0} more - pull a card out for its details";
+        public const float MaxTotalLines = 40.0f;
+        public const string MoreTotalsTemplate = "+{0} more effects don't fit on this screen";
         public const string TeamHint = "Click a deck to look through it · [{0}] or Esc: close.";
         public const string TeamDeckHint = "Esc: back to the team · [{0}] close.";
         public const float TeamPileScale = 1.6f;
@@ -452,6 +453,8 @@ namespace CampfireCards.Generated
         public const float TeamBlockW = 360.0f;
         public const float TeamPileGap = 14.0f;
         public const float TeamDeckScale = 0.8f;
+        public const float TotalsMaxHeight = 480.0f;
+        public const float MinFanBand = 280.0f;
     }
 
     /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop and a small centred panel: a title naming the card, one button per choosable item (only items the ItemDatabase can spawn are listed), and a hint line. Used by Balright to pick the mythic item its campfire delivers.. opened after the card fan closes at a campfire where the owner still has the choice; a click sends the pick to the host (SpawnItem) and closes; Esc or cancel postpones to the next campfire. Controller: the first button is selected, up/down moves, confirm chooses.</summary>

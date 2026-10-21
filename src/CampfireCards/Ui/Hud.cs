@@ -255,6 +255,7 @@ namespace CampfireCards.Ui
                 }
             }
             var sb = new StringBuilder();
+            bool more = false;   // the corner is showing less than everything: the key hint must promise the full list
             if (lines.Count > 0)
             {
                 sb.Append("<b>").Append(UiKit.ColorTag(Ui_DeckHud.HeaderColor)).Append(Ui_DeckHud.TotalsHeader).Append("</color></b>\n");
@@ -270,13 +271,20 @@ namespace CampfireCards.Ui
                 var extras = new List<string>();
                 if (lines.Count > shown) extras.Add(string.Format(Ui_DeckHud.MoreTemplate, lines.Count - shown));
                 if (situational > 0) extras.Add(situational == 1 ? Ui_DeckHud.SituationalOne : string.Format(Ui_DeckHud.SituationalMany, situational));
-                if (extras.Count > 0) sb.Append(UiKit.ColorTag(Ui_DeckHud.HintColor)).Append(string.Join(" · ", extras)).Append("</color>\n");
+                if (extras.Count > 0)
+                {
+                    more = true;
+                    sb.Append(UiKit.ColorTag(Ui_DeckHud.HintColor)).Append(string.Join(" · ", extras)).Append("</color>\n");
+                }
             }
             else if (situational > 0)
+            {
+                more = true;
                 sb.Append(UiKit.ColorTag(Ui_DeckHud.HintColor))
                   .Append(situational == 1 ? Ui_DeckHud.SituationalOne : string.Format(Ui_DeckHud.SituationalMany, situational)).Append("</color>\n");
+            }
             sb.Append("<size=80%>").Append(UiKit.ColorTag(Ui_DeckHud.HintColor))
-              .Append(string.Format(Ui_DeckHud.HintTemplate, Plugin.BuildScreenKeyLabel)).Append("</color></size>");
+              .Append(string.Format(more ? Ui_DeckHud.HintAllTemplate : Ui_DeckHud.HintTemplate, Plugin.BuildScreenKeyLabel)).Append("</color></size>");
             return sb.ToString();
         }
 

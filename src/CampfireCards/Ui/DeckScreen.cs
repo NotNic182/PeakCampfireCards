@@ -65,6 +65,8 @@ namespace CampfireCards.Ui
         /// <summary>The frame OpenFan ran: Hooks opened the window on this key press, so Update must not step on it too.</summary>
         private int _openedFrame;
         private string _teamPrint;
+        /// <summary>The totals panel's live height: grows with the line count up to TotalsMaxHeight, resets on open.</summary>
+        private float _totalsH = Ui_DeckScreen.TotalsHeight;
         private static readonly ModResult _always = new ModResult();
         private static readonly int MaxPerRow = Mathf.RoundToInt(Ui_Fan.MaxPerRow);
 
@@ -238,6 +240,7 @@ namespace CampfireCards.Ui
         {
             if (!isOpen) OpenM.Invoke(this, null);
             _openedFrame = Time.frameCount;
+            _totalsH = Ui_DeckScreen.TotalsHeight;   // grown panel height is per open (grow-only while open)
             _title.rectTransform.sizeDelta = new Vector2(UiKit.FitWidth(1400f), 90f);
             _subtitle.rectTransform.sizeDelta = new Vector2(UiKit.FitWidth(1400f), 40f);
             Art.Sfx.Play(Ui_DeckScreen.SoundOn);
@@ -271,9 +274,9 @@ namespace CampfireCards.Ui
                 _cards.Add(face.Slot);
                 _buttons.Add(face.Button);
             }
+            RefreshTotals();   // may grow the totals panel: the fan layout below must already see the grown height
             WireNavigation(LayoutFan(_deck.Length));
             Reselect(select);
-            RefreshTotals();
             RefreshSubtitle();
             if (expand && _cards.Count > 0) StartCoroutine(Expand());
         }
@@ -282,9 +285,9 @@ namespace CampfireCards.Ui
         private void FitTotals()
         {
             float w = UiKit.FitWidth(Ui_DeckScreen.TotalsWidth);
-            _totalsPanel.rectTransform.sizeDelta = new Vector2(w, Ui_DeckScreen.TotalsHeight);
+            _totalsPanel.rectTransform.sizeDelta = new Vector2(w, _totalsH);
             float colW = (w - 2f * Ui_DeckScreen.TotalsPad - Ui_DeckScreen.TotalsColGap) * 0.5f;
-            float colH = Ui_DeckScreen.TotalsHeight - 2f * Ui_DeckScreen.TotalsPad;
+            float colH = _totalsH - 2f * Ui_DeckScreen.TotalsPad;
             _totalsLeft.rectTransform.sizeDelta = new Vector2(colW, colH);
             _totalsRight.rectTransform.sizeDelta = new Vector2(colW, colH);
             _totalsRight.rectTransform.anchoredPosition = new Vector2(Ui_DeckScreen.TotalsPad + colW + Ui_DeckScreen.TotalsColGap, -Ui_DeckScreen.TotalsPad);
@@ -437,7 +440,7 @@ namespace CampfireCards.Ui
 
             var canvas = UiKit.CanvasSize;
             float bandTop = canvas.y * 0.5f - Ui_DeckScreen.FanBandTop;
-            float bandBottom = -canvas.y * 0.5f + Ui_DeckScreen.TotalsY + Ui_DeckScreen.TotalsHeight + UiTiming.SafeMargin * 0.5f;
+            float bandBottom = -canvas.y * 0.5f + Ui_DeckScreen.TotalsY + _totalsH + UiTiming.SafeMargin * 0.5f;
             float hoverRoom = UiTiming.HoverScale;
             float scale = Mathf.Min(1f, (canvas.x - 2f * UiTiming.SafeMargin) / (w * hoverRoom), (bandTop - bandBottom) / Mathf.Max(1f, h * hoverRoom));
             _fan.localScale = Vector3.one * Mathf.Max(0.05f, scale);
@@ -592,7 +595,15 @@ namespace CampfireCards.Ui
                 lines.Add(Header + "<b>" + UiKit.ColorTag(Ui_DeckScreen.HeaderColor) + Ui_DeckScreen.AurasHeader + "</color></b></size>");
                 lines.AddRange(auras);
             }
-            int cap = Mathf.RoundToInt(Ui_DeckScreen.MaxTotalLines);
+            // the panel grows with its line count into the fan's spare room (MinFanBand always stays for the cards);
+            // the cap is whatever fits that grown panel at minimum font, so "+N more" only appears when the screen
+            // itself runs out of room (a short canvas), not at a fixed line count
+            float maxPanelH = Mathf.Clamp(
+                UiKit.CanvasSize.y - Ui_DeckScreen.FanBandTop - Ui_DeckScreen.TotalsY - UiTiming.SafeMargin * 0.5f - Ui_DeckScreen.MinFanBand,
+                Ui_DeckScreen.TotalsHeight, Ui_DeckScreen.TotalsMaxHeight);
+            float minAdv = Ui_DeckScreen.MinFontSize * Ui_DeckScreen.LineHeight;
+            int perCol = Mathf.FloorToInt((maxPanelH - 2f * Ui_DeckScreen.TotalsPad - minAdv * Ui_DeckScreen.HeaderSizePercent / 100f) / minAdv);
+            int cap = Mathf.Min(Mathf.RoundToInt(Ui_DeckScreen.MaxTotalLines), Mathf.Max(4, perCol * 2));
             if (lines.Count > cap)
             {
                 int dropped = lines.Count - (cap - 1);
@@ -602,6 +613,16 @@ namespace CampfireCards.Ui
 
             // two balanced columns under one header
             int half = (lines.Count + 1) / 2;
+            float adv = Ui_DeckScreen.FontSize * Ui_DeckScreen.LineHeight;
+            float wanted = 2f * Ui_DeckScreen.TotalsPad + adv * Ui_DeckScreen.HeaderSizePercent / 100f + half * adv + 6f;
+            float grown = Mathf.Clamp(wanted, Ui_DeckScreen.TotalsHeight, maxPanelH);
+            // grow-only while open, so conditionals flipping during the 4x/s refresh never make the fan oscillate
+            if (grown > _totalsH + adv * 0.5f)
+            {
+                _totalsH = grown;
+                FitTotals();
+                if (_view == View.Fan) LayoutFan(_deck.Length);
+            }
             var sb = new StringBuilder();
             sb.Append(Header).Append("<b>").Append(UiKit.ColorTag(Ui_DeckScreen.HeaderColor)).Append(Ui_DeckScreen.StatsHeader).Append("</color></b></size>\n");
             for (int i = 0; i < half; i++) sb.Append(lines[i]).Append('\n');

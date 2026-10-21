@@ -167,7 +167,7 @@ The deck includes the reviewed mechanics and the clearer 0.6.1 descriptions. [Ca
 | Card | Rarity | Benefit | Drawback |
 |---|---|---|---|
 | Scoutmaster | Mythic | Climbing costs no stamina and falls cause no Injury. Sprint 25% faster. | No drawback |
-| The Eternal Campfire | Mythic | You and scouts within 15 m: maximum stamina +35; Injury and status buildup -60%. Share 1 auto-revive per biome. | No drawback |
+| The Eternal Campfire | Mythic | You and scouts within 15 m: maximum stamina +35; Injury and status buildup -60%. Share 1 auto-revive on death per biome. | No drawback |
 
 ### Stamina
 

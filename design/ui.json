@@ -409,7 +409,8 @@
         "SituationalOne": "1 situational effect",
         "SituationalMany": "{0} situational effects",
         "HintTemplate": "[{0}] Open your deck",
-        "PileGap": 12
+        "PileGap": 12,
+        "HintAllTemplate": "[{0}] See all card effects"
       },
       "behaviour": "visible on the island when the player holds any card; rebuilt when the collection changes, never per frame. The totals come from the always-on fold only, so they never flicker with conditions; conditional and aura effects are counted as situational instead. The pile is a button: clicking it (whenever a cursor is visible) or pressing the Deck key opens the DeckScreen.",
       "soundOn": "none"
@@ -602,15 +603,17 @@
         "PenaltyLabel": "Clown Luggage penalty: ",
         "PullSound": "cardPick",
         "FlipSound": "cardSwitch",
-        "MaxTotalLines": 22,
-        "MoreTotalsTemplate": "+{0} more - pull a card out for its details",
+        "MaxTotalLines": 40,
+        "MoreTotalsTemplate": "+{0} more effects don't fit on this screen",
         "TeamHint": "Click a deck to look through it · [{0}] or Esc: close.",
         "TeamDeckHint": "Esc: back to the team · [{0}] close.",
         "TeamPileScale": 1.6,
         "TeamPerRow": 4,
         "TeamBlockW": 360,
         "TeamPileGap": 14,
-        "TeamDeckScale": 0.8
+        "TeamDeckScale": 0.8,
+        "TotalsMaxHeight": 480,
+        "MinFanBand": 280
       },
       "behaviour": "opened with the Deck key on the island (or by clicking the DeckHud pile); the key then steps to TEAM DECKS (with teammates in the run) and a third press closes, from the team views alike; Esc and a backdrop click back out one step instead (pulled card -> fan, a teammate’s fanned cards -> the team decks, anything else closes), and the pause menu never opens over this screen: Esc raises Pause and UICancel together, the window consumes both, and hooks.json pausePressed catches what still reaches LateUpdate (a controller Start press). Closed by a pick fan opening or leaving the run. The fan expands from the pile centre over expandSeconds with cardStaggerSeconds between cards. Totals and the pulled card’s detail refresh 4 times a second from the live Effects fold and Core.BuildStats, never recomputed in the UI. Controller: the first card (or deck pile) is selected on open, grid navigation, confirm pulls a card out or opens a pile, < and > flip, cancel backs out.",
       "soundOn": "cardsAppear"

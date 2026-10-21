@@ -90,6 +90,19 @@ namespace CampfireCards.Tests
         }
 
         [Fact]
+        public void BonusStaminaRaisesTheKnockoutPrediction()
+        {
+            // a fall that fills the vanilla 100 is not fatal for a +30 bar holder (threshold 1.3, Injury cap raised with it)
+            Assert.True(NativeInjuryRules.WouldPassOut(.9f, .1f, 0f, 1f, 1f, .2f));
+            Assert.False(NativeInjuryRules.WouldPassOut(.9f, .1f, 0f, 1.3f, 1f, .2f, 0f, 1.3f));
+            // but a fall that fills the extended bar still is
+            Assert.True(NativeInjuryRules.WouldPassOut(.9f, .1f, 0f, 1.3f, 1f, .5f, 0f, 1.3f));
+            // pure Injury against the vanilla 1.0 cap can never reach the raised threshold; the raised cap restores it
+            Assert.False(NativeInjuryRules.WouldPassOut(.9f, .9f, 0f, 1f, 1f, .5f, 0f, 1.3f));
+            Assert.True(NativeInjuryRules.WouldPassOut(.9f, .9f, 0f, 1.3f, 1f, .5f, 0f, 1.3f));
+        }
+
+        [Fact]
         public void SkeletonAndDifficultyAffectPredictionWithoutChangingInputDamage()
         {
             float skeleton = NativeInjuryRules.Multiplier(true, false, 1f);

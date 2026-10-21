@@ -348,4 +348,41 @@ namespace CampfireCards.Generated
         [HarmonyPrefix] static bool Prefix(GUIManager __instance) { return CampfireCards.Hooks.OnUpdatePausedPrefix(__instance); }
     }
 
+    [HarmonyPatch(typeof(CharacterAfflictions), "get_shouldPassOut")]
+    internal static class Patch_passOutThreshold
+    {
+        [HarmonyPostfix] static void Postfix(CharacterAfflictions __instance, ref bool __result) { CampfireCards.Hooks.OnShouldPassOut(__instance, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(CharacterAfflictions), "GetStatusCap", new Type[] { typeof(CharacterAfflictions.STATUSTYPE) })]
+    internal static class Patch_injuryCap
+    {
+        [HarmonyPostfix] static void Postfix(CharacterAfflictions __instance, CharacterAfflictions.STATUSTYPE type, ref float __result) { CampfireCards.Hooks.OnGetStatusCap(__instance, type, ref __result); }
+    }
+
+    [HarmonyPatch(typeof(Character), "CheckEndGame")]
+    internal static class Patch_endGameCheck
+    {
+        [HarmonyPrefix] static bool Prefix(Character __instance) { return CampfireCards.Hooks.OnCheckEndGamePrefix(__instance); }
+    }
+
+    [HarmonyPatch(typeof(Character), "FinishZombifying")]
+    internal static class Patch_zombifyDied
+    {
+        [HarmonyPrefix] static void Prefix(Character __instance, out bool __state) { CampfireCards.Hooks.OnDiedPrefix(__instance, out __state); }
+        [HarmonyPostfix] static void Postfix(Character __instance, bool __state) { CampfireCards.Hooks.OnDied(__instance, __state); }
+    }
+
+    [HarmonyPatch(typeof(Scorpion), "InflictAttack", new Type[] { typeof(Character) })]
+    internal static class Patch_scorpionSting
+    {
+        [HarmonyPrefix] static bool Prefix(Scorpion __instance, Character character) { return CampfireCards.Hooks.OnScorpionAttackPrefix(__instance, character); }
+    }
+
+    [HarmonyPatch(typeof(Peak.StatusFieldBase), "Update")]
+    internal static class Patch_statusFieldMaxGate
+    {
+        [HarmonyPrefix] static bool Prefix(Peak.StatusFieldBase __instance) { return CampfireCards.Hooks.OnStatusFieldUpdatePrefix(__instance); }
+    }
+
 }
