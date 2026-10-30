@@ -13,7 +13,7 @@ namespace CampfireCards
     /// </summary>
     public static class Controls
     {
-        public enum Act { BloodBattery, SecondWind, EmergencyPurge, SafetyNet, BuildScreen, ScavengerFood, ScavengerLuggage, ScavengerMisc }
+        public enum Act { BloodBattery, SecondWind, EmergencyPurge, SafetyNet, BuildScreen, ScavengerFood, ScavengerLuggage, ScavengerMisc, BugReport }
 
         /// <summary>The action a manual card's ability is pressed with (cards.json ability), or null for a passive card.</summary>
         public static Act? ActOf(string ability)
@@ -72,6 +72,18 @@ namespace CampfireCards
             return pad != null && pad.WasPressedThisFrame();
         }
 
+        /// <summary>
+        /// The action's keyboard key would type a character into a focused text field (letters, digits, punctuation,
+        /// space, Enter, numpad). Such a key must not double as "close the window" while the player is typing.
+        /// </summary>
+        public static bool ProducesText(Act act)
+        {
+            var key = KeyOf(act);
+            if (key == null || key.Value == Key.None) return false;
+            var v = key.Value;
+            return (v >= Key.Space && v <= Key.Digit0) || (v >= Key.NumpadEnter && v <= Key.Numpad9);
+        }
+
         /// <summary>The key or the controller button of the action is held down right now (TSA's reveal keys).</summary>
         public static bool IsHeld(Act act)
         {
@@ -107,6 +119,7 @@ namespace CampfireCards
                 case Act.ScavengerFood: return Plugin.ScavengerFoodKey;
                 case Act.ScavengerLuggage: return Plugin.ScavengerLuggageKey;
                 case Act.ScavengerMisc: return Plugin.ScavengerMiscKey;
+                case Act.BugReport: return Plugin.BugReportKey;
                 default: return Plugin.BuildScreenKey;
             }
         }
@@ -122,6 +135,7 @@ namespace CampfireCards
                 case Act.ScavengerFood: return Plugin.ScavengerFoodPad;
                 case Act.ScavengerLuggage: return Plugin.ScavengerLuggagePad;
                 case Act.ScavengerMisc: return Plugin.ScavengerMiscPad;
+                case Act.BugReport: return Plugin.BugReportPad;
                 default: return Plugin.BuildScreenPad;
             }
         }

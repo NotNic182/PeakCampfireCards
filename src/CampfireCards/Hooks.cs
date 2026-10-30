@@ -39,6 +39,7 @@ namespace CampfireCards
             Hooks.ResetRunTracking();
             Hud.ClearMarkers();
             DeckScreen.HideIfOpen();
+            BugReportScreen.HideIfOpen();   // Hooks.Tick is gated off-island, so its Tick cannot do this close itself
         }
 
         public static bool IsGameplayScene(string name) => name != null && (name.Contains("Island") || name.Contains("Level_"));
@@ -250,6 +251,7 @@ namespace CampfireCards
             AbilityKeys(local);
             PickSession.HostTick();
             DeckScreen.Tick(local);
+            BugReportScreen.Tick();
             TickEndGameHold();
 
             if (Time.unscaledTime >= _nextAbilityBar)
@@ -300,6 +302,7 @@ namespace CampfireCards
                 }
             }
             if (Controls.WasPressed(Controls.Act.BuildScreen)) DeckScreen.Toggle(local);
+            if (Controls.WasPressed(Controls.Act.BugReport)) BugReportScreen.Toggle();
         }
 
         /// <summary>
@@ -323,6 +326,12 @@ namespace CampfireCards
             {
                 local.input.pauseWasPressed = false;
                 ItemChooser.Instance.HideNow();
+                return false;
+            }
+            if (BugReportScreen.Instance != null && BugReportScreen.Instance.isOpen)
+            {
+                local.input.pauseWasPressed = false;   // a controller Start raises Pause without UICancel
+                BugReportScreen.Instance.CloseFromInput();   // the draft is static and survives
                 return false;
             }
             return true;

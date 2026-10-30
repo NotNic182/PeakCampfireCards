@@ -23,7 +23,13 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.9.2";
+        public const string Version = "0.9.3";
+
+        /// <summary>
+        /// Where in-game bug reports (Keys.BugReport) are sent: the report server's /report URL, baked per build so
+        /// testers never have to configure anything. Empty: reports are saved to a local file instead of being sent.
+        /// </summary>
+        public const string DefaultReportEndpoint = "";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -43,6 +49,7 @@ namespace CampfireCards
         public static ConfigEntry<Key> ScavengerFoodKey;
         public static ConfigEntry<Key> ScavengerLuggageKey;
         public static ConfigEntry<Key> ScavengerMiscKey;
+        public static ConfigEntry<Key> BugReportKey;
         public static ConfigEntry<Key> RestoreRunKey;
         public static ConfigEntry<string> BloodBatteryPad;
         public static ConfigEntry<string> SecondWindPad;
@@ -52,6 +59,9 @@ namespace CampfireCards
         public static ConfigEntry<string> ScavengerFoodPad;
         public static ConfigEntry<string> ScavengerLuggagePad;
         public static ConfigEntry<string> ScavengerMiscPad;
+        public static ConfigEntry<string> BugReportPad;
+        public static ConfigEntry<string> ReportEndpoint;
+        public static ConfigEntry<string> InstallId;
 
         /// <summary>The key, or the controller button while a controller is in use (Controls).</summary>
         public static string BloodBatteryKeyLabel => Controls.Label(Controls.Act.BloodBattery);
@@ -59,6 +69,7 @@ namespace CampfireCards
         public static string EmergencyPurgeKeyLabel => Controls.Label(Controls.Act.EmergencyPurge);
         public static string SafetyNetKeyLabel => Controls.Label(Controls.Act.SafetyNet);
         public static string BuildScreenKeyLabel => Controls.Label(Controls.Act.BuildScreen);
+        public static string BugReportKeyLabel => Controls.Label(Controls.Act.BugReport);
 
         private Harmony _harmony;
 
@@ -88,6 +99,7 @@ namespace CampfireCards
             ScavengerFoodKey = Config.Bind("Keys", "ScavengerFood", Key.Y, "Hold to mark food on screen while you own TSA.");
             ScavengerLuggageKey = Config.Bind("Keys", "ScavengerLuggage", Key.U, "Hold to mark unopened luggage on screen while you own TSA.");
             ScavengerMiscKey = Config.Bind("Keys", "ScavengerMisc", Key.I, "Hold to mark all other items on screen while you own TSA.");
+            BugReportKey = Config.Bind("Keys", "BugReport", Key.F9, "Opens the bug report window: pick what went wrong, write a comment, optionally attach the scrubbed mod log, and send it to the mod author.");
             RestoreRunKey = Config.Bind("Keys", "RestoreRun", Key.F8, "Host only: gives every player in the room their cards from the saved run back (the mod keeps everyone's cards on disk by player name, so this works after a crash, a rejoin or a relaunch). Restored cards arrive without their pick-time effects (no Curse, no new Clown penalty, no bonus draws).");
             const string padNote = " auto: the first of D-pad up, down, left, right, View/Select, left or right stick click that no PEAK action uses. " +
                                    "none: no controller button. Or an Input System path, for example <Gamepad>/dpad/left.";
@@ -99,6 +111,12 @@ namespace CampfireCards
             ScavengerFoodPad = Config.Bind("Keys", "ScavengerFoodGamepad", Controls.None, "Controller button held to mark food (TSA)." + padNote);
             ScavengerLuggagePad = Config.Bind("Keys", "ScavengerLuggageGamepad", Controls.None, "Controller button held to mark luggage (TSA)." + padNote);
             ScavengerMiscPad = Config.Bind("Keys", "ScavengerMiscGamepad", Controls.None, "Controller button held to mark other items (TSA)." + padNote);
+            BugReportPad = Config.Bind("Keys", "BugReportGamepad", Controls.None, "Controller button for the bug report window (writing the comment still needs a keyboard)." + padNote);
+            ReportEndpoint = Config.Bind("Reporting", "Endpoint", DefaultReportEndpoint,
+                "Where in-game bug reports are sent (the report server's /report URL, HTTPS). Empty: reports are saved to a file in the mod folder instead of being sent.");
+            InstallId = Config.Bind("Reporting", "InstallId", "",
+                "A random id that lets reports from the same install be grouped. It carries no account, name or system information. Clear it and a fresh one is made.");
+            if (string.IsNullOrWhiteSpace(InstallId.Value)) InstallId.Value = System.Guid.NewGuid().ToString("N");
             VerboseLog = Config.Bind("Debug", "VerboseLog", false, "Log every card event.");
 
             CardSettings.Current = LoadSettings(Config);

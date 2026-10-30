@@ -29,6 +29,7 @@ FILES = [
     (os.path.join(ROOT, 'docs', 'card-text-and-playtest.md'), 'docs/card-text-and-playtest.md'),
     (os.path.join(ROOT, 'docs', 'card-interactions.md'), 'docs/card-interactions.md'),
     (os.path.join(ROOT, 'docs', 'research', 'card-copy-review.json'), 'docs/research/card-copy-review.json'),
+    (os.path.join(ROOT, 'assets', 'logo', 'CampfireLogo.png'), 'art/CampfireLogo.png'),
     (os.path.join(ROOT, 'assets', 'card-images', 'README.md'), 'art/cards/README.md'),
     (os.path.join(ROOT, 'design', 'editable', 'card-image-map.csv'), 'art/cards/card-image-map.csv'),
     (os.path.join(ROOT, 'design', 'editable', 'card-image-map.csv'), 'design/editable/card-image-map.csv'),

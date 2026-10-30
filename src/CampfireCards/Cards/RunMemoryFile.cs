@@ -173,6 +173,8 @@ namespace CampfireCards.Cards
                 if (room != null && room.Players.TryGetValue(actor, out p) && p != null && !string.IsNullOrEmpty(p.NickName))
                 {
                     string clean = RunMemory.CleanName(p.NickName);
+                    NetSend.RememberName(p.NickName);
+                    NetSend.RememberName(clean);   // the restore logs this cleaned form; the report scrub must know it too
                     return clean.Length > 0 ? clean : null;
                 }
                 if (actor == NetSend.LocalActor && !string.IsNullOrEmpty(PhotonNetwork.NickName))

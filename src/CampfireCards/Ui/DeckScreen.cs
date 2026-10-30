@@ -77,6 +77,8 @@ namespace CampfireCards.Ui
             if (Instance != null && Instance.isOpen) { Instance.Step(); return; }
             if (!RunState.OnIsland || me == null) return;
             if (CardPicker.Instance != null && CardPicker.Instance.isOpen) return;   // never under a real choice
+            // windowBlockingInput is one frame stale: a report window opened this frame is invisible to it
+            if (BugReportScreen.Instance != null && BugReportScreen.Instance.isOpen) return;
             // the pause menu (or any other blocking window) has the screen: the HUD pile click must not open under it
             bool blocked = false;
             try { blocked = GUIManager.instance != null && (GUIManager.instance.windowBlockingInput || GUIManager.instance.wheelActive); } catch { }
@@ -130,8 +132,14 @@ namespace CampfireCards.Ui
                 Character ch;
                 if (PlayerHandler.TryGetCharacter(actor, out ch) && ch != null && ch.data != null)
                     sb.Append(ch.data.dead ? 'g' : (ch.data.passedOut || ch.data.fullyPassedOut) ? 'd' : 'u');
-                sb.Append(':').Append(Effects.Penalties.Of(actor).Count).Append('|');
+                sb.Append(':');
+                // the penalty VALUES, not just the count: a StateSync can swap variants without changing how many
+                foreach (var v in Effects.Penalties.Of(actor)) sb.Append(v).Append(',');
+                sb.Append('|');
             }
+            // host rules scale what the stats panels show; a mid-run adoption (late join) must redraw them
+            var s = CardSettings.Current;
+            sb.Append(s.DrawbacksEnabled ? 'D' : 'd').Append((s.BenefitStrength * 100f).ToString("0"));
             return sb.ToString();
         }
 
@@ -846,6 +854,12 @@ namespace CampfireCards.Ui
                 var back = UiKit.Panel(mini.transform, "Face", new Vector2(cardW, cardH) - Vector2.one * (frame * 2f), Ui_DeckHud.BackColor, Art.Shapes.Panel);
                 back.type = Image.Type.Sliced;
                 back.pixelsPerUnitMultiplier = Ui_DeckHud.BackPpu;
+                var logo = Art.Logo.Sprite;
+                if (logo != null)
+                {
+                    var stamp = UiKit.Panel(mini.transform, "Logo", Vector2.one * (cardW * Ui_DeckHud.LogoFrac), Color.white, logo);
+                    stamp.preserveAspect = true;
+                }
             }
 
             float chip = Ui_DeckHud.CountChipSize * Ui_DeckScreen.TeamPileScale;
@@ -898,8 +912,90 @@ namespace CampfireCards.Ui
                 grid.constraintCount = cols;
                 foreach (var id in cards) CardFace.Build(holder.transform, id, interactive: false);
                 y -= blockH;
+
+                y -= Ui_DeckScreen.TeamStatsGap;
+                y -= BuildTeamStats(actor, cards, y);
+                width = Mathf.Max(width, Ui_DeckScreen.TeamStatsWidth);
             }
             FitTeam(-y, width);
+        }
+
+        /// <summary>
+        /// ALL CARDS ADDED UP for a teammate, under their fanned cards: the always-on fold of their synced card list in
+        /// two columns (their conditions can't be evaluated here, so situational effects are a count, never a guess).
+        /// Returns the panel height; rebuilt with the view whenever the team fingerprint changes.
+        /// </summary>
+        private float BuildTeamStats(int actor, List<byte> cards, float top)
+        {
+            Effects.FoldAlwaysOf(actor, _always);
+            var stats = BuildStats.Lines(_always, _always);
+            var lines = new List<string>();
+            foreach (var l in stats)
+                lines.Add(UiKit.ColorTag(GoodOrBad(l, l.Always)) + Mark(l, l.Always) + BuildStats.Say(l, l.Always) + ".</color>");
+            int situational = SituationalCount(cards);
+            if (situational > 0)
+                lines.Add(Meta + UiKit.ColorTag(Ui_DeckScreen.InactiveColor)
+                          + (situational == 1 ? Ui_DeckScreen.TeamSituationalOne : string.Format(Ui_DeckScreen.TeamSituationalMany, situational)) + "</color></size>");
+            if (lines.Count == 0)
+                lines.Add(UiKit.ColorTag(Ui_DeckScreen.InactiveColor) + Ui_DeckScreen.TeamNothing + "</color>");
+
+            float adv = Ui_DeckScreen.FontSize * Ui_DeckScreen.LineHeight;
+            float headerAdv = adv * Ui_DeckScreen.HeaderSizePercent / 100f;
+            int maxLines = Mathf.Max(4, 2 * Mathf.FloorToInt((Ui_DeckScreen.TotalsMaxHeight - 2f * Ui_DeckScreen.TotalsPad - headerAdv) / adv));
+            if (lines.Count > maxLines)
+            {
+                int dropped = lines.Count - (maxLines - 1);
+                lines.RemoveRange(maxLines - 1, dropped);
+                lines.Add(Meta + UiKit.ColorTag(Ui_DeckScreen.InactiveColor) + string.Format(Ui_DeckScreen.MoreTotalsTemplate, dropped) + "</color></size>");
+            }
+            int half = (lines.Count + 1) / 2;
+            float panelW = Ui_DeckScreen.TeamStatsWidth;
+            float panelH = Mathf.Min(Ui_DeckScreen.TotalsMaxHeight, 2f * Ui_DeckScreen.TotalsPad + headerAdv + half * adv + 6f);
+
+            var panel = UiKit.Panel(_teamRoot, "TeamStats", new Vector2(panelW, panelH), Ui_DeckScreen.TotalsPanel, Art.Shapes.Panel);
+            panel.type = Image.Type.Sliced;
+            UiKit.Place(panel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, top));
+            float colW = (panelW - 2f * Ui_DeckScreen.TotalsPad - Ui_DeckScreen.TotalsColGap) * 0.5f;
+            float colH = panelH - 2f * Ui_DeckScreen.TotalsPad;
+            TextMeshProUGUI Col(string name, float x)
+            {
+                var t = UiKit.Text(panel.transform, name, new Vector2(colW, colH), Ui_DeckScreen.FontSize, UiPalette.Text, TextAlignmentOptions.TopLeft);
+                UiKit.Place(t.rectTransform, new Vector2(0f, 1f), new Vector2(x, -Ui_DeckScreen.TotalsPad));
+                UiKit.LineHeight(t, Ui_DeckScreen.LineHeight);
+                t.overflowMode = TextOverflowModes.Ellipsis;
+                UiKit.AutoSize(t, Ui_DeckScreen.MinFontSize);
+                return t;
+            }
+            var sb = new StringBuilder();
+            sb.Append(Header).Append("<b>").Append(UiKit.ColorTag(Ui_DeckScreen.HeaderColor)).Append(Ui_DeckScreen.StatsHeader).Append("</color></b></size>\n");
+            for (int i = 0; i < half; i++) sb.Append(lines[i]).Append('\n');
+            Col("Left", Ui_DeckScreen.TotalsPad).text = sb.ToString().TrimEnd();
+            sb.Length = 0;
+            sb.Append('\n');   // the right column starts level with the left column's first line
+            for (int i = half; i < lines.Count; i++) sb.Append(lines[i]).Append('\n');
+            Col("Right", Ui_DeckScreen.TotalsPad + colW + Ui_DeckScreen.TotalsColGap).text = sb.ToString().TrimEnd('\n', ' ');
+            return panelH;
+        }
+
+        /// <summary>Modifiers in these cards that wait on a condition or a teammate, after the host's drawback setting.</summary>
+        private static int SituationalCount(List<byte> cards)
+        {
+            int n = 0;
+            var s = CardSettings.Current;
+            foreach (var id in cards)
+            {
+                CardDef def;
+                if (!Deck.TryGet(id, out def)) continue;
+                for (int i = 0; i < def.Mods.Length; i++)
+                {
+                    var m = def.Mods[i];
+                    if (m.When == Generated.Condition.always && m.Target != ModTarget.team) continue;
+                    // a drawback the host disabled is neutral and must not be counted as a waiting effect
+                    if (BuildStats.IsNeutral(s.ModValue(def, i), ChannelTable.Defs[(int)m.Channel].IsMul)) continue;
+                    n++;
+                }
+            }
+            return n;
         }
 
         /// <summary>The team content (hanging below the root's origin) scaled to the band under the subtitle, centred in it.</summary>

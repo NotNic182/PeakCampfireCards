@@ -1,0 +1,13 @@
+{
+  "name": "campfirecards-report-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Receives in-game bug reports from the Campfire Cards mod.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

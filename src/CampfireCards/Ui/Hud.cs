@@ -25,11 +25,10 @@ namespace CampfireCards.Ui
         private static GameObject _root;
         private static RectTransform _rootRect;
         private static Image _waitingPanel; private static TextMeshProUGUI _waitingText, _waitingOrder;
-        /// <summary>The deck pile (mini card backs), its count chip, and ALL CARDS ADDED UP underneath (ui.json DeckHud).</summary>
+        /// <summary>The deck pile (mini card backs), its count chip, and the deck-key hint underneath (ui.json DeckHud).</summary>
         private static RectTransform _pile, _pileCards;
         private static Image _deckChip; private static TextMeshProUGUI _deckCount;
-        private static TextMeshProUGUI _totals; private static Image _totalsPanel;
-        private static readonly ModResult _always = new ModResult();
+        private static TextMeshProUGUI _hint; private static Image _hintPanel;
         private static Image _toastPanel; private static TextMeshProUGUI _toastText; private static float _toastUntil;
         private static TextMeshProUGUI _abilityBar; private static Image _abilityPanel;
         /// <summary>The input device the hint labels were last written for (they name a key or a controller button).</summary>
@@ -72,14 +71,14 @@ namespace CampfireCards.Ui
             UiKit.AutoSize(_waitingOrder, Mathf.Min(Ui_WaitingBanner.MinFontSize, Ui_WaitingBanner.OrderFontSize));
             _waitingPanel.gameObject.SetActive(false);
 
-            // the deck corner sits straight on the world: the totals on a dark panel fitted to the text (readable on
-            // snow), the pile of card backs above it, both above the status icons over the stamina bar (ui.json DeckHud)
-            _totalsPanel = UiKit.Panel(_root.transform, "DeckTotalsPanel", Vector2.zero, Ui_DeckHud.Panel, Art.Shapes.Panel);
-            _totalsPanel.type = Image.Type.Sliced;
-            _totals = UiKit.Text(_root.transform, "DeckTotals", new Vector2(Ui_DeckHud.Width, 300f), Ui_DeckHud.FontSize, Ui_DeckHud.Color, TextAlignmentOptions.BottomLeft);
-            UiKit.Place(_totals.rectTransform, new Vector2(0f, 0f), new Vector2(Ui_DeckHud.X + Ui_DeckHud.Padding, DeckBottom + Ui_DeckHud.Padding));
-            UiKit.LineHeight(_totals, Ui_DeckHud.LineHeight);
-            UiKit.AutoSize(_totals, Ui_DeckHud.MinFontSize);
+            // the deck corner sits straight on the world: one hint line on a dark panel fitted to the text (readable on
+            // snow), the pile of card backs above it, both above the status icons over the stamina bar (ui.json DeckHud).
+            // The combined stats live in the DeckScreen - a corner list could only ever show a slice and read as broken.
+            _hintPanel = UiKit.Panel(_root.transform, "DeckHintPanel", Vector2.zero, Ui_DeckHud.Panel, Art.Shapes.Panel);
+            _hintPanel.type = Image.Type.Sliced;
+            _hint = UiKit.Text(_root.transform, "DeckHint", new Vector2(Ui_DeckHud.Width, Ui_DeckHud.FontSize * 1.5f), Ui_DeckHud.FontSize, Ui_DeckHud.HintColor, TextAlignmentOptions.BottomLeft);
+            UiKit.Place(_hint.rectTransform, new Vector2(0f, 0f), new Vector2(Ui_DeckHud.X + Ui_DeckHud.Padding, DeckBottom + Ui_DeckHud.Padding));
+            UiKit.AutoSize(_hint, Ui_DeckHud.MinFontSize);
 
             var pileGo = new GameObject("DeckPile", typeof(RectTransform));
             pileGo.transform.SetParent(_root.transform, false);
@@ -178,28 +177,25 @@ namespace CampfireCards.Ui
             else panel.gameObject.SetActive(false);
         }
 
-        /// <summary>The deck corner shown or hidden as one: the totals (panel fitted around them) and the pile above.</summary>
+        /// <summary>The deck corner shown or hidden as one: the hint line (panel fitted around it) and the pile above.</summary>
         private static void ShowDeck(bool show)
         {
-            if (_totals == null) return;
-            _totals.gameObject.SetActive(show);
-            if (show) UiKit.FitBacking(_totalsPanel, _totals, Ui_DeckHud.Padding);
-            else _totalsPanel.gameObject.SetActive(false);
+            if (_hint == null) return;
+            _hint.gameObject.SetActive(show);
+            if (show) UiKit.FitBacking(_hintPanel, _hint, Ui_DeckHud.Padding);
+            else _hintPanel.gameObject.SetActive(false);
             _pile.gameObject.SetActive(show);
         }
 
-        /// <summary>The deck pile (newest card on top) and ALL CARDS ADDED UP under it. Rebuilt when the collection changes.</summary>
+        /// <summary>The deck pile (newest card on top) and the deck-key hint under it. Rebuilt when the collection changes.</summary>
         public static void RefreshMyCards()
         {
-            if (_totals == null) return;
+            if (_hint == null) return;
             _labelsForGamepad = Controls.UsingGamepad;
             var cards = Effects.CardsOf(NetSend.LocalActor);
             if (cards.Count == 0) { ShowDeck(false); return; }
 
-            // on a short canvas (big UI scale, 32:9) stay below the prompt: the totals shrink, then cut, rather than overlap
-            float room = UiKit.CanvasSize.y - DeckBottom - (PromptTop + Ui_Prompt.Size.y) - Ui_DeckHud.CardH - Ui_DeckHud.PileGap;
-            _totals.rectTransform.sizeDelta = new Vector2(Ui_DeckHud.Width, Mathf.Clamp(room, Ui_DeckHud.FontSize * 4f, 300f));
-            _totals.text = TotalsText(cards);
+            _hint.text = string.Format(Ui_DeckHud.HintTemplate, Plugin.BuildScreenKeyLabel);
             ShowDeck(RunState.OnIsland);
 
             // the pile: up to MaxShown card backs cascading up-right, framed in their rarity colour, newest on top
@@ -208,7 +204,7 @@ namespace CampfireCards.Ui
             float w = Ui_DeckHud.CardW + (shown - 1) * Ui_DeckHud.OffsetX;
             float h = Ui_DeckHud.CardH + (shown - 1) * Ui_DeckHud.OffsetY;
             _pile.sizeDelta = new Vector2(w, h);
-            float panelH = _totalsPanel.gameObject.activeSelf ? _totalsPanel.rectTransform.sizeDelta.y : 0f;
+            float panelH = _hintPanel.gameObject.activeSelf ? _hintPanel.rectTransform.sizeDelta.y : 0f;
             _pile.anchoredPosition = new Vector2(Ui_DeckHud.X, DeckBottom + panelH + Ui_DeckHud.PileGap);
             for (int i = 0; i < shown; i++)
             {
@@ -225,67 +221,16 @@ namespace CampfireCards.Ui
                 var back = UiKit.Panel(mini.transform, "Face", new Vector2(Ui_DeckHud.CardW, Ui_DeckHud.CardH) - Vector2.one * (Ui_DeckHud.FrameWidth * 2f), Ui_DeckHud.BackColor, Art.Shapes.Panel);
                 back.type = Image.Type.Sliced;
                 back.pixelsPerUnitMultiplier = Ui_DeckHud.BackPpu;
+                var logo = Art.Logo.Sprite;
+                if (logo != null)
+                {
+                    var stamp = UiKit.Panel(mini.transform, "Logo", Vector2.one * (Ui_DeckHud.CardW * Ui_DeckHud.LogoFrac), Color.white, logo);
+                    stamp.preserveAspect = true;
+                }
             }
             _deckChip.rectTransform.anchoredPosition = new Vector2(w - 4f, h - 4f);
             _deckChip.transform.SetAsLastSibling();
             _deckCount.text = cards.Count.ToString();
-        }
-
-        /// <summary>
-        /// ALL CARDS ADDED UP: the always-on combined stats (never per-frame, never flickering with conditions), capped
-        /// at MaxLines with a "+N more" tail; conditional and aura modifiers are counted as situational effects instead.
-        /// </summary>
-        private static string TotalsText(List<byte> cards)
-        {
-            Effects.FoldAlways(_always);
-            var lines = BuildStats.Lines(_always, _always);
-            int situational = 0;
-            var settings = CardSettings.Current;
-            foreach (var id in cards)
-            {
-                CardDef def;
-                if (!Deck.TryGet(id, out def)) continue;
-                for (int i = 0; i < def.Mods.Length; i++)
-                {
-                    var m = def.Mods[i];
-                    if (m.When == Generated.Condition.always && m.Target != ModTarget.team) continue;
-                    // a drawback the host disabled is neutral and must not be counted as a waiting effect
-                    if (BuildStats.IsNeutral(settings.ModValue(def, i), ChannelTable.Defs[(int)m.Channel].IsMul)) continue;
-                    situational++;
-                }
-            }
-            var sb = new StringBuilder();
-            bool more = false;   // the corner is showing less than everything: the key hint must promise the full list
-            if (lines.Count > 0)
-            {
-                sb.Append("<b>").Append(UiKit.ColorTag(Ui_DeckHud.HeaderColor)).Append(Ui_DeckHud.TotalsHeader).Append("</color></b>\n");
-                int shown = Mathf.Min(lines.Count, Mathf.RoundToInt(Ui_DeckHud.MaxLines));
-                for (int i = 0; i < shown; i++)
-                {
-                    var l = lines[i];
-                    bool helps = BuildStats.Helps(l.Always, l.IsMul, l.Words);
-                    sb.Append(UiKit.ColorTag(helps ? Ui_CardEffects.GoodColor : Ui_CardEffects.BadColor))
-                      .Append(helps ? Ui_DeckScreen.GoodMark : Ui_DeckScreen.BadMark)
-                      .Append(BuildStats.Say(l, l.Always)).Append(".</color>\n");
-                }
-                var extras = new List<string>();
-                if (lines.Count > shown) extras.Add(string.Format(Ui_DeckHud.MoreTemplate, lines.Count - shown));
-                if (situational > 0) extras.Add(situational == 1 ? Ui_DeckHud.SituationalOne : string.Format(Ui_DeckHud.SituationalMany, situational));
-                if (extras.Count > 0)
-                {
-                    more = true;
-                    sb.Append(UiKit.ColorTag(Ui_DeckHud.HintColor)).Append(string.Join(" · ", extras)).Append("</color>\n");
-                }
-            }
-            else if (situational > 0)
-            {
-                more = true;
-                sb.Append(UiKit.ColorTag(Ui_DeckHud.HintColor))
-                  .Append(situational == 1 ? Ui_DeckHud.SituationalOne : string.Format(Ui_DeckHud.SituationalMany, situational)).Append("</color>\n");
-            }
-            sb.Append("<size=80%>").Append(UiKit.ColorTag(Ui_DeckHud.HintColor))
-              .Append(string.Format(more ? Ui_DeckHud.HintAllTemplate : Ui_DeckHud.HintTemplate, Plugin.BuildScreenKeyLabel)).Append("</color></size>");
-            return sb.ToString();
         }
 
         /// <summary>One line per owned card that has a state to show (charges, cooldowns, activation keys).</summary>
@@ -368,6 +313,7 @@ namespace CampfireCards.Ui
             HidePrompt();
             CardPicker.HideAll();
             DeckScreen.HideIfOpen();
+            BugReportScreen.HideIfOpen();
             ClearMarkers();
             if (_toastPanel != null) _toastPanel.gameObject.SetActive(false);
             ShowDeck(false);
@@ -379,10 +325,10 @@ namespace CampfireCards.Ui
             if (_toastPanel != null && _toastPanel.gameObject.activeSelf && Time.unscaledTime > _toastUntil) _toastPanel.gameObject.SetActive(false);
             if (!RunState.OnIsland)
             {
-                if (_totals != null && _totals.gameObject.activeSelf) ShowDeck(false);
+                if (_hint != null && _hint.gameObject.activeSelf) ShowDeck(false);
                 if (_abilityBar != null && _abilityBar.gameObject.activeSelf) ShowCorner(_abilityBar, _abilityPanel, false);
             }
-            else if (_totals != null && Controls.UsingGamepad != _labelsForGamepad) RefreshMyCards();   // the hint names the other device's button
+            else if (_hint != null && Controls.UsingGamepad != _labelsForGamepad) RefreshMyCards();   // the hint names the other device's button
             DrawMarkers();
         }
     }

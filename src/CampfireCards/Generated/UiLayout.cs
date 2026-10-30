@@ -237,7 +237,7 @@ namespace CampfireCards.Generated
         public const string Separator = "  ·  ";
     }
 
-    /// <summary>your deck as a little pile of card backs: up to MaxShown mini cards, newest on top, each framed in its card's rarity colour, cascading up-right with a small alternating tilt; a count chip in the accent colour on the pile's top-right corner; under the pile, ALL CARDS ADDED UP on a dark rounded panel: the always-on combined effects with + / - markers (up to MaxLines, then '+N more'), a situational-effects count, and a last line naming the deck key (or controller button). visible on the island when the player holds any card; rebuilt when the collection changes, never per frame. The totals come from the always-on fold only, so they never flicker with conditions; conditional and aura effects are counted as situational instead. The pile is a button: clicking it (whenever a cursor is visible) or pressing the Deck key opens the DeckScreen.</summary>
+    /// <summary>your deck as a little pile of card backs: up to MaxShown mini cards, newest on top, each framed in its card's rarity colour, cascading up-right with a small alternating tilt; a count chip in the accent colour on the pile's top-right corner; under the pile, one small hint line naming the deck key (or controller button) on a fitted dark panel. The combined stats live in the DeckScreen (0.9.3: the corner list moved there - it could only ever show a slice and read as broken). visible on the island when the player holds any card; rebuilt when the collection changes, never per frame. The pile is a button: clicking it (whenever a cursor is visible) or pressing the Deck key opens the DeckScreen, where ALL CARDS ADDED UP lives.</summary>
     public static class Ui_DeckHud
     {
         public const string Parent = "root";
@@ -260,23 +260,15 @@ namespace CampfireCards.Generated
         public const float CountFontSize = 18.0f;
         public static readonly Color CountChipColor = new Color(1f, 0.86f, 0.55f, 1f);
         public static readonly Color CountTextColor = new Color(0.07f, 0.045f, 0.03f, 1f);
-        public const string TotalsHeader = "ALL CARDS ADDED UP";
-        public static readonly Color HeaderColor = new Color(1f, 0.86f, 0.55f, 1f);
-        public const float FontSize = 18.0f;
-        public const float MinFontSize = 13.0f;
-        public const float LineHeight = 1.2f;
-        public static readonly Color Color = new Color(1f, 1f, 1f, 0.9f);
+        public const float FontSize = 16.0f;
+        public const float MinFontSize = 12.0f;
         public static readonly Color HintColor = new Color(0.8f, 0.74f, 0.68f, 1f);
         public static readonly Color Panel = new Color(0.06f, 0.036f, 0.024f, 0.75f);
-        public const float Padding = 12.0f;
+        public const float Padding = 8.0f;
         public const float Width = 340.0f;
-        public const float MaxLines = 5.0f;
-        public const string MoreTemplate = "+{0} more";
-        public const string SituationalOne = "1 situational effect";
-        public const string SituationalMany = "{0} situational effects";
-        public const string HintTemplate = "[{0}] Open your deck";
+        public const string HintTemplate = "[{0}] Cards and effects";
         public const float PileGap = 12.0f;
-        public const string HintAllTemplate = "[{0}] See all card effects";
+        public const float LogoFrac = 0.8f;
     }
 
     /// <summary>dark panel, white text. toastSeconds notices; warnings that ask the players to act (settings or version mismatch) stay warningToastSeconds</summary>
@@ -362,7 +354,7 @@ namespace CampfireCards.Generated
         public const string GiveUpLaterTemplate = "{0}: after this pick, you give up one of your cards.";
     }
 
-    /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop: YOUR DECK. The deck expands from a pile into a fan of full card faces (rows of up to Fan.MaxPerRow, scaled to fit the band between the subtitle and the totals panel); under the fan, ALL CARDS ADDED UP on a dark panel: the combined stats from the live Effects fold in two balanced columns, with + / - markers, on-now and off-now marks, the difficulty strength line, and FROM TEAMMATES auras. Clicking a card pulls it out: the card enlarged on the left, a detail panel on the right (rarity and name, benefit, drawback, every conditional modifier marked active or not right now, its charge or cooldown, aura reach, when it was picked, flavour), with < and > arrows that flip through the deck. The Deck key steps to TEAM DECKS: every other player as a small pile of card backs in their rarity colours (name, card count and state (passed out / ghost), Clown Luggage penalties above it, a count chip on the pile); clicking a deck fans that player’s cards out as card faces in pick order; the key again closes the screen. opened with the Deck key on the island (or by clicking the DeckHud pile); the key then steps to TEAM DECKS (with teammates in the run) and a third press closes, from the team views alike; Esc and a backdrop click back out one step instead (pulled card -> fan, a teammate’s fanned cards -> the team decks, anything else closes), and the pause menu never opens over this screen: Esc raises Pause and UICancel together, the window consumes both, and hooks.json pausePressed catches what still reaches LateUpdate (a controller Start press). Closed by a pick fan opening or leaving the run. The fan expands from the pile centre over expandSeconds with cardStaggerSeconds between cards. Totals and the pulled card’s detail refresh 4 times a second from the live Effects fold and Core.BuildStats, never recomputed in the UI. Controller: the first card (or deck pile) is selected on open, grid navigation, confirm pulls a card out or opens a pile, < and > flip, cancel backs out.</summary>
+    /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop: YOUR DECK. The deck expands from a pile into a fan of full card faces (rows of up to Fan.MaxPerRow, scaled to fit the band between the subtitle and the totals panel); under the fan, ALL CARDS ADDED UP on a dark panel: the combined stats from the live Effects fold in two balanced columns, with + / - markers, on-now and off-now marks, the difficulty strength line, and FROM TEAMMATES auras. Clicking a card pulls it out: the card enlarged on the left, a detail panel on the right (rarity and name, benefit, drawback, every conditional modifier marked active or not right now, its charge or cooldown, aura reach, when it was picked, flavour), with < and > arrows that flip through the deck. The Deck key steps to TEAM DECKS: every other player as a small pile of card backs in their rarity colours (name, card count and state (passed out / ghost), Clown Luggage penalties above it, a count chip on the pile); clicking a deck fans that player’s cards out as card faces in pick order with ALL CARDS ADDED UP (their always-on combined stats and a situational count) on a panel beneath; the key again closes the screen. opened with the Deck key on the island (or by clicking the DeckHud pile); the key then steps to TEAM DECKS (with teammates in the run) and a third press closes, from the team views alike; Esc and a backdrop click back out one step instead (pulled card -> fan, a teammate’s fanned cards -> the team decks, anything else closes), and the pause menu never opens over this screen: Esc raises Pause and UICancel together, the window consumes both, and hooks.json pausePressed catches what still reaches LateUpdate (a controller Start press). Closed by a pick fan opening or leaving the run. The fan expands from the pile centre over expandSeconds with cardStaggerSeconds between cards. Totals and the pulled card’s detail refresh 4 times a second from the live Effects fold and Core.BuildStats, never recomputed in the UI. Controller: the first card (or deck pile) is selected on open, grid navigation, confirm pulls a card out or opens a pile, < and > flip, cancel backs out.</summary>
     public static class Ui_DeckScreen
     {
         public const string Parent = "root";
@@ -455,6 +447,11 @@ namespace CampfireCards.Generated
         public const float TeamDeckScale = 0.8f;
         public const float TotalsMaxHeight = 480.0f;
         public const float MinFanBand = 280.0f;
+        public const float TeamStatsWidth = 980.0f;
+        public const float TeamStatsGap = 24.0f;
+        public const string TeamSituationalOne = "+1 effect that needs a situation or a teammate";
+        public const string TeamSituationalMany = "+{0} effects that need a situation or a teammate";
+        public const string TeamNothing = "These cards change nothing on their own.";
     }
 
     /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop and a small centred panel: a title naming the card, one button per choosable item (only items the ItemDatabase can spawn are listed), and a hint line. Used by Balright to pick the mythic item its campfire delivers.. opened after the card fan closes at a campfire where the owner still has the choice; a click sends the pick to the host (SpawnItem) and closes; Esc or cancel postpones to the next campfire. Controller: the first button is selected, up/down moves, confirm chooses.</summary>
@@ -479,6 +476,94 @@ namespace CampfireCards.Generated
         public const string Hint = "Click an item to spawn it by the fire. Esc: decide at the next campfire.";
         public const float HintFontSize = 16.0f;
         public static readonly Color HintColor = new Color(0.8f, 0.74f, 0.68f, 1f);
+    }
+
+    /// <summary>the mod's wordmark while cards are being picked: the campfire logo (art/CampfireLogo.png), CAMPFIRE CARDS in the display font in the accent colour, a small tilted BETA sticker to the right, and one muted line underneath crediting NotNic and asking testers to press the report key when something misbehaves. built once into the CardPicker window, so it appears whenever a pick (opening, campfire, sacrifice or bonus) is on screen and never anywhere else; sized under the picker title's band (Title.Y -70) so nothing overlaps. The feedback line names the configured report key (Keys.BugReport).</summary>
+    public static class Ui_Branding
+    {
+        public const string Parent = "root";
+        public static readonly Vector2 Size = new Vector2(1400f, 70f);
+        public const string Anchor = "top center, the strip above the picker title";
+        public const string Text = "{branding}";
+        public const string SoundOn = "none";
+        public const float Top = 6.0f;
+        public const float RowHeight = 44.0f;
+        public const float FontSize = 38.0f;
+        public static readonly Color Color = new Color(1f, 0.86f, 0.55f, 1f);
+        public const string Title = "CAMPFIRE CARDS";
+        public const float LogoSize = 46.0f;
+        public const float LogoGap = 14.0f;
+        public const string Beta = "BETA";
+        public const float BetaW = 74.0f;
+        public const float BetaH = 30.0f;
+        public const float BetaFontSize = 18.0f;
+        public const float BetaTilt = 8.0f;
+        public const float BetaLift = 10.0f;
+        public static readonly Color BetaColor = new Color(1f, 0.86f, 0.55f, 1f);
+        public static readonly Color BetaTextColor = new Color(0.07f, 0.045f, 0.03f, 1f);
+        public const float SmallFontSize = 15.0f;
+        public static readonly Color SmallColor = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public const float LineY = 48.0f;
+        public const string Credit = "Developed by NotNic";
+        public const string Separator = "  ·  ";
+        public const string Feedback = "It's a beta: press {0} to report anything that misbehaves. Every report helps - thanks!";
+    }
+
+    /// <summary>MenuWindow (blocksPlayerInput, showCursorWhileOpen) with a dark backdrop and a centred panel: REPORT A PROBLEM, a privacy line, four category chips the player can toggle (effect didn't work / something broke / lag / not what I expected), a multi-line comment box, an 'attach the mod log' checkbox, and Send / Cancel buttons. The draft (comment, chips, checkbox) survives closing and reopening within the session.. opened with the BugReport key (config Keys, default F9) on the island; the game's windowBlockingInput silences movement and every other mod key while it is open, so typing never walks the scout off a cliff. Esc, cancel or a backdrop click closes it (the draft is kept; pauseWasPressed is consumed so the pause menu never opens on top). Send builds the payload (versions, scene, deck ids, room size, categories, comment, and the scrubbed log tail when the checkbox is on), posts it to the configured endpoint (Reporting.Endpoint), and falls back to a local file in the plugin folder when the post fails or no endpoint is set.</summary>
+    public static class Ui_BugReport
+    {
+        public const string Parent = "root";
+        public static readonly Vector2 Size = new Vector2(760f, 560f);
+        public const string Anchor = "center";
+        public const string Text = "{report}";
+        public const string SoundOn = "none";
+        public static readonly Color Backdrop = new Color(0.04f, 0.025f, 0.015f, 0.72f);
+        public static readonly Color Panel = new Color(0.045f, 0.03f, 0.02f, 0.88f);
+        public const string Title = "REPORT A PROBLEM";
+        public const float TitleFontSize = 34.0f;
+        public static readonly Color TitleColor = new Color(1f, 1f, 1f, 1f);
+        public const string PrivacyLine = "Goes straight to the mod author. No names, accounts or system info are sent.";
+        public const float PrivacyFontSize = 15.0f;
+        public static readonly Color PrivacyColor = new Color(0.8f, 0.74f, 0.68f, 1f);
+        public const string CatEffect = "An effect didn't work";
+        public const string CatBroke = "Something broke";
+        public const string CatLag = "Lag or stutter";
+        public const string CatSurprise = "Not what I expected";
+        public const float ChipFontSize = 17.0f;
+        public const float ChipHeight = 40.0f;
+        public const float ChipGap = 10.0f;
+        public const float ChipPadding = 16.0f;
+        public static readonly Color ChipColor = new Color(0.06f, 0.036f, 0.024f, 0.75f);
+        public static readonly Color ChipOnColor = new Color(1f, 0.86f, 0.55f, 1f);
+        public static readonly Color ChipTextColor = new Color(1f, 1f, 1f, 0.9f);
+        public static readonly Color ChipOnTextColor = new Color(0.07f, 0.045f, 0.03f, 1f);
+        public const string CommentLabel = "What happened?";
+        public const string Placeholder = "What went wrong, where, and what you expected instead...";
+        public const float CommentFontSize = 19.0f;
+        public const float CommentHeight = 170.0f;
+        public const float CommentLimit = 500.0f;
+        public static readonly Color FieldColor = new Color(0.06f, 0.036f, 0.024f, 0.75f);
+        public static readonly Color TextColor = new Color(1f, 1f, 1f, 1f);
+        public const string LogToggle = "Attach the mod log (player names and usernames are removed)";
+        public const float ToggleFontSize = 16.0f;
+        public const float CheckSize = 26.0f;
+        public const string SendLabel = "SEND";
+        public const string CancelLabel = "CANCEL";
+        public const float ButtonFontSize = 22.0f;
+        public const float ButtonWidth = 180.0f;
+        public const float ButtonHeight = 52.0f;
+        public const float ButtonGap = 20.0f;
+        public static readonly Color SendColor = new Color(1f, 0.86f, 0.55f, 1f);
+        public static readonly Color CancelColor = new Color(0.06f, 0.036f, 0.024f, 0.75f);
+        public const float Pad = 28.0f;
+        public const float RowGap = 14.0f;
+        public const string SentToast = "Thanks! Your report is on its way.";
+        public const string FailedToast = "Couldn't send the report - it was saved next to the mod instead ({0}).";
+        public const string SavedToast = "No report server in this build - your report was saved next to the mod ({0}).";
+        public const string EmptyToast = "Nothing to send yet: write a line or pick a category first.";
+        public const string WaitToast = "Easy there - give it {0} more seconds before the next report.";
+        public const string KeptText = "Couldn't send or save the report - your words are kept here, try again in a bit.";
+        public const string SendingLabel = "SENDING...";
     }
 
 }

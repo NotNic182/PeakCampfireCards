@@ -75,7 +75,8 @@ explain the status terms and the supplied log.
 | N | Budget Checkpoint Flag: place your anchor on flat ground (once per biome) |
 | Y / U / I | TSA (hold): mark food / unopened luggage / all other items on screen, through terrain, while the key is held |
 | F8 | Host only: everyone gets their cards from the saved run back after a crash, a rejoin or a relaunch |
-| J | Your deck: your cards fan out as real card faces with ALL CARDS ADDED UP (the combined result: sprint speed, jump height, stamina costs, regeneration, maximum stamina, Injury, item weight and more) beneath them. Click a card to pull it out and see everything it does — benefit, drawback, which conditional effects are active right now, charges and cooldowns — and flip through the deck with < and >. Press J again for TEAM DECKS: every teammate as a pile of card backs — click a deck (or its name) to look through their cards. A third press closes, and Esc always backs out one step without opening the pause menu. Clicking the pile in the corner opens it too |
+| F9 | Report a problem: pick what went wrong, write a line, optionally attach the mod log (usernames and player names are scrubbed out first), and send it straight to the mod author |
+| J | Your deck: your cards fan out as real card faces with ALL CARDS ADDED UP (the combined result: sprint speed, jump height, stamina costs, regeneration, maximum stamina, Injury, item weight and more) beneath them. Click a card to pull it out and see everything it does — benefit, drawback, which conditional effects are active right now, charges and cooldowns — and flip through the deck with < and >. Press J again for TEAM DECKS: every teammate as a pile of card backs — click a deck (or its name) to look through their cards and their combined stats. A third press closes, and Esc always backs out one step without opening the pause menu. Clicking the pile in the corner opens it too |
 
 **With a controller**, move between offered cards with the D-pad or stick and confirm to take one. The ability keys and
 the deck key also get a controller button: by default the first of D-pad up, down, left, right, View/Select or a stick
@@ -88,7 +89,8 @@ After you take a card, it stays raised and the others dim until the host confirm
 5 seconds, you can choose again.
 
 Your cards also live on the HUD as a little pile of card backs in the bottom-left corner — newest pick on top, a count
-chip, and the always-on combined effects added up underneath.
+chip, and the deck key named underneath. The combined effects moved into the deck screen (J), where there is room to
+show every line instead of a slice.
 
 **Screen size.** The card UI fits any resolution and aspect ratio, from a Steam Deck to 32:9. `General.UiScale` sets its
 size: `0` (default) is automatic and a little larger on screens 900 pixels tall or less; `0.75` to `1.5` sets it
@@ -251,7 +253,12 @@ without re-paying any pick-time costs. Restore promptly: the memory holds the cu
   - `PickMode`: `Simultaneous` (default) or `Turns`. The host's choice applies to everyone.
 - `Keys`: `SecondWind` (V), `EmergencyPurge` (K), `BloodBattery` (B), `SafetyNet` (N), `BuildScreen` (J),
   `ScavengerFood` (Y), `ScavengerLuggage` (U), `ScavengerMisc` (I) — held, not pressed, and only with TSA —
-  and `RestoreRun` (F8, host only).
+  `BugReport` (F9), and `RestoreRun` (F8, host only).
+- `Reporting`: `Endpoint` (where F9 reports go; empty saves them to `plugins/CampfireCards/reports/` instead) and
+  `InstallId` (a random id that groups one install's reports — it carries no account, name or system information).
+  Before a report leaves your machine, the attached log is scrubbed: user-folder paths, your OS user name, every
+  player name in the room, Steam ids, IP addresses and e-mail addresses are replaced with placeholders. The
+  [report server](server/report-server/README.md) stores no addresses either.
 - `Cards`: `OfferCount` (3; 1 to 10 cards per pick), `Drawbacks` (false = cards keep only their benefits),
   `AllowDuplicates`, `MythicsEnabled`, and `DisabledCards` (cards that are never offered, comma separated, by the
   name on the card; for the three names that themselves contain a comma, use the card key from

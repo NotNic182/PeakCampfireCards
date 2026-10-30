@@ -50,12 +50,18 @@ namespace CampfireCards.Cards
         /// auras), without any teammate's aura. The Current Build screen shows it next to Local, so a temporary effect
         /// is never presented as permanent.
         /// </summary>
-        public static void FoldAlways(ModResult into)
+        public static void FoldAlways(ModResult into) => FoldAlwaysOf(NetSend.LocalActor, into);
+
+        /// <summary>
+        /// Any scout's always-on fold from their synced card list (the team deck view). Conditions can only be evaluated
+        /// for the local scout, so this is the honest remote view: what their cards always do, nothing situational.
+        /// </summary>
+        public static void FoldAlwaysOf(int actor, ModResult into)
         {
             var mods = new List<ActiveMod>();
             var s = CardSettings.Current;
             List<byte> list;
-            if (CardsByActor.TryGetValue(NetSend.LocalActor, out list))
+            if (CardsByActor.TryGetValue(actor, out list))
             {
                 foreach (var id in list)
                 {
@@ -69,7 +75,7 @@ namespace CampfireCards.Cards
                     }
                 }
             }
-            AddPenalties(mods, NetSend.LocalActor);
+            AddPenalties(mods, actor);
             into.Fold(mods, s);
         }
 

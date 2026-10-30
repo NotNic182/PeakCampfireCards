@@ -6,7 +6,7 @@
     <AssemblyName>CampfireCards</AssemblyName>
     <RootNamespace>CampfireCards</RootNamespace>
     <Nullable>disable</Nullable>
-    <Version>0.9.2</Version>
+    <Version>0.9.3</Version>
     <Product>Campfire Cards</Product>
     <Authors>NotNic</Authors>
     <DebugType>portable</DebugType>
@@ -55,6 +55,7 @@
     <Reference Include="UnityEngine.ImageConversionModule"><HintPath>$(Managed)\UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(Managed)\UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.AnimationModule"><HintPath>$(Managed)\UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule"><HintPath>$(Managed)\UnityEngine.UnityWebRequestModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 
 </Project>

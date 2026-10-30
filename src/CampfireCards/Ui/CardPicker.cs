@@ -170,6 +170,8 @@ namespace CampfireCards.Ui
                 if (isOpen && Current == Mode.Reveal) HideNow();
             };
 
+            BuildBranding();
+
             _title = UiKit.Text(transform, "Title", Ui_Title.Size, Ui_Title.FontSize, Ui_Title.Color, TextAlignmentOptions.Center, FontStyles.Bold | FontStyles.UpperCase);
             UiKit.Place(_title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, Ui_Title.Y));
             UiKit.AutoSize(_title, Ui_Title.MinFontSize);   // the long sacrifice title on a narrow screen
@@ -185,6 +187,42 @@ namespace CampfireCards.Ui
             _grid.spacing = new Vector2(Ui_Fan.Spacing, Ui_Fan.Spacing);
             _grid.childAlignment = TextAnchor.MiddleCenter;
             _grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        }
+
+        /// <summary>
+        /// ui.json Branding: the wordmark strip above the pick title - logo, CAMPFIRE CARDS, a tilted BETA sticker,
+        /// and one muted credit-and-feedback line naming the report key. Built once; it lives and dies with the window.
+        /// </summary>
+        private void BuildBranding()
+        {
+            var row = UiKit.Node(transform, "Branding", new Vector2(UiKit.FitWidth(1400f), Ui_Branding.RowHeight));
+            UiKit.Place(UiKit.Rect(row), new Vector2(0.5f, 1f), new Vector2(0f, -Ui_Branding.Top));
+
+            var name = UiKit.Text(row.transform, "Name", new Vector2(900f, Ui_Branding.RowHeight), Ui_Branding.FontSize, Ui_Branding.Color, TextAlignmentOptions.Center, FontStyles.Bold | FontStyles.UpperCase);
+            UiKit.Place(name.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
+            name.text = Ui_Branding.Title;
+            name.ForceMeshUpdate(true);
+            float half = name.textBounds.size.x * 0.5f;   // the logo and the sticker hug the measured wordmark
+
+            var logo = Art.Logo.Sprite;
+            if (logo != null)
+            {
+                var img = UiKit.Panel(row.transform, "Logo", Vector2.one * Ui_Branding.LogoSize, Color.white, logo);
+                img.preserveAspect = true;
+                UiKit.Place(img.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-half - Ui_Branding.LogoGap - Ui_Branding.LogoSize * 0.5f, 0f));
+            }
+
+            var sticker = UiKit.Panel(row.transform, "Beta", new Vector2(Ui_Branding.BetaW, Ui_Branding.BetaH), Ui_Branding.BetaColor, Art.Shapes.Panel);
+            sticker.type = Image.Type.Sliced;
+            UiKit.Place(sticker.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(half + Ui_Branding.LogoGap + Ui_Branding.BetaW * 0.5f, Ui_Branding.BetaLift));
+            sticker.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Ui_Branding.BetaTilt);   // slapped on, not printed
+            var stickerText = UiKit.Text(sticker.transform, "Label", new Vector2(Ui_Branding.BetaW, Ui_Branding.BetaH), Ui_Branding.BetaFontSize, Ui_Branding.BetaTextColor, TextAlignmentOptions.Center, FontStyles.Bold);
+            UiKit.Place(stickerText.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
+            stickerText.text = Ui_Branding.Beta;
+
+            var line = UiKit.Text(transform, "BrandingLine", new Vector2(UiKit.FitWidth(1300f), Ui_Branding.SmallFontSize * 1.5f), Ui_Branding.SmallFontSize, Ui_Branding.SmallColor, TextAlignmentOptions.Top);
+            UiKit.Place(line.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -Ui_Branding.LineY));
+            line.text = Ui_Branding.Credit + Ui_Branding.Separator + string.Format(Ui_Branding.Feedback, Plugin.BugReportKeyLabel);
         }
 
         /// <summary>A pick offer (Mode.Pick).</summary>
