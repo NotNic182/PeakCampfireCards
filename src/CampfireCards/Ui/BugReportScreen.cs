@@ -387,7 +387,14 @@ namespace CampfireCards.Ui
                 IsHost = NetSend.IsHost,
                 Players = 1,
             };
-            try { r.GameVersion = Application.version; } catch { }
+            try
+            {
+                // PEAK bakes a launch arg into its bundle version ("3.0.1--logFile"); keep the number only
+                string gv = Application.version ?? "";
+                int cut = gv.IndexOf("--", StringComparison.Ordinal);
+                r.GameVersion = cut > 0 ? gv.Substring(0, cut) : gv;
+            }
+            catch { }
             try { r.Scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name; } catch { }
             try { if (Photon.Pun.PhotonNetwork.CurrentRoom != null) r.Players = Photon.Pun.PhotonNetwork.CurrentRoom.PlayerCount; } catch { }
             var s = CardSettings.Current;

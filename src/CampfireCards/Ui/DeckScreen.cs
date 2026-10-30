@@ -329,7 +329,7 @@ namespace CampfireCards.Ui
             {
                 Art.Sfx.Play(Ui_DeckScreen.PullSound);
                 try { UIInputHandler.SetSelectedObject(_next.gameObject); }
-                catch (System.Exception e) { Plugin.Verbose("controller selection skipped: " + e.Message); }
+                catch (System.Exception e) { Plugin.Log.LogWarning("controller selection skipped: " + e.Message); }
             }
         }
 
@@ -477,7 +477,7 @@ namespace CampfireCards.Ui
             if (_buttons.Count == 0) return;
             index = Mathf.Clamp(index, 0, _buttons.Count - 1);
             try { UIInputHandler.SetSelectedObject(_buttons[index].gameObject); }
-            catch (System.Exception e) { Plugin.Verbose("controller selection skipped: " + e.Message); }
+            catch (System.Exception e) { Plugin.Log.LogWarning("controller selection skipped: " + e.Message); }
         }
 
         /// <summary>The deck expands: every card flies from the pile point (the fan's centre) out to its slot.</summary>
@@ -813,7 +813,7 @@ namespace CampfireCards.Ui
             if (_teamButtons.Count > 0)
             {
                 try { UIInputHandler.SetSelectedObject(_teamButtons[0].gameObject); }
-                catch (System.Exception e) { Plugin.Verbose("controller selection skipped: " + e.Message); }
+                catch (System.Exception e) { Plugin.Log.LogWarning("controller selection skipped: " + e.Message); }
             }
         }
 

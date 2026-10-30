@@ -155,7 +155,7 @@ namespace CampfireCards.Cards
                     if (actor == int.MinValue || Turns.IsClaimed(actor)) continue;
                     var hand = Turns.HandOf(actor);
                     if (hand.Length == 0) continue;
-                    Plugin.Verbose($"Pick timeout for actor {actor}: waited {waited:0.0}s of {TimeoutSeconds}s");
+                    Plugin.Log.LogInfo($"Pick timeout for actor {actor}: waited {waited:0.0}s of {TimeoutSeconds}s");
                     var rng = DealRandom.Shared;
                     HostAccept(actor, hand[rng.Next(hand.Length)], auto: true);
                     picked = true;
@@ -253,7 +253,7 @@ namespace CampfireCards.Cards
         {
             if (m.sessionId == _awaitingStart) _awaitingStart = 0;
             // a replayed or out-of-date start never restarts a session
-            if (!_seenSessions.Add(m.sessionId)) { Plugin.Verbose($"Ignored repeated session start {m.sessionId}"); return; }
+            if (!_seenSessions.Add(m.sessionId)) { Plugin.Log.LogInfo($"Ignored repeated session start {m.sessionId}"); return; }
             _queue.MarkStarted(m.segment);
             if (m.segment == 255) _openingPending = false;   // a later host never deals the opening again
             if (m.order == null || m.hands == null || m.handSize == 0 || m.handSize > CardSettings.MaxOfferCount || m.hands.Length < m.order.Length * m.handSize)
@@ -289,7 +289,7 @@ namespace CampfireCards.Cards
                         : string.Format(Ui_Toast.SkipTemplate, NetSend.NameOf(actor), Deck.NameOfAbility("PhoenixClause")));
                 Effects.SetFlag(actor, (byte)(Effects.FlagSkipNext | Effects.FlagOfferOne), false);
             }
-            Plugin.Verbose($"Pick session {SessionId} reason {Reason} mode {mode}: order {string.Join(",", Turns.Order)}");
+            Plugin.Log.LogInfo($"Pick session {SessionId} reason {Reason} mode {mode}: order {string.Join(",", Turns.Order)}");
             Refresh(sessionStarted: true);
         }
 
@@ -410,11 +410,11 @@ namespace CampfireCards.Cards
                     Effects.AddCard(m.actor, m.cardId, live: true);
                     return;
                 }
-                Plugin.Verbose($"Ignored pick: actor {m.actor} card {m.cardId} session {m.sessionId}: {verdict}");
+                Plugin.Log.LogInfo($"Ignored pick: actor {m.actor} card {m.cardId} session {m.sessionId}: {verdict}");
                 return;
             }
             Turns.Apply(m.actor);
-            Plugin.Verbose($"Pick: actor {m.actor} card {m.cardId} auto={m.auto} session {m.sessionId}");
+            Plugin.Log.LogInfo($"Pick: actor {m.actor} card {m.cardId} auto={m.auto} session {m.sessionId}");
             bool added = Effects.AddCard(m.actor, m.cardId, live: true);
             if (added && NetSend.IsHost) HostGrantBonus(m.actor, m.cardId, m.sessionId);
             string who = m.actor == NetSend.LocalActor ? Ui_Toast.You : NetSend.NameOf(m.actor);
@@ -496,7 +496,7 @@ namespace CampfireCards.Cards
         public static void OnSkipped(PickSkipped m)
         {
             if (!Turns.Skip(m.sessionId, m.actor)) return;
-            Plugin.Verbose($"Actor {m.actor} no longer eligible for pick session {m.sessionId}");
+            Plugin.Log.LogInfo($"Actor {m.actor} no longer eligible for pick session {m.sessionId}");
             if (m.actor == NetSend.LocalActor) HidePickFan();
             Refresh();
         }
@@ -505,7 +505,7 @@ namespace CampfireCards.Cards
         public static void OnPlayerLeft(int actor)
         {
             if (!Turns.Active || !Turns.RemoveActor(actor)) return;
-            Plugin.Verbose($"Actor {actor} left during pick session {SessionId}");
+            Plugin.Log.LogInfo($"Actor {actor} left during pick session {SessionId}");
             Refresh();
         }
 

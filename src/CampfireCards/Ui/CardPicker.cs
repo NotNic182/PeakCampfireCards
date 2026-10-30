@@ -296,7 +296,7 @@ namespace CampfireCards.Ui
             if (_buttons.Count > 0)
             {
                 try { UIInputHandler.SetSelectedObject(_buttons[0].gameObject); }
-                catch (System.Exception e) { Plugin.Verbose("controller selection skipped: " + e.Message); }
+                catch (System.Exception e) { Plugin.Log.LogWarning("controller selection skipped: " + e.Message); }
             }
             Sfx.Play(Ui_PickerWindow.SoundOn);
             StartCoroutine(SlideIn());
@@ -359,7 +359,7 @@ namespace CampfireCards.Ui
         private void Choose(byte id)
         {
             if (_picked) return;
-            Plugin.Verbose($"Card clicked: {id} ({Deck.NameOf(id)}) mode={Current}");
+            Plugin.Log.LogInfo($"Card clicked: {id} ({Deck.NameOf(id)}) mode={Current}");
             switch (Current)
             {
                 case Mode.Pick:

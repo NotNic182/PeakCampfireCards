@@ -147,7 +147,7 @@ namespace CampfireCards.Ui
             if (!isOpen) OpenM.Invoke(this, null);
             Art.Sfx.Play(Ui_ItemChooser.SoundOn);
             try { UIInputHandler.SetSelectedObject(_buttons[0].gameObject); }
-            catch (System.Exception e) { Plugin.Verbose("controller selection skipped: " + e.Message); }
+            catch (System.Exception e) { Plugin.Log.LogWarning("controller selection skipped: " + e.Message); }
         }
 
         private void Choose(byte index)

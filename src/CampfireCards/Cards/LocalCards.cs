@@ -112,7 +112,7 @@ namespace CampfireCards.Cards
         {
             if (biome == Biome) return;
             Biome = biome;
-            Plugin.Verbose("Biome started: " + biome);
+            Plugin.Log.LogInfo("Biome started: " + biome);
             foreach (var a in _abilities.Values.ToList())
             {
                 try { a.OnBiomeStarted(me, biome); }
@@ -179,7 +179,7 @@ namespace CampfireCards.Cards
             if (_downHandled) return;
             _downHandled = true;
             _revivePending = TryRevive(me);
-            Plugin.Verbose($"Incapacitation {IncapEvent}: revival {(_revivePending ? "started" : "none")}");
+            Plugin.Log.LogInfo($"Incapacitation {IncapEvent}: revival {(_revivePending ? "started" : "none")}");
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace CampfireCards.Cards
             foreach (var a in _abilities.Values.ToList())
                 if (a.Card.Ability == "EternalCampfire" && a.TryRevive(me, IncapEvent)) { _revivePending = true; break; }
             if (!_revivePending) _revivePending = Ability_EternalCampfire.RequestFromTeammate(me, IncapEvent);
-            Plugin.Verbose($"Death {IncapEvent}: Eternal Campfire revival {(_revivePending ? "requested" : "none")}");
+            Plugin.Log.LogInfo($"Death {IncapEvent}: Eternal Campfire revival {(_revivePending ? "requested" : "none")}");
         }
 
         /// <summary>The local scout is up again (woke up or was revived): the next time it goes down is a new event.</summary>

@@ -127,7 +127,7 @@ namespace CampfireCards
         {
             if (__state == Campfire.FireState.Lit || !updateSegment) return;   // late-join sync, quicksave or debug
             if (!RunState.RunStarted) return;
-            Plugin.Verbose($"Campfire lit -> {__instance.advanceToSegment}");
+            Plugin.Log.LogInfo($"Campfire lit -> {__instance.advanceToSegment}");
             if (NetSend.IsHost) HostCampfireLit(__instance);
             var local = Character.localCharacter;
             // card effects first, so cards picked at this fire do not fire for it
