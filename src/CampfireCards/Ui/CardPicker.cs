@@ -111,6 +111,9 @@ namespace CampfireCards.Ui
         public enum Mode { Pick, Sacrifice, Reveal }
 
         private TextMeshProUGUI _title, _subtitle;
+        private TextMeshProUGUI _brandName;
+        private RectTransform _brandLogo, _brandSticker;
+        private bool _brandPlaced;
         private RectTransform _fan;
         private GridLayoutGroup _grid;
         private static readonly int MaxPerRow = Mathf.RoundToInt(Ui_Fan.MaxPerRow);
@@ -201,8 +204,11 @@ namespace CampfireCards.Ui
             var name = UiKit.Text(row.transform, "Name", new Vector2(900f, Ui_Branding.RowHeight), Ui_Branding.FontSize, Ui_Branding.Color, TextAlignmentOptions.Center, FontStyles.Bold | FontStyles.UpperCase);
             UiKit.Place(name.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
             name.text = Ui_Branding.Title;
-            name.ForceMeshUpdate(true);
-            float half = name.textBounds.size.x * 0.5f;   // the logo and the sticker hug the measured wordmark
+            _brandName = name;
+            // The logo and the sticker hug the wordmark, but TMP cannot measure a label on a window that has never
+            // been active (Build runs closed): start from an estimated width, measure for real on the first open
+            // frame (PlaceBranding, from Update).
+            float half = Ui_Branding.Title.Length * Ui_Branding.FontSize * 0.28f;
 
             var logo = Art.Logo.Sprite;
             if (logo != null)
@@ -210,12 +216,14 @@ namespace CampfireCards.Ui
                 var img = UiKit.Panel(row.transform, "Logo", Vector2.one * Ui_Branding.LogoSize, Color.white, logo);
                 img.preserveAspect = true;
                 UiKit.Place(img.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-half - Ui_Branding.LogoGap - Ui_Branding.LogoSize * 0.5f, 0f));
+                _brandLogo = img.rectTransform;
             }
 
             var sticker = UiKit.Panel(row.transform, "Beta", new Vector2(Ui_Branding.BetaW, Ui_Branding.BetaH), Ui_Branding.BetaColor, Art.Shapes.Panel);
             sticker.type = Image.Type.Sliced;
             UiKit.Place(sticker.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(half + Ui_Branding.LogoGap + Ui_Branding.BetaW * 0.5f, Ui_Branding.BetaLift));
             sticker.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Ui_Branding.BetaTilt);   // slapped on, not printed
+            _brandSticker = sticker.rectTransform;
             var stickerText = UiKit.Text(sticker.transform, "Label", new Vector2(Ui_Branding.BetaW, Ui_Branding.BetaH), Ui_Branding.BetaFontSize, Ui_Branding.BetaTextColor, TextAlignmentOptions.Center, FontStyles.Bold);
             UiKit.Place(stickerText.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero);
             stickerText.text = Ui_Branding.Beta;
@@ -432,10 +440,26 @@ namespace CampfireCards.Ui
             return rt != null && mouse != null && RectTransformUtility.RectangleContainsScreenPoint(rt, mouse.position.ReadValue(), null);
         }
 
+        /// <summary>
+        /// Snaps the logo and the BETA sticker to the measured wordmark width on the first frame the window is open:
+        /// only then is the TMP mesh real (Update runs before the frame renders, so the estimate is never seen).
+        /// </summary>
+        private void PlaceBranding()
+        {
+            if (_brandName == null) { _brandPlaced = true; return; }
+            _brandName.ForceMeshUpdate();
+            float half = _brandName.textBounds.size.x * 0.5f;
+            if (half <= 1f) return;   // nothing measurable yet; try again next frame
+            _brandPlaced = true;
+            if (_brandLogo != null) _brandLogo.anchoredPosition = new Vector2(-half - Ui_Branding.LogoGap - Ui_Branding.LogoSize * 0.5f, 0f);
+            if (_brandSticker != null) _brandSticker.anchoredPosition = new Vector2(half + Ui_Branding.LogoGap + Ui_Branding.BetaW * 0.5f, Ui_Branding.BetaLift);
+        }
+
         protected override void Update()
         {
             base.Update();
             if (!isOpen) return;
+            if (!_brandPlaced) PlaceBranding();
             if (_picked)
             {
                 // a sent pick with no answer: let the player choose again (the host refuses a second claim, so a late

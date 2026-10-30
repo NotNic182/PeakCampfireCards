@@ -200,7 +200,10 @@ namespace CampfireCards.Ui
             t.alignment = align;
             t.fontStyle = style;
             t.textWrappingMode = TextWrappingModes.Normal;
-            t.overflowMode = TextOverflowModes.Ellipsis;
+            // Ellipsis culls vertically too: a line that misses the rect height renders as nothing at all. A rect
+            // tighter than the font's line box (Darumadrop advances 1.45 em) holds a single centered label, so let
+            // it overflow instead of vanishing.
+            t.overflowMode = size.y < fontSize * 1.5f ? TextOverflowModes.Overflow : TextOverflowModes.Ellipsis;
             t.raycastTarget = false;
             t.richText = true;
             return t;
