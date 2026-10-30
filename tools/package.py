@@ -40,18 +40,38 @@ for name in sorted(os.listdir(os.path.join(ROOT, 'assets', 'card-images'))):
     if name.endswith('.png'):
         FILES.append((os.path.join(ROOT, 'assets', 'card-images', name), 'art/cards/' + name))
 
+# Thunderstore wants manifest.json, icon.png (exactly 256x256) and README.md at the zip ROOT, above plugins/.
+# Mod managers treat them as metadata and install only the plugins/ tree, so the game folder sees none of this.
+ROOT_FILES = [
+    (os.path.join(ROOT, 'assets', 'logo', 'CampfireLogo.png'), 'icon.png'),
+    (os.path.join(ROOT, 'README.md'), 'README.md'),
+    (os.path.join(ROOT, 'CHANGELOG.md'), 'CHANGELOG.md'),
+]
+
+MANIFEST = {
+    'name': 'CampfireCards',
+    'version_number': VERSION,
+    'website_url': 'https://github.com/NotNic182/PeakCampfireCards',
+    'description': 'A card at every campfire: 64 buffs, drawbacks and abilities that stack for the whole run, '
+                   'for you and the whole lobby. Deck screen on J, bug reports on F9. Beta - every report helps.',
+    'dependencies': ['BepInEx-BepInExPack_PEAK-5.4.75301'],
+}
+
 
 def main():
-    for src, _ in FILES:
+    for src, _ in FILES + ROOT_FILES:
         if not os.path.exists(src):
             print('missing', src); sys.exit(1)
     out = os.path.join(ROOT, 'build', f'CampfireCards-{VERSION}.zip')
     with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
+        z.writestr('manifest.json', json.dumps(MANIFEST, indent=1))
+        for src, name in ROOT_FILES:
+            z.write(src, name)
         for src, name in FILES:
             z.write(src, 'plugins/CampfireCards/' + name)
     size = os.path.getsize(out)
     sha = hashlib.sha256(open(out, 'rb').read()).hexdigest()
-    entries = [f'plugins/CampfireCards/{n}' for _, n in FILES]
+    entries = ['manifest.json'] + [n for _, n in ROOT_FILES] + [f'plugins/CampfireCards/{n}' for _, n in FILES]
     meta = {'file': os.path.basename(out), 'version': VERSION, 'size': size, 'sha256': sha, 'entries': entries}
     json.dump(meta, open(os.path.join(ROOT, 'build', 'package.json'), 'w'), indent=1)
     print(json.dumps(meta, indent=1))
