@@ -19,6 +19,8 @@ namespace CampfireCards
             AccessTools.FieldRefAccess<CharacterVineClimbing, Character>("character");
         private static readonly AccessTools.FieldRef<CharacterGrabbing, Character> GrabbingCharacter =
             AccessTools.FieldRefAccess<CharacterGrabbing, Character>("character");
+        private static readonly AccessTools.FieldRef<CharacterMovement, Character> MovementCharacter =
+            AccessTools.FieldRefAccess<CharacterMovement, Character>("character");
 
         /// <summary>Inside a climbing method of this scout: its UseStamina calls are climbing costs.</summary>
         [ThreadStatic] private static Character _climbCtx;
@@ -202,6 +204,24 @@ namespace CampfireCards
         }
 
         // ------------------------------------------------------------------ jumps
+        /// <summary>
+        /// hooks.json jumpGravity postfix. A jump is one physics step of velocity, and the per-tick body drag halves
+        /// that velocity every ~70 ms, so apex height grows only linearly with jumpImpulse and hang time barely moves -
+        /// a x1.3 impulse reads as nothing in play. The game's own jump buffs pair impulse with lighter gravity (each
+        /// balloon: impulse x1.25 + airborne gravity x0.9), so jumpHeight does the same: during the first 0.75 s of the
+        /// local scout's jump, downward gravity is divided by 1 + 0.5*(k-1). The early UPWARD jump assist (jumpGravity
+        /// +15 before the curve ramps negative) is never scaled, and falling outside a jump is untouched.
+        /// </summary>
+        public static void OnJumpGravity(CharacterMovement __instance, ref Vector3 __result)
+        {
+            if (__result.y >= 0f) return;
+            var ch = MovementCharacter(__instance);
+            if (!Mine(ch) || !ch.data.isJumping || ch.data.sinceJump > 0.75f) return;
+            float k = Effects.Local[Channel.jumpHeight];
+            if (k <= 1.0001f) return;
+            __result /= 1f + 0.5f * (k - 1f);
+        }
+
         /// <summary>hooks.json jumped: Second Spring notices its extra midair jump being used.</summary>
         public static void OnCharacterJumped(Character character, bool doubleJump)
         {

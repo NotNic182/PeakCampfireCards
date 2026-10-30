@@ -176,6 +176,12 @@ namespace CampfireCards.Generated
         [HarmonyPostfix] static void Postfix(Character character, bool doubleJump) { CampfireCards.Hooks.OnCharacterJumped(character, doubleJump); }
     }
 
+    [HarmonyPatch(typeof(CharacterMovement), "GetGravityForce")]
+    internal static class Patch_jumpGravity
+    {
+        [HarmonyPostfix] static void Postfix(CharacterMovement __instance, ref UnityEngine.Vector3 __result) { CampfireCards.Hooks.OnJumpGravity(__instance, ref __result); }
+    }
+
     [HarmonyPatch(typeof(Character), "RPCA_PassOut")]
     internal static class Patch_passOut
     {

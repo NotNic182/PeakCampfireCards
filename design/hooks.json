@@ -413,6 +413,21 @@
       "finalizerArgs": ""
     },
     {
+      "id": "jumpGravity",
+      "kind": "harmony",
+      "targetType": "CharacterMovement",
+      "targetMember": "GetGravityForce",
+      "signature": "",
+      "prefixArgs": "",
+      "prefixBool": false,
+      "postfixArgs": "CharacterMovement __instance, ref UnityEngine.Vector3 __result",
+      "handler": "OnJumpGravity",
+      "runsOn": "owner",
+      "purpose": "jumpHeight > 1 also lightens downward gravity during the jump arc (first 0.75 s): the per-tick body drag eats a bare impulse buff, so the card buys visible apex and hang time this way instead",
+      "verified": "CharacterMovement.cs:704-714 private Vector3 GetGravityForce(), consumed once at FixedUpdate:301 and scaled by ragdoll control x balloonFloatMultiplier at :313; isJumping set in JumpRpc:675, cleared on landing :754; sinceJump pinned 0 during the jump coroutine :669; vanilla precedent: each balloon pairs jump impulse x1.25 with airborne gravity x0.9 (CharacterBalloons.cs:64-65); drag rig.linearVelocity *= 0.85 per tick (Bodypart.cs:222-224 via FixedUpdate:328) makes apex ~linear in impulse (prefab values: jumpImpulse 400, jumpGravity +15, maxGravity -500, resources.assets)",
+      "finalizerArgs": ""
+    },
+    {
       "id": "passOut",
       "kind": "harmony",
       "targetType": "Character",
