@@ -321,7 +321,8 @@ namespace CampfireCards.Ui
             var cats = (bool[])_draftCats.Clone();   // kept so a total failure can hand the draft back
 
             string endpoint = Plugin.ReportEndpoint != null ? (Plugin.ReportEndpoint.Value ?? "").Trim() : "";
-            bool saveOnly = endpoint.Length == 0;
+            if (endpoint.Length == 0) endpoint = Plugin.DefaultReportEndpoint;   // stale empty configs pick up the baked server
+            bool saveOnly = endpoint.Length == 0 || endpoint.Equals("local", StringComparison.OrdinalIgnoreCase);
             // the report can carry a log: it never travels unencrypted (localhost excepted, for testing the server)
             if (!saveOnly && !endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
                           && !endpoint.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase)

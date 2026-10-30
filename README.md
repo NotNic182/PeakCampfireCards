@@ -254,7 +254,8 @@ without re-paying any pick-time costs. Restore promptly: the memory holds the cu
 - `Keys`: `SecondWind` (V), `EmergencyPurge` (K), `BloodBattery` (B), `SafetyNet` (N), `BuildScreen` (J),
   `ScavengerFood` (Y), `ScavengerLuggage` (U), `ScavengerMisc` (I) — held, not pressed, and only with TSA —
   `BugReport` (F9), and `RestoreRun` (F8, host only).
-- `Reporting`: `Endpoint` (where F9 reports go; empty saves them to `plugins/CampfireCards/reports/` instead) and
+- `Reporting`: `Endpoint` (where F9 reports go; empty uses the build's default server, `local` saves them to
+  `plugins/CampfireCards/reports/` instead) and
   `InstallId` (a random id that groups one install's reports — it carries no account, name or system information).
   Before a report leaves your machine, the attached log is scrubbed: user-folder paths, your OS user name, every
   player name in the room, Steam ids, IP addresses and e-mail addresses are replaced with placeholders. The

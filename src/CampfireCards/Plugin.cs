@@ -29,7 +29,7 @@ namespace CampfireCards
         /// Where in-game bug reports (Keys.BugReport) are sent: the report server's /report URL, baked per build so
         /// testers never have to configure anything. Empty: reports are saved to a local file instead of being sent.
         /// </summary>
-        public const string DefaultReportEndpoint = "";
+        public const string DefaultReportEndpoint = "https://peakcampfirecards-production.up.railway.app/report";
 
         public static Plugin Instance { get; private set; }
         public static ManualLogSource Log { get; private set; }
@@ -113,7 +113,7 @@ namespace CampfireCards
             ScavengerMiscPad = Config.Bind("Keys", "ScavengerMiscGamepad", Controls.None, "Controller button held to mark other items (TSA)." + padNote);
             BugReportPad = Config.Bind("Keys", "BugReportGamepad", Controls.None, "Controller button for the bug report window (writing the comment still needs a keyboard)." + padNote);
             ReportEndpoint = Config.Bind("Reporting", "Endpoint", DefaultReportEndpoint,
-                "Where in-game bug reports are sent (the report server's /report URL, HTTPS). Empty: reports are saved to a file in the mod folder instead of being sent.");
+                "Where in-game bug reports are sent (the report server's /report URL, HTTPS). Empty: the build's default server. local: reports are saved to a file in the mod folder instead of being sent.");
             InstallId = Config.Bind("Reporting", "InstallId", "",
                 "A random id that lets reports from the same install be grouped. It carries no account, name or system information. Clear it and a fresh one is made.");
             if (string.IsNullOrWhiteSpace(InstallId.Value)) InstallId.Value = System.Guid.NewGuid().ToString("N");
