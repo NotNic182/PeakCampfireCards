@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.5
+
+- **True Final Ascent compatibility.** Chained runs now work: every biome campfire deals cards - including the mid-chain fires between biomes that share a map segment (Tropics to Roots, Alpine to Mesa, the Kiln stretch) - and once-per-biome cards (Safety Net, Meditation, Blood Battery, Lucky Lunch, Discount Cure-All, Otto-Matic Clutch, Loaded Dice, The Eternal Campfire's revive) recharge at every biome, not once per run. Runs without True Final Ascent are untouched.
+- Campfires that would silently deal no cards now say so in the log, so F9 reports catch it.
+- Thanks to the scout who sent three detailed F9 reports about chained runs - they pinpointed both bugs.
+
 ## 0.9.4
 
 - Bug-report logs now tell the whole story: picks, campfires, biomes, knockouts and revives always leave a line in the log, so an F9 report without a comment is still diagnosable. These are a handful of lines per run - no spam.
