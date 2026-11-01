@@ -21,7 +21,8 @@ namespace CampfireCards
         public static bool RunStarted;
         public static bool SentOpeningArrival;
         public static float GroundedSince = -1f;
-        public static readonly HashSet<byte> ArrivedSegments = new HashSet<byte>();
+        /// <summary>Campfires this scout already sent an Arrival for - by object, since chained runs reuse segment numbers.</summary>
+        public static readonly HashSet<Campfire> ArrivedFires = new HashSet<Campfire>();
 
         /// <summary>Everything the mod changed goes back to vanilla: cards, flags, timers, stat changes, UI.</summary>
         public static void Reset()
@@ -29,7 +30,7 @@ namespace CampfireCards
             RunStarted = false;
             SentOpeningArrival = false;
             GroundedSince = -1f;
-            ArrivedSegments.Clear();
+            ArrivedFires.Clear();
             Effects.Reset();
             Hooks.ResetStatusCarries();
             Hooks.ResetEndGameHold();
@@ -88,6 +89,9 @@ namespace CampfireCards
             _thorns.Reset();
             _lunch.Reset();
             _dynamiteSpawnDepth = 0; _dynamiteBlast = false;
+            _lastSegmentNumber = int.MinValue;
+            _fireKeys.Clear();
+            _chainKeysTaken = 0;
             ResetCampfireSpawns();
         }
 
@@ -118,21 +122,114 @@ namespace CampfireCards
         public static void OnCampfireLitPrefix(Campfire __instance, bool updateSegment, out Campfire.FireState __state)
         {
             __state = __instance.state;
-            if (__state != Campfire.FireState.Lit && updateSegment && RunState.RunStarted)
-                PickSession.SnapshotCampfireEligibility((byte)__instance.advanceToSegment);
+            if (__state == Campfire.FireState.Lit || !RunState.RunStarted) return;
+            if (TfaPresent) PickSession.CapturePreLitEligibility();   // a chained fire's key exists only in the postfix
+            if (updateSegment) PickSession.SnapshotCampfireEligibility(FireKey(__instance));
         }
 
-        /// <summary>hooks.json campfireLit postfix: Off -> Lit with updateSegment is a real lighting.</summary>
+        /// <summary>
+        /// hooks.json campfireLit postfix: Off -> Lit with a segment advance is a real lighting. A lighting WITHOUT a
+        /// segment advance is normally a late-join sync or quicksave relight (burningFor carries the fire's age) - but
+        /// True Final Ascent lights its mid-chain biome fires exactly that way, fresh, so with that mod present a fresh
+        /// one counts as a biome boundary and deals cards too. Chained runs also revisit vanilla segment numbers, so a
+        /// fire whose number already had its session needs a key of its own. Chain keys live only on the HOST: a local
+        /// counter would drift on late joins and rejoins, and the host's key reaches every client (fixed or not) in
+        /// PickSessionStart, so the mirrored queues stay identical. Biome boundaries and card effects stay per-client.
+        /// </summary>
         public static void OnCampfireLit(Campfire __instance, bool updateSegment, float burningFor, Campfire.FireState __state)
         {
-            if (__state == Campfire.FireState.Lit || !updateSegment) return;   // late-join sync, quicksave or debug
-            if (!RunState.RunStarted) return;
-            Plugin.Log.LogInfo($"Campfire lit -> {__instance.advanceToSegment}");
-            if (NetSend.IsHost) HostCampfireLit(__instance);
+            if (__state == Campfire.FireState.Lit || !RunState.RunStarted) return;
             var local = Character.localCharacter;
+            byte raw = FireKey(__instance);
+            byte key = raw;
+            bool chained = false;
+            if (!updateSegment)
+            {
+                if (!TfaPresent) return;   // late-join sync, quicksave or debug
+                bool fresh = burningFor <= 0.01f && PhotonNetwork.Time - PickSession.RunStartTime > 20.0;
+                Plugin.Log.LogInfo($"Campfire lit without a segment advance (burningFor {burningFor:0.##}): "
+                                   + (fresh ? "chained-run biome fire" : "sync relight, ignored"));
+                if (!fresh) return;
+                chained = true;
+            }
+            else if (TfaPresent && PickSession.SegmentUsed(raw))
+            {
+                chained = true;   // the chain revisits this segment number; the fire still needs a session of its own
+            }
+            bool session = true;
+            if (chained)
+            {
+                if (!PollBiomeNow(local) && local != null) LocalCards.OnChainBoundary(local);
+                if (NetSend.IsHost)
+                {
+                    int chainKey = TakeFreeChainKey();
+                    if (chainKey < 0) { session = false; Plugin.Log.LogWarning("Chain keys exhausted; this fire deals no cards"); }
+                    else
+                    {
+                        key = (byte)chainKey;
+                        PickSession.AdoptPreLitEligibility(key);
+                        _fireKeys[__instance] = key;
+                    }
+                }
+            }
+            else _fireKeys[__instance] = key;
+            Plugin.Log.LogInfo($"Campfire lit -> {__instance.advanceToSegment} (key {key})");
+            if (NetSend.IsHost) HostCampfireLit(__instance, raw);
             // card effects first, so cards picked at this fire do not fire for it
             if (local != null) LocalCards.OnCampfireLit(local, __instance);
-            PickSession.RequestSession(1, (byte)__instance.advanceToSegment);   // every client queues it; the host deals
+            // vanilla runs: every client queues it and the host deals. Chained runs: ONLY the host's queue takes keys -
+            // a guest's view of what a fire should be keyed can diverge (late join, rejoin), and a wrongly queued entry
+            // survives to deal a phantom session after host migration. Guests mirror the host via PickSessionStart.
+            if (session && (!TfaPresent || NetSend.IsHost)) PickSession.RequestSession(1, key);
+        }
+
+        // ------------------------------------------------------------------ chained-run campfires (True Final Ascent)
+        private static bool? _tfaPresent;
+        private static readonly Dictionary<Campfire, byte> _fireKeys = new Dictionary<Campfire, byte>();
+        private static int _chainKeysTaken;
+        /// <summary>First session key for chained-run fires: above every vanilla segment number, below the opening's 255.</summary>
+        internal const byte ChainKeyFirst = 200;
+        internal const int ChainKeyRange = 50;
+
+        /// <summary>True Final Ascent chains many biomes into one run; several of its campfires reuse segment numbers.</summary>
+        internal static bool TfaPresent
+        {
+            get
+            {
+                if (_tfaPresent == null)
+                {
+                    try { _tfaPresent = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.CptPICHU.peak.truefinalascent"); }
+                    catch { _tfaPresent = false; }
+                }
+                return _tfaPresent.Value;
+            }
+        }
+
+        /// <summary>
+        /// Session/ledger key for a campfire: its segment number, unless this client keyed the fire onto the chain
+        /// range at lighting time (the host does, for chained fires). Guests keep the segment number; the host's
+        /// ledger carries both, so their claims still resolve to the right fire.
+        /// </summary>
+        internal static byte FireKey(Campfire fire)
+        {
+            byte key;
+            if (fire != null && _fireKeys.TryGetValue(fire, out key)) return key;
+            int seg = fire != null ? (int)fire.advanceToSegment : 0;
+            return (byte)(seg >= 255 ? 254 : seg);   // 255 is the opening pick's sentinel
+        }
+
+        /// <summary>
+        /// Host: the next chain key no session used yet, or -1 when all 50 are spent (a promoted host's counter may
+        /// trail its mirrored queue, so keys from before its join can be re-minted; session ids keep that harmless).
+        /// </summary>
+        private static int TakeFreeChainKey()
+        {
+            for (int i = 0; i < ChainKeyRange; i++)
+            {
+                byte key = (byte)(ChainKeyFirst + (_chainKeysTaken++ % ChainKeyRange));
+                if (!PickSession.SegmentUsed(key)) return key;
+            }
+            return -1;
         }
 
         /// <summary>hooks.json lobbyCreated: log where this host is (net.log), for launchers that list open games.</summary>
@@ -266,12 +363,21 @@ namespace CampfireCards
             CheckArrivals(local);
         }
 
-        private static void PollBiome(Character local)
+        private static int _lastSegmentNumber = int.MinValue;
+
+        private static void PollBiome(Character local) { PollBiomeNow(local); }
+
+        /// <summary>Checks the map's segment number right now; true when it moved and a biome boundary was raised.</summary>
+        private static bool PollBiomeNow(Character local)
         {
+            if (local == null) return false;
             int seg;
             try { seg = (int)MapHandler.CurrentSegmentNumber; }
-            catch { return; }
-            if (seg != LocalCards.Biome) LocalCards.OnBiomeStarted(local, seg);
+            catch { return false; }
+            if (seg == _lastSegmentNumber) return false;
+            _lastSegmentNumber = seg;
+            LocalCards.OnSegmentNumber(local, seg);
+            return true;
         }
 
         /// <summary>
@@ -359,18 +465,15 @@ namespace CampfireCards
             // campfire arrival: first time we are within the fire's rest radius
             Campfire fire = null;
             try { fire = MapHandler.CurrentCampfire; } catch { }
-            if (fire != null && !fire.Lit)
+            if (fire != null && !fire.Lit && !RunState.ArrivedFires.Contains(fire))
             {
-                byte seg = (byte)fire.advanceToSegment;
-                if (!RunState.ArrivedSegments.Contains(seg))
+                float radius = fire.moraleBoostRadius > 0f ? fire.moraleBoostRadius : 15f;
+                if (Vector3.Distance(local.Center, fire.transform.position) <= radius)
                 {
-                    float radius = fire.moraleBoostRadius > 0f ? fire.moraleBoostRadius : 15f;
-                    if (Vector3.Distance(local.Center, fire.transform.position) <= radius)
-                    {
-                        RunState.ArrivedSegments.Add(seg);
-                        NetSend.RaiseToMaster(new Arrival { segment = seg, time = PhotonNetwork.Time });
-                        PickSession.RecordArrival(NetSend.LocalActor, seg, PhotonNetwork.Time);
-                    }
+                    byte seg = FireKey(fire);
+                    RunState.ArrivedFires.Add(fire);
+                    NetSend.RaiseToMaster(new Arrival { segment = seg, time = PhotonNetwork.Time });
+                    PickSession.RecordArrival(NetSend.LocalActor, seg, PhotonNetwork.Time);
                 }
             }
         }

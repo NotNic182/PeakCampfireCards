@@ -18,6 +18,12 @@ namespace CampfireCards.Core
         /// <summary>The host saw this campfire being lit (its segment) during the current run.</summary>
         public void FireLit(byte segment) => _litFires.Add(segment);
 
+        /// <summary>
+        /// A NEW fire took over this segment number (chained runs reuse them): claims made at the old fire are
+        /// forgotten, so rewards stay once per FIRE - run-wide limits live in card flags, not in this ledger.
+        /// </summary>
+        public void ForgetFire(byte segment) => _spawned.RemoveWhere(key => (byte)key == segment);
+
         public bool IsLit(byte segment) => _litFires.Contains(segment);
 
         /// <param name="ownsCardForItem">the host checked that the sender owns a card whose reward is this item</param>

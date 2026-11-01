@@ -117,7 +117,7 @@ namespace CampfireCards.Abilities
             if (fire == null) return;
             int item = Mathf.RoundToInt(P("item", 0f));
             if (item < 0 || item >= CardTable.SpawnItems.Length) return;
-            NetSend.RaiseToMaster(new SpawnItem { item = (byte)item, segment = (byte)fire.advanceToSegment });
+            NetSend.RaiseToMaster(new SpawnItem { item = (byte)item, segment = Hooks.FireKey(fire) });
         }
     }
 

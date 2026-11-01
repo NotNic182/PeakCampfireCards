@@ -101,7 +101,7 @@ namespace CampfireCards.Abilities
             if (fire == null) return;
             int item = Mathf.RoundToInt(P("item", 3f));
             if (item < 0 || item >= CardTable.SpawnItems.Length) return;
-            NetSend.RaiseToMaster(new SpawnItem { item = (byte)item, segment = (byte)fire.advanceToSegment });
+            NetSend.RaiseToMaster(new SpawnItem { item = (byte)item, segment = Hooks.FireKey(fire) });
         }
 
         public override AbilityStatus Status(Character me) =>
@@ -126,7 +126,7 @@ namespace CampfireCards.Abilities
             var fire = LocalCards.LastCampfire;
             if (fire == null) return;
             _pendingChoice = true;
-            _fireSegment = (byte)fire.advanceToSegment;
+            _fireSegment = Hooks.FireKey(fire);
         }
 
         public override void Tick(Character me, float dt)
