@@ -108,6 +108,16 @@ namespace CampfireCards.Cards
             _footholds.Clear();
         }
 
+        /// <summary>The map's segment number moved (the vanilla biome boundary).</summary>
+        public static void OnSegmentNumber(Character me, int segment)
+        {
+            // chained runs (True Final Ascent) insert boundaries between segment changes, so Biome may run ahead
+            OnBiomeStarted(me, System.Math.Max(Biome + 1, segment));
+        }
+
+        /// <summary>A chained-run campfire crossed into a new biome without moving the segment number.</summary>
+        public static void OnChainBoundary(Character me) => OnBiomeStarted(me, Biome + 1);
+
         public static void OnBiomeStarted(Character me, int biome)
         {
             if (biome == Biome) return;

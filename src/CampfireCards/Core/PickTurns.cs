@@ -173,10 +173,17 @@ namespace CampfireCards.Core
         /// <summary>Ask for a session. False when this segment already had or is already waiting for one.</summary>
         public bool Request(byte reason, byte segment)
         {
-            if (_started.Contains(segment)) return false;
-            foreach (var e in _waiting) if (e.Segment == segment) return false;
+            if (Used(segment)) return false;
             _waiting.Add(new Entry { Reason = reason, Segment = segment });
             return true;
+        }
+
+        /// <summary>This segment already had a session or is waiting for one.</summary>
+        public bool Used(byte segment)
+        {
+            if (_started.Contains(segment)) return true;
+            foreach (var e in _waiting) if (e.Segment == segment) return true;
+            return false;
         }
 
         /// <summary>The next session to deal (oldest first); its segment is marked done now.</summary>

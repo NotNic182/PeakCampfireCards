@@ -372,12 +372,21 @@ namespace CampfireCards
             _spawns.Reset();
         }
 
-        /// <summary>Host: a campfire was really lit this run; its card rewards may now be claimed, once each.</summary>
-        private static void HostCampfireLit(Campfire fire)
+        /// <summary>
+        /// Host: a campfire was really lit this run; its card rewards may now be claimed, once each. A chain-keyed
+        /// fire is filed under its segment number too: guests (and clients on older versions) claim by the number.
+        /// </summary>
+        private static void HostCampfireLit(Campfire fire, byte raw)
         {
-            byte seg = (byte)fire.advanceToSegment;
+            byte seg = FireKey(fire);
             _litFires[seg] = fire;
             _spawns.FireLit(seg);
+            if (raw != seg)
+            {
+                _litFires[raw] = fire;
+                _spawns.ForgetFire(raw);   // claims by the number now mean THIS fire, not the one biomes back
+                _spawns.FireLit(raw);
+            }
         }
 
         /// <summary>

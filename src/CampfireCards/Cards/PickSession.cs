@@ -52,6 +52,7 @@ namespace CampfireCards.Cards
             Arrivals.Clear();
             _queue.Reset();
             _campfireEligible.Clear();
+            _preLit = null;
             _seenSessions.Clear();
             _foreignPicks.Clear();
             _grants.Clear();
@@ -104,6 +105,34 @@ namespace CampfireCards.Cards
             if (_campfireEligible.ContainsKey(segment)) return;
             _campfireEligible[segment] = new HashSet<int>(ActorsInRoom().Where(CanReceiveCard));
         }
+
+        private static HashSet<int> _preLit;   // scouts eligible just before the current lighting's RPC ran
+
+        /// <summary>Lighting prefix: who could receive a card before this fire's RPC can revive anyone.</summary>
+        public static void CapturePreLitEligibility()
+        {
+            _preLit = new HashSet<int>(ActorsInRoom().Where(CanReceiveCard));
+        }
+
+        /// <summary>Chained-run fires get their key after the prefix ran; the pre-RPC snapshot is adopted under it here.</summary>
+        public static void AdoptPreLitEligibility(byte segment)
+        {
+            _campfireEligible[segment] = _preLit ?? new HashSet<int>(ActorsInRoom().Where(CanReceiveCard));
+            _preLit = null;
+        }
+
+        /// <summary>Whether this actor is in the fire's eligibility snapshot (no snapshot: everyone is).</summary>
+        public static bool EligibleAtCampfire(byte segment, int actor)
+        {
+            HashSet<int> eligible;
+            return !_campfireEligible.TryGetValue(segment, out eligible) || eligible.Contains(actor);
+        }
+
+        /// <summary>A session for this segment already ran or is waiting - the campfire hook keys such repeats elsewhere.</summary>
+        public static bool SegmentUsed(byte segment) => _queue.Used(segment);
+
+        /// <summary>PhotonNetwork.Time when this client's run started.</summary>
+        public static double RunStartTime => _runStartTime;
 
         /// <summary>Host: a session is running or about to (its start has not come back yet).</summary>
         private static bool HostBusy
@@ -183,7 +212,7 @@ namespace CampfireCards.Cards
         {
             if (!_queue.Request(reason, segment))
             {
-                Plugin.Verbose($"Pick session for segment {segment} already started or queued");
+                Plugin.Log.LogInfo($"Pick session for segment {segment} already started or queued");
                 return;
             }
             if (!NetSend.IsHost) return;
