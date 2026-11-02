@@ -26,6 +26,19 @@ namespace CampfireCards.Core
 
         public bool IsLit(byte segment) => _litFires.Contains(segment);
 
+        /// <summary>A rejoiner took over this actor's cards: their item claims move too (no rejoin re-claim).</summary>
+        public void Transfer(int fromActor, int toActor)
+        {
+            var moved = new List<long>();
+            _spawned.RemoveWhere(key =>
+            {
+                if ((int)(key >> 16) != fromActor) return false;
+                moved.Add(((long)toActor << 16) | (key & 0xFFFF));
+                return true;
+            });
+            foreach (var key in moved) _spawned.Add(key);
+        }
+
         /// <param name="ownsCardForItem">the host checked that the sender owns a card whose reward is this item</param>
         public SpawnVerdict TryClaim(int actor, byte item, byte segment, bool ownsCardForItem)
         {

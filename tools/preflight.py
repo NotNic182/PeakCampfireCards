@@ -276,7 +276,7 @@ def main():
                 problem('hooks %s: handler %s not found in src' % (r['id'], r['handler']))
 
     # 7. net
-    codes = set(); allowed_types = {'byte', 'bool', 'int', 'float', 'double', 'string', 'byte[]', 'int[]'}
+    codes = set(); allowed_types = {'byte', 'bool', 'int', 'float', 'double', 'string', 'byte[]', 'int[]', 'string[]'}
     for r in net['rows']:
         if r['code'] in codes or not (90 <= r['code'] <= 119):
             problem('net %s: code %s duplicate or outside 90..119' % (r['name'], r['code']))

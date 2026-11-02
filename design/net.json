@@ -454,6 +454,37 @@
       ],
       "purpose": "The host spawned a one-time card reward (Balloon Bunch / mythic choice, or the Book of Bones); retain the used bit (flag) in pickFlags for state sync and host migration.",
       "handler": "OnCardRewardUsed"
+    },
+    {
+      "code": 110,
+      "name": "SessionMirror",
+      "sender": "host",
+      "receivers": "All after each session start; target when answering a late joiner's Hello or StateRequest",
+      "reliable": true,
+      "fields": [
+        {
+          "name": "segments",
+          "type": "byte[]"
+        },
+        {
+          "name": "dealtCounts",
+          "type": "byte[]"
+        },
+        {
+          "name": "dealtIds",
+          "type": "string[]"
+        },
+        {
+          "name": "deadCounts",
+          "type": "byte[]"
+        },
+        {
+          "name": "deadIds",
+          "type": "string[]"
+        }
+      ],
+      "purpose": "who was in each segment's dealt order and who was a ghost when its fire lit (persistent user ids, parallel to segments via the count arrays): a late joiner or freshly promoted host then owes exactly the right catch-up deals and never re-deals the opening. 0.9.5 clients ignore the code.",
+      "handler": "OnSessionMirror"
     }
   ]
 }

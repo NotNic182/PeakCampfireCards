@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using CampfireCards.Abilities;
 using CampfireCards.Cards;
 using CampfireCards.Core;
@@ -327,13 +328,14 @@ namespace CampfireCards
             }
         }
 
-        /// <summary>hooks.json maxStamina: flat maximum-stamina modifiers (already floored for normal cards in the fold).</summary>
+        /// <summary>hooks.json maxStamina: flat maximum-stamina modifiers (already floored for normal cards in the fold,
+        /// and capped at the knockout ceiling so stacked bonuses cannot outgrow the pass-out threshold or the HUD).</summary>
         public static void OnGetMaxStamina(Character __instance, ref float __result)
         {
             if (!Mine(__instance)) return;
             float bonus = Effects.Local[Channel.maxStamina];
             if (Mathf.Abs(bonus) < 0.0001f) return;
-            __result = Mathf.Max(1f + bonus - __instance.refs.afflictions.statusSum, 0f);
+            __result = Mathf.Max(Mathf.Min(1f + bonus, StatComposites.MaxBarFrame) - __instance.refs.afflictions.statusSum, 0f);
         }
 
         /// <summary>
@@ -343,7 +345,7 @@ namespace CampfireCards
         /// Lava hit gate.
         /// </summary>
         internal static float PassOutThreshold() =>
-            Mathf.Min(1f + Mathf.Max(0f, Effects.Local[Channel.maxStamina]), 1.9f);
+            Mathf.Min(1f + Mathf.Max(0f, Effects.Local[Channel.maxStamina]), StatComposites.MaxBarFrame);
 
         /// <summary>hooks.json passOutThreshold: afflictions must fill the card-extended bar, not the vanilla 100.</summary>
         public static void OnShouldPassOut(CharacterAfflictions __instance, ref bool __result)
@@ -427,43 +429,101 @@ namespace CampfireCards
             return false;
         }
 
-        /// <summary>The HUD's status-segment row (Bar/LayoutGroup) and its prefab right edge, while the mod has moved it.</summary>
-        private static RectTransform _barSegments;
-        private static int _barSegmentsOwner;
-        private static float _barSegmentsRight;
-        private static bool _barSegmentsMoved;
+        /// <summary>Per-HUD-instance capture of the bar pieces the mod moves, and their prefab geometry for the restore.</summary>
+        private sealed class BarCapture
+        {
+            public RectTransform Segments;
+            public float SegmentsRight;
+            public RectTransform Overflow;
+            public float OverflowX;
+            public float FrameWidth;
+            public bool Moved;
+        }
+
+        private static readonly Dictionary<int, BarCapture> _barCaptures = new Dictionary<int, BarCapture>();
+        private static StaminaBar _barToStyle;
+
+        internal static void ResetBarCaptures()
+        {
+            _barCaptures.Clear();
+            _barToStyle = null;
+        }
 
         /// <summary>
-        /// hooks.json staminaBarFrame. In PEAK's HUD prefab, MaxStamina ignores the layout and is sized from the left to
-        /// GetMaxStamina(), while the status segments sit in a HorizontalLayoutGroup aligned MiddleRight across the full
-        /// bar, so in vanilla the two always meet (max stamina + statuses = 100%). A card's max-stamina change resizes only
-        /// MaxStamina, which left a gap (penalty) or an overlap (bonus). Here the segment row's right edge and the frame
-        /// follow the card-adjusted maximum instead: a penalty visibly shortens the whole bar with Hunger and the other
-        /// statuses right after the stamina, and a bonus lengthens it. Only for the local scout; otherwise vanilla.
+        /// hooks.json staminaBarFrame (StaminaBar.Update postfix). The geometry itself is applied from
+        /// Canvas.willRenderCanvases (Hooks.Subscribe): vanilla rewrites the outline every Update, and overlay mods
+        /// restyle the bar from LateUpdate, so writing here would be overwritten - just before UI render nothing is.
         /// </summary>
-        public static void OnStaminaBarUpdate(StaminaBar __instance)
+        public static void OnStaminaBarUpdate(StaminaBar __instance) => _barToStyle = __instance;
+
+        internal static void ApplyPendingBarFrame()
         {
-            if (__instance.staminaBarOutline == null || __instance.fullBar == null) return;
+            var bar = _barToStyle;
+            if (bar == null) return;   // Unity null: a destroyed HUD stops styling by itself
+            try { ApplyBarFrame(bar); }
+            catch (System.Exception e)
+            {
+                _barToStyle = null;
+                Plugin.Log.LogWarning("Stamina bar frame: " + e.Message);
+            }
+        }
+
+        /// <summary>
+        /// In PEAK's HUD prefab, MaxStamina ignores the layout and is sized from the left to GetMaxStamina(), while the
+        /// status segments sit in a HorizontalLayoutGroup aligned MiddleRight across the full bar, so in vanilla the two
+        /// always meet (max stamina + statuses = 100%). A card's max-stamina change resizes only MaxStamina, which left a
+        /// gap (penalty) or an overlap (bonus). Here the frame, the segment row's right edge and the overflow tick follow
+        /// the card-adjusted maximum instead, eased at the same speed as vanilla's own fill so nothing snaps. Only for
+        /// the local scout; otherwise vanilla.
+        /// </summary>
+        private static void ApplyBarFrame(StaminaBar bar)
+        {
+            if (bar.staminaBarOutline == null || bar.fullBar == null) return;
             var c = Character.observedCharacter;
             float bonus = c != null && Mine(c) ? Effects.Local[Channel.maxStamina] : 0f;
-            var segments = BarSegments(__instance);
-            float width = __instance.fullBar.sizeDelta.x;
+            var cap = Capture(bar);
             if (Mathf.Abs(bonus) < 0.0001f)
             {
-                if (segments != null && _barSegmentsMoved) SetRightEdge(segments, _barSegmentsRight);
-                _barSegmentsMoved = false;
+                if (cap != null && cap.Moved)
+                {
+                    if (cap.Segments != null) SetRightEdge(cap.Segments, cap.SegmentsRight);
+                    if (cap.Overflow != null) cap.Overflow.anchoredPosition = new Vector2(cap.OverflowX, cap.Overflow.anchoredPosition.y);
+                    cap.Moved = false;   // the outline needs no restore: vanilla rewrites it every Update
+                }
                 return;
             }
-            if (segments == null) return;   // unknown HUD layout: leave the game's bar alone rather than half-move it
+            float width = bar.fullBar.sizeDelta.x;
             float frame = StatComposites.BarFrame(bonus, c.refs.afflictions.statusSum);
-            var o = __instance.staminaBarOutline;
-            o.sizeDelta = new Vector2(14f + frame * width, o.sizeDelta.y);
-            // vanilla flags "overflow" at statusSum > 1.005; with a bonus the bar only truly overflows past the
-            // extended threshold (hooks.json passOutThreshold)
-            if (__instance.staminaBarOutlineOverflowBar != null)
-                __instance.staminaBarOutlineOverflowBar.gameObject.SetActive(c.refs.afflictions.statusSum > PassOutThreshold() + 0.005f);
-            if (!_barSegmentsMoved) { _barSegmentsRight = segments.offsetMax.x; _barSegmentsMoved = true; }
-            SetRightEdge(segments, _barSegmentsRight + StatComposites.BarSegmentsShift(bonus, width));
+            var o = bar.staminaBarOutline;
+            if (cap == null)
+            {
+                // layout not ready yet: the frame alone still follows the hook-extended maximum (never a poking fill)
+                o.sizeDelta = new Vector2(14f + frame * width, o.sizeDelta.y);
+                return;
+            }
+            if (!cap.Moved)
+            {
+                cap.Moved = true;
+                cap.FrameWidth = o.sizeDelta.x;   // vanilla wrote this frame's base width in its own Update
+                cap.SegmentsRight = cap.Segments != null ? cap.Segments.offsetMax.x : 0f;
+                cap.OverflowX = cap.Overflow != null ? cap.Overflow.anchoredPosition.x : 0f;
+            }
+            // ease at vanilla's own bar speed (dt*10): the fill and max backing lerp, a snapping frame looks broken
+            float t = Mathf.Clamp01(Time.deltaTime * 10f);
+            cap.FrameWidth = Mathf.Lerp(cap.FrameWidth, 14f + frame * width, t);
+            o.sizeDelta = new Vector2(cap.FrameWidth, o.sizeDelta.y);
+            float shift = StatComposites.BarSegmentsShift(bonus, width);
+            if (cap.Segments != null)
+                SetRightEdge(cap.Segments, Mathf.Lerp(cap.Segments.offsetMax.x, cap.SegmentsRight + shift, t));
+            // vanilla re-gates the tick every Update but never moves it off the prefab's 100% mark: with a wider
+            // frame the true knockout mark sits further right by the same shift
+            if (cap.Overflow != null)
+            {
+                cap.Overflow.anchoredPosition = new Vector2(cap.OverflowX + shift, cap.Overflow.anchoredPosition.y);
+                // vanilla flags "overflow" at statusSum > 1.005; with a bonus the bar only truly overflows past the
+                // extended threshold (hooks.json passOutThreshold)
+                cap.Overflow.gameObject.SetActive(c.refs.afflictions.statusSum > PassOutThreshold() + 0.005f);
+            }
         }
 
         private static void SetRightEdge(RectTransform rt, float right)
@@ -471,22 +531,24 @@ namespace CampfireCards
             if (Mathf.Abs(rt.offsetMax.x - right) > 0.01f) rt.offsetMax = new Vector2(right, rt.offsetMax.y);
         }
 
-        /// <summary>The parent of the status segments, if it is the right-aligned HorizontalLayoutGroup the prefab has.</summary>
-        private static RectTransform BarSegments(StaminaBar bar)
+        /// <summary>The bar pieces the mod moves, found once per HUD instance (two bars never share a capture).</summary>
+        private static BarCapture Capture(StaminaBar bar)
         {
             int id = bar.GetInstanceID();
-            if (_barSegmentsOwner == id) return _barSegments;   // a new HUD (scene load) has a new id
-            _barSegments = null; _barSegmentsOwner = id; _barSegmentsMoved = false;
+            BarCapture cap;
+            if (_barCaptures.TryGetValue(id, out cap)) return cap;
             // StaminaBar.Start fills afflictions from the whole bar group (Petrify lives elsewhere): take the segments'
             // HorizontalLayoutGroup. MaxStamina is also its child, but ignores the layout and hangs from the left edge.
-            if (bar.afflictions == null || bar.afflictions.Length == 0) { _barSegmentsOwner = 0; return null; }   // Start has not run yet
+            if (bar.afflictions == null || bar.afflictions.Length == 0) return null;   // Start has not run yet
+            cap = new BarCapture { Overflow = bar.staminaBarOutlineOverflowBar };
             foreach (var a in bar.afflictions)
             {
                 var parent = a != null && a.rtf != null ? a.rtf.parent as RectTransform : null;
-                if (parent != null && parent.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>() != null) { _barSegments = parent; break; }
+                if (parent != null && parent.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>() != null) { cap.Segments = parent; break; }
             }
-            Plugin.Verbose("Stamina bar segments: " + (_barSegments != null ? _barSegments.name : "not found (frame only)"));
-            return _barSegments;
+            _barCaptures[id] = cap;
+            Plugin.Verbose("Stamina bar segments: " + (cap.Segments != null ? cap.Segments.name : "not found (frame only)"));
+            return cap;
         }
 
         /// <summary>hooks.json bonusStamina: every bonus (yellow) stamina grant, including the cards' own.</summary>

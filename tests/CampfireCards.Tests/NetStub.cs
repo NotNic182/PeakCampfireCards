@@ -30,5 +30,6 @@ namespace CampfireCards.Net
         public static void OnPickSkipped(PickSkipped m, int sender) => Last.Add((107, sender, m));
         public static void OnCardPenalty(CardPenalty m, int sender) => Last.Add((108, sender, m));
         public static void OnCardRewardUsed(CardRewardUsed m, int sender) => Last.Add((109, sender, m));
+        public static void OnSessionMirror(SessionMirror m, int sender) => Last.Add((110, sender, m));
     }
 }

@@ -32,6 +32,23 @@ namespace CampfireCards.Cards
         private static readonly SessionQueue _queue = new SessionQueue();
         /// <summary>Scouts alive when each campfire was lit, before its RPC can revive anyone. Kept for queued fires.</summary>
         private static readonly Dictionary<byte, HashSet<int>> _campfireEligible = new Dictionary<byte, HashSet<int>>();
+        /// <summary>actor -> published user id for everyone seen this run (a rejoiner comes back with a new number).</summary>
+        public static readonly ActorDirectory Directory = new ActorDirectory();
+        /// <summary>Who was in each segment's dealt order, as persistent ids - mirrored from every PickSessionStart,
+        /// so any later host knows who is still owed that pick (and a rejoiner is never dealt it twice).</summary>
+        private static readonly Dictionary<byte, HashSet<string>> _dealtBySegment = new Dictionary<byte, HashSet<string>>();
+        /// <summary>Scouts already dead when each fire lit (persistent ids): a catch-up must not deal a ghost either.</summary>
+        private static readonly Dictionary<byte, HashSet<string>> _deadAtFire = new Dictionary<byte, HashSet<string>>();
+        private static HashSet<string> _preLitDead;
+        /// <summary>Host: segments owed a catch-up deal because someone loaded in (or joined) after their session.</summary>
+        private static readonly List<byte> _catchupPending = new List<byte>();
+        /// <summary>Host: when each actor's character registered; the grace lets their own Arrival win the race.</summary>
+        private static readonly Dictionary<int, float> _readySince = new Dictionary<int, float>();
+        private const float CatchupGraceSeconds = 15f;
+        /// <summary>An idle drain that dealt nothing backs off until here; triggers clear it so they act at once.</summary>
+        private static float _nextCatchupCheck;
+        /// <summary>A catch-up whose only recipients never proved the mod resolves by timeout: keep that stall short.</summary>
+        private const float ModlessCatchupTimeout = 20f;
         private static readonly HashSet<int> _seenSessions = new HashSet<int>();
         /// <summary>Picks applied from sessions this client never saw start (it joined mid-session): once per player each.</summary>
         private static readonly HashSet<(int session, int actor)> _foreignPicks = new HashSet<(int, int)>();
@@ -53,6 +70,13 @@ namespace CampfireCards.Cards
             _queue.Reset();
             _campfireEligible.Clear();
             _preLit = null;
+            Directory.Reset();
+            _dealtBySegment.Clear();
+            _deadAtFire.Clear();
+            _preLitDead = null;
+            _catchupPending.Clear();
+            _readySince.Clear();
+            _nextCatchupCheck = 0f;
             _seenSessions.Clear();
             _foreignPicks.Clear();
             _grants.Clear();
@@ -70,7 +94,11 @@ namespace CampfireCards.Cards
             _openingPending = true;
             _runStartTime = PhotonNetwork.Time;
             TimeoutSeconds = PickTiming.Normalize(Plugin.PickTimeoutSeconds != null ? Plugin.PickTimeoutSeconds.Value : UiTiming.PickTimeoutSeconds);
+            // every session this client ever DEALS uses its own config; TimeoutSeconds itself follows the wire per session
+            _configuredTimeout = TimeoutSeconds;
         }
+
+        private static float _configuredTimeout = UiTiming.PickTimeoutSeconds;
 
         public static void RecordArrival(int actor, byte segment, double time)
         {
@@ -104,6 +132,7 @@ namespace CampfireCards.Cards
         {
             if (_campfireEligible.ContainsKey(segment)) return;
             _campfireEligible[segment] = new HashSet<int>(ActorsInRoom().Where(CanReceiveCard));
+            _deadAtFire[segment] = DeadNow();
         }
 
         private static HashSet<int> _preLit;   // scouts eligible just before the current lighting's RPC ran
@@ -112,13 +141,181 @@ namespace CampfireCards.Cards
         public static void CapturePreLitEligibility()
         {
             _preLit = new HashSet<int>(ActorsInRoom().Where(CanReceiveCard));
+            _preLitDead = DeadNow();
         }
 
         /// <summary>Chained-run fires get their key after the prefix ran; the pre-RPC snapshot is adopted under it here.</summary>
         public static void AdoptPreLitEligibility(byte segment)
         {
             _campfireEligible[segment] = _preLit ?? new HashSet<int>(ActorsInRoom().Where(CanReceiveCard));
+            _deadAtFire[segment] = _preLitDead ?? DeadNow();
             _preLit = null;
+            _preLitDead = null;
+        }
+
+        /// <summary>Scouts whose character exists and is a ghost right now, as persistent ids.</summary>
+        private static HashSet<string> DeadNow()
+        {
+            var dead = new HashSet<string>();
+            foreach (var a in ActorsInRoom())
+            {
+                Character c;
+                if (a == NetSend.LocalActor) c = Character.localCharacter;
+                else if (!PlayerHandler.TryGetCharacter(a, out c)) continue;
+                if (c != null && c.data != null && !c.isBot && c.data.dead) dead.Add(PersistentIdOf(a));
+            }
+            return dead;
+        }
+
+        /// <summary>Photon's published user id (stable across a rejoin), or "actor:N" when it is unknown.</summary>
+        internal static string PersistentIdOf(int actor)
+        {
+            var room = PhotonNetwork.CurrentRoom;
+            Photon.Realtime.Player p;
+            if (room != null && room.Players.TryGetValue(actor, out p) && ActorDirectory.ValidId(p.UserId))
+            {
+                Directory.Record(actor, p.UserId);
+                return p.UserId;
+            }
+            return Directory.UserIdOf(actor) ?? "actor:" + actor;
+        }
+
+        /// <summary>This player (by account, so a rejoin counts) was in this segment's dealt order already.</summary>
+        public static bool WasDealt(byte segment, int actor)
+        {
+            HashSet<string> dealt;
+            return _dealtBySegment.TryGetValue(segment, out dealt) && dealt.Contains(PersistentIdOf(actor));
+        }
+
+        private static bool IsBot(int actor)
+        {
+            Character c;
+            if (actor == NetSend.LocalActor) c = Character.localCharacter;
+            else if (!PlayerHandler.TryGetCharacter(actor, out c)) return false;
+            return c != null && c.isBot;
+        }
+
+        /// <summary>
+        /// Host: the whole dealt/dead record as one event. A rejoiner's own run restart wiped their copy (and with it the
+        /// opening latch), and a client promoted later needs the parts only the old host knew (chain-fire ghost sets), so
+        /// the host answers every late joiner with this and broadcasts it after each session start.
+        /// </summary>
+        public static SessionMirror BuildMirror()
+        {
+            var segments = new List<byte>(); var dealtCounts = new List<byte>(); var dealtIds = new List<string>();
+            var deadCounts = new List<byte>(); var deadIds = new List<string>();
+            var keys = new HashSet<byte>(_dealtBySegment.Keys);
+            keys.UnionWith(_deadAtFire.Keys);
+            foreach (var segment in keys)
+            {
+                segments.Add(segment);
+                HashSet<string> set;
+                _dealtBySegment.TryGetValue(segment, out set);
+                dealtCounts.Add((byte)(set == null ? 0 : Math.Min(255, set.Count)));
+                if (set != null) dealtIds.AddRange(set.Take(255));
+                _deadAtFire.TryGetValue(segment, out set);
+                deadCounts.Add((byte)(set == null ? 0 : Math.Min(255, set.Count)));
+                if (set != null) deadIds.AddRange(set.Take(255));
+            }
+            return new SessionMirror
+            {
+                segments = segments.ToArray(), dealtCounts = dealtCounts.ToArray(), dealtIds = dealtIds.ToArray(),
+                deadCounts = deadCounts.ToArray(), deadIds = deadIds.ToArray()
+            };
+        }
+
+        public static bool HasMirror => _dealtBySegment.Count > 0 || _deadAtFire.Count > 0;
+
+        /// <summary>
+        /// A host synced card state to this client: cards only exist after the opening dealt, so this run's opening is
+        /// already history. Keeps a mid-run joiner that is promoted later - even from a lobby whose host was too old to
+        /// send the dealt mirror - from dealing the whole room a second opening.
+        /// </summary>
+        public static void NoteHostRunInProgress()
+        {
+            if (!NetSend.IsHost) _openingPending = false;
+        }
+
+        /// <summary>The host's mirror: union into ours (never remove), and a dealt opening stays dealt.</summary>
+        public static void ApplyMirror(SessionMirror m)
+        {
+            if (m.segments == null) return;
+            int dealtPos = 0, deadPos = 0;
+            for (int i = 0; i < m.segments.Length; i++)
+            {
+                byte segment = m.segments[i];
+                int dn = m.dealtCounts != null && i < m.dealtCounts.Length ? m.dealtCounts[i] : 0;
+                if (dn > 0)
+                {
+                    HashSet<string> dealt;
+                    if (!_dealtBySegment.TryGetValue(segment, out dealt)) _dealtBySegment[segment] = dealt = new HashSet<string>();
+                    for (int k = 0; k < dn && m.dealtIds != null && dealtPos < m.dealtIds.Length; k++) dealt.Add(m.dealtIds[dealtPos++]);
+                    if (segment == 255) _openingPending = false;   // this run's opening already happened before we (re)loaded
+                }
+                int xn = m.deadCounts != null && i < m.deadCounts.Length ? m.deadCounts[i] : 0;
+                if (xn > 0)
+                {
+                    HashSet<string> dead;
+                    if (!_deadAtFire.TryGetValue(segment, out dead)) _deadAtFire[segment] = dead = new HashSet<string>();
+                    for (int k = 0; k < xn && m.deadIds != null && deadPos < m.deadIds.Length; k++) dead.Add(m.deadIds[deadPos++]);
+                }
+            }
+        }
+
+        private static bool DeadAtFire(byte segment, int actor)
+        {
+            HashSet<string> dead;
+            return _deadAtFire.TryGetValue(segment, out dead) && dead.Contains(PersistentIdOf(actor));
+        }
+
+        /// <summary>
+        /// Host: this actor can (newly) receive cards - a late opening Arrival (arrived), or their character registering
+        /// (the grace then lets their own Arrival win the race). Every session they missed because they had not loaded in
+        /// yet is owed a catch-up. Fires as often as it likes: the dealt mirror at drain time keeps it idempotent.
+        /// </summary>
+        public static void HostNoteReady(int actor, bool arrived)
+        {
+            if (!NetSend.IsHost || _dealtBySegment.Count == 0) return;
+            _nextCatchupCheck = 0f;   // something changed: the next drain looks right away
+            if (!arrived && !_readySince.ContainsKey(actor)) _readySince[actor] = UnityEngine.Time.unscaledTime;
+            var segments = new List<byte>(_dealtBySegment.Keys);
+            segments.Sort();
+            // the opening (255) first; fire keys then follow in roughly the order they were handed out
+            if (segments.Remove(255)) segments.Insert(0, 255);
+            foreach (var segment in segments)
+            {
+                if (WasDealt(segment, actor) || DeadAtFire(segment, actor) || _catchupPending.Contains(segment)) continue;
+                _catchupPending.Add(segment);
+            }
+        }
+
+        /// <summary>This client was just promoted to host mid-run: owe catch-ups for anyone the old host missed.</summary>
+        public static void HostPromotedSweep()
+        {
+            if (!NetSend.IsHost) return;
+            Dictionary<int, double> opening;
+            Arrivals.TryGetValue(255, out opening);
+            foreach (var actor in ActorsInRoom())
+                HostNoteReady(actor, arrived: opening != null && opening.ContainsKey(actor));
+        }
+
+        /// <summary>
+        /// A rejoiner took over a departed actor's state: re-key the per-actor session bookkeeping too. Runs on EVERY
+        /// client (the roster tick detects the replacement), so a later host agrees about eligibility and deal order.
+        /// The opening Arrival is deliberately NOT grafted: it proves the sender's mod is loaded NOW, and the rejoiner
+        /// re-sends their own if it still is.
+        /// </summary>
+        public static void OnActorReplaced(int from, int to)
+        {
+            foreach (var set in _campfireEligible.Values)
+                if (set.Remove(from)) set.Add(to);
+            foreach (var kv in Arrivals)
+            {
+                if (kv.Key == 255) { kv.Value.Remove(from); continue; }
+                double time;
+                if (kv.Value.TryGetValue(from, out time)) { kv.Value.Remove(from); if (!kv.Value.ContainsKey(to)) kv.Value[to] = time; }
+            }
+            _readySince.Remove(from);
         }
 
         /// <summary>Whether this actor is in the fire's eligibility snapshot (no snapshot: everyone is).</summary>
@@ -220,10 +417,11 @@ namespace CampfireCards.Cards
             HostStartNext();
         }
 
-        /// <summary>Host: deal the oldest waiting session if nothing is running.</summary>
+        /// <summary>Host: deal the oldest waiting session if nothing is running, then any catch-up owed to late loaders.</summary>
         private static void HostStartNext()
         {
-            if (!NetSend.IsHost || HostBusy || _queue.Count == 0) return;
+            if (!NetSend.IsHost || HostBusy) return;
+            if (_queue.Count == 0 && _catchupPending.Count == 0) return;
             if (!Deck.Ready)
             {
                 if (!_warnedEmptyDeck) Plugin.Log.LogWarning("No pick session: the deck is empty");
@@ -231,8 +429,71 @@ namespace CampfireCards.Cards
                 return;
             }
             SessionQueue.Entry next;
-            if (!_queue.TryNext(out next)) return;
-            Deal(next.Reason, next.Segment);
+            if (_queue.TryNext(out next)) { Deal(next.Reason, next.Segment); return; }
+            DealNextCatchup();
+        }
+
+        /// <summary>
+        /// Host: a session just started - anyone in the room who missed it and was not a ghost at its fire is owed it
+        /// (players still building the world sit in the room long before they can be dealt). The drain settles who and when.
+        /// </summary>
+        private static void HostAuditOwed(byte segment)
+        {
+            if (!NetSend.IsHost || _catchupPending.Contains(segment)) return;
+            foreach (var a in ActorsInRoom())
+            {
+                if (WasDealt(segment, a) || DeadAtFire(segment, a) || IsBot(a)) continue;
+                _catchupPending.Add(segment);
+                _nextCatchupCheck = 0f;
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Host: deal one owed catch-up session. The owed set is recomputed now: in the room, not already dealt this
+        /// segment (by account), not a ghost when its fire lit. Someone currently dead or still loading stays owed for a
+        /// later drain. A player is dealt once their opening Arrival proves the mod is loaded, or - with timed sessions
+        /// only, so a stuck session can never be minted - after a grace from when the host first saw them ready
+        /// (modless players; the timeout then picks for them).
+        /// </summary>
+        private static void DealNextCatchup()
+        {
+            // a drain that found nothing backs off (nothing changes faster than the triggers that clear this)
+            if (UnityEngine.Time.unscaledTime < _nextCatchupCheck) return;
+            for (int i = 0; i < _catchupPending.Count; i++)
+            {
+                byte segment = _catchupPending[i];
+                Dictionary<int, double> opening;
+                Arrivals.TryGetValue(255, out opening);
+                var missing = 0;        // owed and may yet qualify (the ready ones included)
+                var ready = new List<int>();
+                bool anyArrival = false;
+                foreach (var a in ActorsInRoom())
+                {
+                    if (WasDealt(segment, a) || DeadAtFire(segment, a) || IsBot(a)) continue;
+                    bool hasArrival = opening != null && opening.ContainsKey(a);
+                    // untimed sessions never mint a pick for a player who may have no picker to answer with
+                    if (!hasArrival && _configuredTimeout <= 0f) continue;
+                    missing++;
+                    if (!CanReceiveCard(a)) continue;   // a ghost or still-loading scout: owed, maybe ready later
+                    if (!hasArrival)
+                    {
+                        float since;
+                        if (!_readySince.TryGetValue(a, out since)) { _readySince[a] = UnityEngine.Time.unscaledTime; continue; }
+                        if (UnityEngine.Time.unscaledTime - since <= CatchupGraceSeconds) continue;
+                    }
+                    anyArrival |= hasArrival;
+                    ready.Add(a);
+                }
+                if (missing == 0) { _catchupPending.RemoveAt(i); i--; continue; }
+                if (ready.Count == 0) continue;   // owed, but nobody is ready right now
+                Plugin.Log.LogInfo($"Catch-up pick for segment {segment}: dealing {ready.Count} player(s) who loaded in late");
+                // only never-proved players: the timeout is what resolves it, so do not stall the room for the full one
+                float? timeout = anyArrival ? (float?)null : Math.Min(_configuredTimeout, ModlessCatchupTimeout);
+                DealTo(segment == 255 ? (byte)0 : (byte)1, segment, ready, timeout);
+                return;
+            }
+            _nextCatchupCheck = UnityEngine.Time.unscaledTime + 0.25f;
         }
 
         private static void Deal(byte reason, byte segment)
@@ -240,6 +501,11 @@ namespace CampfireCards.Cards
             HashSet<int> eligible;
             _campfireEligible.TryGetValue(segment, out eligible);
             var actors = ActorsInRoom().Where(a => CanReceiveCard(a) && (reason != 1 || eligible == null || eligible.Contains(a))).ToList();
+            DealTo(reason, segment, actors);
+        }
+
+        private static void DealTo(byte reason, byte segment, List<int> actors, float? timeoutOverride = null)
+        {
             Dictionary<int, double> arr;
             Arrivals.TryGetValue(segment, out arr);
             // last to arrive picks first; players with no recorded arrival are treated as the latest
@@ -274,7 +540,7 @@ namespace CampfireCards.Cards
             NetSend.Raise(new PickSessionStart
             {
                 sessionId = id, reason = reason, order = actors.ToArray(), hands = hands.ToArray(),
-                handSize = (byte)handSize, timeoutSeconds = TimeoutSeconds, mode = (byte)mode, segment = segment
+                handSize = (byte)handSize, timeoutSeconds = timeoutOverride ?? _configuredTimeout, mode = (byte)mode, segment = segment
             }, Photon.Realtime.ReceiverGroup.All);
         }
 
@@ -289,6 +555,17 @@ namespace CampfireCards.Cards
             {
                 Plugin.Log.LogWarning($"Ignored malformed session start {m.sessionId}");
                 return;
+            }
+            // remember who this segment was dealt to, by account: any later host owes everyone else a catch-up
+            HashSet<string> dealt;
+            if (!_dealtBySegment.TryGetValue(m.segment, out dealt)) _dealtBySegment[m.segment] = dealt = new HashSet<string>();
+            foreach (var actor in m.order) dealt.Add(PersistentIdOf(actor));
+            if (NetSend.IsHost)
+            {
+                // a session dealt while someone was still loading (or queued before their arrival) is owed right away
+                HostAuditOwed(m.segment);
+                // and guests get the host-only bookkeeping (chain-fire ghost sets) so a promoted host agrees
+                NetSend.Raise(BuildMirror(), Photon.Realtime.ReceiverGroup.All);
             }
             if (Turns.Active) Plugin.Log.LogWarning($"Session {m.sessionId} replaces unfinished session {Turns.SessionId}");
 

@@ -28,7 +28,8 @@ namespace CampfireCards.Net
         public const byte PickSkipped = 107;
         public const byte CardPenalty = 108;
         public const byte CardRewardUsed = 109;
-        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109 };
+        public const byte SessionMirror = 110;
+        public static readonly byte[] All = new byte[] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110 };
     }
 
     /// <summary>announce the mod version and the settings fingerprint (Core.SettingsFingerprint: global rules, rarity weights x10000, one hash per card) so players with different versions or card settings are told exactly what differs. Sender: anyone entering a room. Receivers: Others (the host answers the sender with its own Hello, targeted).</summary>
@@ -679,6 +680,45 @@ namespace CampfireCards.Net
         }
     }
 
+    /// <summary>who was in each segment's dealt order and who was a ghost when its fire lit (persistent user ids, parallel to segments via the count arrays): a late joiner or freshly promoted host then owes exactly the right catch-up deals and never re-deals the opening. 0.9.5 clients ignore the code.. Sender: host. Receivers: All after each session start; target when answering a late joiner's Hello or StateRequest.</summary>
+    public struct SessionMirror : INetEvent
+    {
+        public const byte Code = 110;
+        public byte EventCode => Code;
+        public const bool Reliable = true;
+        public const string Receivers = "All after each session start; target when answering a late joiner's Hello or StateRequest";
+        public byte[] segments;
+        public byte[] dealtCounts;
+        public string[] dealtIds;
+        public byte[] deadCounts;
+        public string[] deadIds;
+        public byte[] Write()
+        {
+            using (var ms = new MemoryStream()) using (var w = new BinaryWriter(ms))
+            {
+                w.Write(segments == null ? 0 : segments.Length); if (segments != null) w.Write(segments);
+                w.Write(dealtCounts == null ? 0 : dealtCounts.Length); if (dealtCounts != null) w.Write(dealtCounts);
+                w.Write(dealtIds == null ? 0 : dealtIds.Length); if (dealtIds != null) foreach (var x in dealtIds) w.Write(x ?? "");
+                w.Write(deadCounts == null ? 0 : deadCounts.Length); if (deadCounts != null) w.Write(deadCounts);
+                w.Write(deadIds == null ? 0 : deadIds.Length); if (deadIds != null) foreach (var x in deadIds) w.Write(x ?? "");
+                w.Flush(); return ms.ToArray();
+            }
+        }
+        public static SessionMirror Read(byte[] data)
+        {
+            var v = new SessionMirror();
+            using (var ms = new MemoryStream(data)) using (var r = new BinaryReader(ms))
+            {
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.segments: bad length " + n); v.segments = r.ReadBytes(n); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.dealtCounts: bad length " + n); v.dealtCounts = r.ReadBytes(n); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.dealtIds: bad length " + n); v.dealtIds = new string[n]; for (int i = 0; i < n; i++) v.dealtIds[i] = r.ReadString(); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.deadCounts: bad length " + n); v.deadCounts = r.ReadBytes(n); }}
+                {{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("v.deadIds: bad length " + n); v.deadIds = new string[n]; for (int i = 0; i < n; i++) v.deadIds[i] = r.ReadString(); }}
+            }
+            return v;
+        }
+    }
+
     public static partial class NetDispatcher
     {
         /// <summary>Routes a received mod event to its handler. Returns false for codes the mod does not own.</summary>
@@ -706,6 +746,7 @@ namespace CampfireCards.Net
                 case 107: NetHandlers.OnPickSkipped(PickSkipped.Read(data), sender); return true;
                 case 108: NetHandlers.OnCardPenalty(CardPenalty.Read(data), sender); return true;
                 case 109: NetHandlers.OnCardRewardUsed(CardRewardUsed.Read(data), sender); return true;
+                case 110: NetHandlers.OnSessionMirror(SessionMirror.Read(data), sender); return true;
                 default: return false;
             }
         }
