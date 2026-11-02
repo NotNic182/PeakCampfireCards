@@ -23,7 +23,7 @@ namespace CampfireCards
     {
         public const string Guid = "notnic.campfirecards";
         public const string Name = "Campfire Cards";
-        public const string Version = "0.9.5";
+        public const string Version = "0.9.6";
 
         /// <summary>
         /// Where in-game bug reports (Keys.BugReport) are sent: the report server's /report URL, baked per build so

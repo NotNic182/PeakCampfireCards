@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.6
+
+- **Slow loaders get their cards.** Anyone who finishes loading after a pick was dealt - a long True Final Ascent world build, or joining mid-run - is now dealt every pick they missed, one at a time, as soon as they're in. Works for friends without the mod too (the pick resolves on a short timer for them). Dying before your catch-up arrives no longer forfeits it.
+- **Rejoining keeps your deck.** Leave and rejoin a run and the host hands your cards, drawbacks and once-per-run rewards straight back - no more coming back empty. You also won't be dealt a pick you already took, and fires you missed while away are caught up.
+- **Host migration is safer.** If the host disconnects, the new host now knows exactly who was dealt what, so nobody gets skipped or double-dealt.
+- **Smoother extended stamina bar.** Cards like Cookie Addiction extend the bar by easing instead of snapping, the knockout tick sits at the real knockout point, and the extension is capped at the knockout ceiling. If another mod draws its own bar preview over ours, ours now wins (and the log says which mod to suspect).
+- These fixes need the **host** on 0.9.6 - older clients in the lobby are fine.
+- Thanks again to the chained-run scouts for the follow-up reports.
+
 ## 0.9.5
 
 - **True Final Ascent compatibility.** Chained runs now work: every biome campfire deals cards - including the mid-chain fires between biomes that share a map segment (Tropics to Roots, Alpine to Mesa, the Kiln stretch) - and once-per-biome cards (Safety Net, Meditation, Blood Battery, Lucky Lunch, Discount Cure-All, Otto-Matic Clutch, Loaded Dice, The Eternal Campfire's revive) recharge at every biome, not once per run. Runs without True Final Ascent are untouched.
