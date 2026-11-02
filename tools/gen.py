@@ -222,6 +222,9 @@ WRITERS = {
                '{{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("{n}: bad length " + n); {n} = r.ReadBytes(n); }}'),
     'int[]': ('w.Write({n} == null ? 0 : {n}.Length); if ({n} != null) foreach (var x in {n}) w.Write(x);',
               '{{ int n = r.ReadInt32(); if (n < 0 || n > (ms.Length - ms.Position) / 4) throw new InvalidDataException("{n}: bad length " + n); {n} = new int[n]; for (int i = 0; i < n; i++) {n}[i] = r.ReadInt32(); }}'),
+    # every wire string is at least one byte, so the remaining payload bounds the element count
+    'string[]': ('w.Write({n} == null ? 0 : {n}.Length); if ({n} != null) foreach (var x in {n}) w.Write(x ?? "");',
+                 '{{ int n = r.ReadInt32(); if (n < 0 || n > ms.Length - ms.Position) throw new InvalidDataException("{n}: bad length " + n); {n} = new string[n]; for (int i = 0; i < n; i++) {n}[i] = r.ReadString(); }}'),
 }
 
 

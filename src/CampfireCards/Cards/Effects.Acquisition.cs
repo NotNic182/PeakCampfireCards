@@ -53,6 +53,27 @@ namespace CampfireCards.Cards
             if (!_bulkChange && CollectionChanged != null) CollectionChanged(actor);
         }
 
+        /// <summary>
+        /// Host: a rejoiner (new actor number, same account) takes over a departed actor's cards, pick flags and Clown
+        /// Luggage penalties. The departed entry stays behind as an EMPTY key: every later StateSync then carries it with
+        /// count 0 and clears the stale copy on every client. Restores are not picks - no acquisition effects run.
+        /// </summary>
+        public static void TransferActorState(int from, int to)
+        {
+            if (from == to) return;
+            var cards = new List<byte>(CardsOf(to));
+            cards.AddRange(CardsOf(from));
+            var penalties = new List<byte>(Penalties.Of(to));
+            penalties.AddRange(Penalties.Of(from));
+            byte flags = (byte)(Flags(to) | Flags(from));
+            CardsByActor[from] = new List<byte>();
+            PickFlags[from] = 0;
+            Penalties.Restore(from, new List<byte>());
+            SetAll(to, cards, flags);
+            Penalties.Restore(to, penalties);
+            if (CollectionChanged != null) CollectionChanged(from);
+        }
+
         /// <summary>Reconcile a synced collection without resetting abilities that the local scout still owns.</summary>
         public static void SetAll(int actor, IEnumerable<byte> cards, byte flags)
         {

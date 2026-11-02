@@ -17,7 +17,9 @@ namespace CampfireCards.Tests
                 new ActiveMod { Channel = Channel.nonFallInjury, Op = ModOp.mul, Value = 8f, Rarity = CardRarity.Rare }
             }, new CardSettings());
             Assert.Equal(1f, result[Channel.maxStamina]);
-            Assert.Equal(2f, StatComposites.BarFrame(result[Channel.maxStamina], 0f));
+            // the drawn bar (and the real maximum with it) stops at the knockout ceiling: a 2.0 bar never matched
+            // the 1.9-capped pass-out threshold anyway, so a double-stamina build plays as +90, not +100
+            Assert.Equal(StatComposites.MaxBarFrame, StatComposites.BarFrame(result[Channel.maxStamina], 0f));
             Assert.Equal(8f, StatComposites.Injury(result, fall: false));
             Assert.Equal(1f, StatComposites.Injury(result, fall: true));
             // This affects ALL non-fall Injury. Falling-object-only fragility needs a new source-aware hook.

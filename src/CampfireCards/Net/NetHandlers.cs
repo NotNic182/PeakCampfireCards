@@ -78,8 +78,10 @@ namespace CampfireCards.Net
             }
             if (NetSend.IsHost && !FromHost(sender))
             {
+                Hooks.HostAdoptRejoiners();   // a rejoiner's Hello: re-home their old deck before answering with state
                 if (_answered.Add((sender, m.deckHash))) NetSend.RaiseTo(MakeHello(), sender);
                 if (Effects.HasAnyState) NetSend.RaiseTo(Effects.BuildStateSync(PickSession.SessionId), sender);
+                if (PickSession.HasMirror) NetSend.RaiseTo(PickSession.BuildMirror(), sender);
             }
             // the lobby-wide rules are the HOST's: a guest's own config must not free its scout of drawbacks or let it
             // keep duplicates others refuse (SettingsFingerprint.Rules: [1] = duplicate cards, [5] = drawbacks)
@@ -129,18 +131,33 @@ namespace CampfireCards.Net
         {
             if (!FromHost(sender)) return;
             Effects.ApplyStateSync(m);
+            // a host only syncs state once someone holds cards: this run's opening is long past, so if this client is
+            // ever promoted it must not re-deal it (even under a host too old to send the dealt mirror)
+            PickSession.NoteHostRunInProgress();
             Plugin.Verbose($"State sync from {sender}: {m.actors.Length} players");
         }
 
         public static void OnArrival(Arrival m, int sender)
         {
             PickSession.RecordArrival(sender, m.segment, m.time);
+            // the opening Arrival is each client's own "I'm loaded and standing" signal: a late one (slow mod-heavy
+            // world builds take minutes) means this player missed sessions they are still owed
+            if (m.segment == 255) PickSession.HostNoteReady(sender, arrived: true);
         }
 
         public static void OnStateRequest(StateRequest m, int sender)
         {
             if (!NetSend.IsHost) return;
+            Hooks.HostAdoptRejoiners();
             NetSend.RaiseTo(Effects.BuildStateSync(PickSession.SessionId), sender);
+            if (PickSession.HasMirror) NetSend.RaiseTo(PickSession.BuildMirror(), sender);
+        }
+
+        /// <summary>The host's dealt/dead record: who already had each segment's pick and who was a ghost at its fire.</summary>
+        public static void OnSessionMirror(SessionMirror m, int sender)
+        {
+            if (!FromHost(sender)) return;
+            PickSession.ApplyMirror(m);
         }
 
         public static void OnCardsGranted(CardsGranted m, int sender)

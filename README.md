@@ -4,10 +4,11 @@ A roguelike card mod for PEAK. On the beach, and every time your group lights a 
 three cards and keeps one. Cards last for the whole run and change how you climb, eat, fall, heal and recover.
 About half of the cards have a catch. The deck has 64 cards in five rarities.
 
-By default everyone chooses at the same time, so nobody waits for three other players. The **last climber to reach
-the fire still comes first**: they are dealt first (first claim on a Mythic) and head the deal order shown at the top
-of the screen. With `PickMode = Turns` the last climber picks first and the others see "X is picking a card" while
-they choose.
+Every offer is random, rolled from the rarity odds — nothing you do changes which cards you are shown. By default
+everyone chooses at the same time, so nobody waits for three other players. Arrival order at the fire only breaks
+ties: when two climbers would be offered the same Mythic, the last one to reach the fire gets it, and that order is
+what the name list at the top of the screen shows. With `PickMode = Turns` players choose one at a time in that
+order and the others see "X is picking a card" while they choose.
 
 ## You need
 - **PEAK** with **BepInEx 5** ([BepInExPack PEAK](https://thunderstore.io/c/peak/p/BepInEx/BepInExPack_PEAK/)).

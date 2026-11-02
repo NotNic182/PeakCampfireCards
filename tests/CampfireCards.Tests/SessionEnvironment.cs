@@ -62,7 +62,7 @@ namespace HarmonyLib
 namespace Photon.Realtime
 {
     public enum ReceiverGroup { All }
-    public class Player { public int ActorNumber; }
+    public class Player { public int ActorNumber; public string UserId; }
     public class Room { public Dictionary<int, Player> Players = new Dictionary<int, Player>(); }
 }
 namespace Photon.Pun
@@ -185,6 +185,7 @@ namespace CampfireCards.Net
             if (!Deliver) return;
             // Synchronous loopback exercises the offline/reentrant paths as well as the host's normal decisions.
             if (e is PickSessionStart start) PickSession.OnStart(start);
+            if (e is SessionMirror mirror) PickSession.ApplyMirror(mirror);
             if (e is PickMade pick) PickSession.OnPick(pick);
             if (e is PickSkipped skip) PickSession.OnSkipped(skip);
             if (e is SessionEnd end) PickSession.OnSessionEnd(end);

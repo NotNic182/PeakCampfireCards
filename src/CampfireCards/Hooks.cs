@@ -61,6 +61,9 @@ namespace CampfireCards
         {
             PlayerHandler.CharacterRegistered += OnCharacterRegistered;
             SceneManager.sceneLoaded += OnSceneLoaded;
+            // the stamina-bar frame is applied just before UI render, after every other script's Update and LateUpdate
+            Canvas.willRenderCanvases -= ApplyPendingBarFrame;
+            Canvas.willRenderCanvases += ApplyPendingBarFrame;
             SubscribePhoton();
         }
 
@@ -106,8 +109,11 @@ namespace CampfireCards
             RunMemoryFile.OnRunStarted(LocalCards.RunSeed);
             PickSession.OnRunStarted();
             Hud.Ensure();
+            _wasHost = NetSend.IsHost;
+            RecordRoster();
             if (!NetSend.IsHost) NetSend.Raise(NetHandlers.MakeHello(), Photon.Realtime.ReceiverGroup.Others);
             Plugin.Log.LogInfo($"Run started. Host={NetSend.IsHost} actor={NetSend.LocalActor} solo={NetSend.IsSolo} deck={Deck.Count} cards");
+            WarnOverlayMods();
         }
 
         /// <summary>hooks.json endGame: the run is over (end screen). Cards, timers and stat changes are cleared.</summary>
@@ -205,6 +211,25 @@ namespace CampfireCards
             }
         }
 
+        /// <summary>Names of mods known to redraw the stamina bar, logged once so bug reports explain themselves.</summary>
+        private static bool _overlayModsChecked;
+
+        private static void WarnOverlayMods()
+        {
+            if (_overlayModsChecked) return;
+            _overlayModsChecked = true;
+            try
+            {
+                foreach (var kv in BepInEx.Bootstrap.Chainloader.PluginInfos)
+                {
+                    var name = kv.Value != null && kv.Value.Metadata != null ? kv.Value.Metadata.Name : null;
+                    if (name != null && name.IndexOf("EffectPreview", StringComparison.OrdinalIgnoreCase) >= 0)
+                        Plugin.Log.LogInfo($"{name} detected: its stamina-bar overlay may not line up with card-extended stamina bars");
+                }
+            }
+            catch { }
+        }
+
         /// <summary>
         /// Session/ledger key for a campfire: its segment number, unless this client keyed the fire onto the chain
         /// range at lighting time (the host does, for chained fires). Guests keep the segment number; the host's
@@ -262,9 +287,13 @@ namespace CampfireCards
                         NetSend.RaiseToMaster(new StateRequest { modVersion = Plugin.Version });
                     }
                 }
-                else if (NetSend.IsHost && Effects.HasAnyState)
+                else if (NetSend.IsHost)
                 {
-                    NetSend.RaiseTo(Effects.BuildStateSync(PickSession.SessionId), actor);
+                    // even a modless player is owed the sessions their slow load made them miss (the timeout picks for them)
+                    PickSession.HostNoteReady(actor, arrived: false);
+                    HostAdoptRejoiners();
+                    if (Effects.HasAnyState) NetSend.RaiseTo(Effects.BuildStateSync(PickSession.SessionId), actor);
+                    if (PickSession.HasMirror) NetSend.RaiseTo(PickSession.BuildMirror(), actor);
                 }
             }
             catch (Exception e)
@@ -273,9 +302,62 @@ namespace CampfireCards
             }
         }
 
+        /// <summary>
+        /// Host: a player who left and rejoined has a new actor number, while their cards, flags and penalties still sit
+        /// under the old one (Photon publishes stable user ids; the game's own reconnect matches players the same way).
+        /// Move everything over, re-key the session and item bookkeeping, and sync the result to the room - the departed
+        /// entry stays as an empty key, so the broadcast also clears every client's stale copy.
+        /// </summary>
+        internal static void HostAdoptRejoiners()
+        {
+            if (!NetSend.IsHost || !RunState.RunStarted) return;
+            var room = PhotonNetwork.CurrentRoom;
+            if (room == null) return;
+            var actors = new List<int>();
+            foreach (var p in room.Players.Values) actors.Add(p.ActorNumber);
+            bool moved = false;
+            foreach (var p in room.Players.Values)
+            {
+                foreach (var from in PickSession.Directory.DepartedTwins(p.ActorNumber, p.UserId, actors))
+                {
+                    // never through CardsOf: its create-on-read would seed ghost rows into every later StateSync
+                    List<byte> fromCards;
+                    bool hasCards = Effects.CardsByActor.TryGetValue(from, out fromCards) && fromCards.Count > 0;
+                    if (!hasCards && Effects.Flags(from) == 0 && Effects.Penalties.Count(from) == 0) continue;
+                    Effects.TransferActorState(from, p.ActorNumber);
+                    PickSession.OnActorReplaced(from, p.ActorNumber);
+                    Ability_EternalCampfire.Arbiter.Transfer(from, p.ActorNumber);
+                    _spawns.Transfer(from, p.ActorNumber);
+                    moved = true;
+                    Plugin.Log.LogInfo($"Rejoin: moved {Effects.CardsOf(p.ActorNumber).Count} card(s) back to {NetSend.NameOf(p.ActorNumber)} (actor {from} -> {p.ActorNumber})");
+                }
+            }
+            if (moved) NetSend.Raise(Effects.BuildStateSync(PickSession.SessionId), Photon.Realtime.ReceiverGroup.All);
+        }
+
+        /// <summary>
+        /// Every client remembers each actor's published user id, so even a freshly promoted host can match rejoiners -
+        /// and every client re-keys its own session bookkeeping (eligibility, deal order) for a detected rejoin, so a
+        /// later host agrees with the one that handled the rejoin. The card transfer itself stays host-only.
+        /// </summary>
+        private static void RecordRoster()
+        {
+            var room = PhotonNetwork.CurrentRoom;
+            if (room == null) return;
+            var actors = new List<int>();
+            foreach (var p in room.Players.Values) actors.Add(p.ActorNumber);
+            foreach (var p in room.Players.Values)
+            {
+                foreach (var from in PickSession.Directory.DepartedTwins(p.ActorNumber, p.UserId, actors))
+                    PickSession.OnActorReplaced(from, p.ActorNumber);
+                PickSession.Directory.Record(p.ActorNumber, p.UserId);
+            }
+        }
+
         /// <summary>hooks.json sceneLoaded.</summary>
         public static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            ResetBarCaptures();   // the HUD and its StaminaBar are scene objects
             bool gameplay = RunState.IsGameplayScene(scene.name);
             RunState.OnIsland = gameplay;
             if (!gameplay)
@@ -338,6 +420,13 @@ namespace CampfireCards
             Hud.Ensure();
             if (!RunState.RunStarted) return;
 
+            if (!_wasHost && NetSend.IsHost)
+            {
+                // promoted mid-run: the dealt mirror knows who the old host still owed a pick
+                _wasHost = true;
+                PickSession.HostPromotedSweep();
+            }
+
             RestoreKey(local);
 
             PollBiome(local);
@@ -360,8 +449,12 @@ namespace CampfireCards
 
             if (Time.unscaledTime < _nextArrivalCheck) return;
             _nextArrivalCheck = Time.unscaledTime + 0.25f;
+            RecordRoster();
+            if (NetSend.IsHost) HostAdoptRejoiners();   // self-healing: covers rejoins around a host migration too
             CheckArrivals(local);
         }
+
+        private static bool _wasHost;
 
         private static int _lastSegmentNumber = int.MinValue;
 
@@ -455,7 +548,8 @@ namespace CampfireCards
                     if (Time.unscaledTime - RunState.GroundedSince >= UiTiming.OpeningPickDelaySeconds)
                     {
                         RunState.SentOpeningArrival = true;
-                        NetSend.RaiseToMaster(new Arrival { segment = 255, time = PhotonNetwork.Time });
+                        // to everyone, not just the master: a promoted host must know who already proved their mod
+                        NetSend.Raise(new Arrival { segment = 255, time = PhotonNetwork.Time }, Photon.Realtime.ReceiverGroup.Others);
                         PickSession.RecordArrival(NetSend.LocalActor, 255, PhotonNetwork.Time);   // known here too if we become host
                     }
                 }
@@ -472,7 +566,8 @@ namespace CampfireCards
                 {
                     byte seg = FireKey(fire);
                     RunState.ArrivedFires.Add(fire);
-                    NetSend.RaiseToMaster(new Arrival { segment = seg, time = PhotonNetwork.Time });
+                    // to everyone: deal order should survive a host migration too
+                    NetSend.Raise(new Arrival { segment = seg, time = PhotonNetwork.Time }, Photon.Realtime.ReceiverGroup.Others);
                     PickSession.RecordArrival(NetSend.LocalActor, seg, PhotonNetwork.Time);
                 }
             }

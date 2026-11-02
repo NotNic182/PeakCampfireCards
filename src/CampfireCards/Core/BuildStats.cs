@@ -37,16 +37,25 @@ namespace CampfireCards.Core
         public static bool CancelsStatus(float scaledAmount) => scaledAmount <= 0f;
 
         /// <summary>
-        /// Width of the stamina bar frame in full bars: the card-adjusted maximum (1 + maxStamina channel), or the status
-        /// total when statuses overflow it (vanilla uses max(1, statusSum)).
+        /// The ceiling for the extended bar, matching the knockout threshold's cap (reachable under the engine's 2.0
+        /// status total and the Lava hit gate): past it the bar, the knockout and the HUD's own mask would all disagree.
         /// </summary>
-        public static float BarFrame(float maxStaminaBonus, float statusSum) => Math.Max(Math.Max(0.05f, 1f + maxStaminaBonus), statusSum);
+        public const float MaxBarFrame = 1.9f;
+
+        /// <summary>
+        /// Width of the stamina bar frame in full bars: the card-adjusted maximum (1 + maxStamina channel, capped at the
+        /// knockout ceiling), or the status total when statuses overflow it (vanilla uses max(1, statusSum)).
+        /// </summary>
+        public static float BarFrame(float maxStaminaBonus, float statusSum) =>
+            Math.Max(Math.Max(0.05f, Math.Min(1f + maxStaminaBonus, MaxBarFrame)), statusSum);
 
         /// <summary>
         /// How far the HUD's right-aligned status segments move (HUD units): by the card bonus times the full bar width,
-        /// never so far left that the row would have no width, so they always end where the card-adjusted bar ends.
+        /// never so far left that the row would have no width and never past the knockout ceiling, so they always end
+        /// where the card-adjusted bar ends.
         /// </summary>
-        public static float BarSegmentsShift(float maxStaminaBonus, float fullWidth) => Math.Max(-0.95f, maxStaminaBonus) * fullWidth;
+        public static float BarSegmentsShift(float maxStaminaBonus, float fullWidth) =>
+            Math.Min(Math.Max(-0.95f, maxStaminaBonus), MaxBarFrame - 1f) * fullWidth;
     }
 
     /// <summary>stats.json in-game wording for one line: "more" when the value goes up, "less" when it goes down, "never" at 0.</summary>

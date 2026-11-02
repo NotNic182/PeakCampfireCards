@@ -226,6 +226,17 @@ namespace CampfireCards.Core
             _events.RemoveWhere(k => (int)(k >> 32) == victimActor);
         }
 
+        /// <summary>A rejoiner took over this owner's cards: a spent revive charge moves with them (no rejoin refill).</summary>
+        public void Transfer(int fromOwner, int toOwner)
+        {
+            int used;
+            if (!_ownerBiome.TryGetValue(fromOwner, out used)) return;
+            _ownerBiome.Remove(fromOwner);
+            int existing;
+            // both halves spent a charge somewhere: keep the later biome (the restrictive one right now)
+            if (!_ownerBiome.TryGetValue(toOwner, out existing) || used > existing) _ownerBiome[toOwner] = used;
+        }
+
         public void Reset() { _ownerBiome.Clear(); _events.Clear(); }
     }
 
